@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KENIA | Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <!-- mammoth.js for Word (.docx) parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+
+<body>
+  <main class="layout">
+    <section class="panel">
+
+      <!-- HEADER -->
+      <div class="app-header">
+        <div class="app-logo">📡</div>
+        <div class="app-title">
+          <h1>KENIA Dashboard</h1>
+          <p>Control remoto de llamadas desde el navegador</p>
+        </div>
+      </div>
+
+      <!-- APK MANAGEMENT BAR -->
+      <div id="apkBar" class="apk-bar">
+        <div class="apk-info">
+          <span class="apk-icon">🤖</span>
+          <div>
+            <strong id="apkName">Phone-VC Android</strong>
+            <small id="apkMeta" class="muted">Cargando info del APK…</small>
+          </div>
+        </div>
+        <div class="apk-actions">
+          <a id="apkDownloadBtn" href="/api/apk/download" class="btn-apk-dl" download>
+            ⬇️ Descargar APK
+          </a>
+          <button id="apkInstallHelp" class="secondary" style="font-size:12px;min-height:34px;padding:0 12px;">
+            ❓ Cómo instalar
+          </button>
+        </div>
+      </div>
+
+      <!-- INSTALL GUIDE (collapsible) -->
+      <div id="installGuide" class="install-guide" style="display:none">
+        <ol>
+          <li>Descarga el APK con el botón de arriba.</li>
+          <li>En Android: <strong>Ajustes → Seguridad → Instalar apps desconocidas</strong> → Activar para tu navegador.
+          </li>
+          <li>Abre el archivo descargado e instala.</li>
+          <li>Abre <strong>Phone-VC</strong>, escanea el QR o ingresa el código de sesión.</li>
+          <li>Activa <strong>Phone-VC como marcador por defecto</strong> dentro de la app para poder colgar llamadas.
+          </li>
+        </ol>
+      </div>
+
+      <!-- SESSION BAR -->
+      <div class="session-bar">
+        <button id="createSession">＋ Crear Sesión</button>
+        <input id="sessionCode" placeholder="CÓDIGO (6 chars)" maxlength="8" style="text-transform:uppercase;" />
+        <button id="joinSession" class="secondary">Vincular</button>
+      </div>
+
+      <!-- STATUS -->
+      <div class="status-pill" id="status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Sin vincular. Crea o une a una sesión.</span>
+      </div>
+
+      <!-- LINKED BANNER -->
+      <div id="linkedBanner" class="linked-banner" style="display:none">
+        <div>
+          <strong>📱 Celular vinculado</strong>
+          <span id="linkedDevice" style="display:block;font-size:13px;margin-top:3px;">Dispositivo conectado</span>
+        </div>
+        <span style="color:#a78bfa;font-size:22px;">✅</span>
+      </div>
+
+      <!-- QR BLOCK -->
+      <div class="qr-block" id="qrBlock">
+        <div>
+          <p class="muted" style="font-size:13px;margin-bottom:8px;">QR de vinculación (Android)</p>
+          <img id="pairQr" alt="QR de vinculacion" style="display:none" />
+          <small id="qrHint" class="muted">Crea una sesión para ver el QR.</small>
+        </div>
+        <div class="pairing-data">
+          <label class="muted" style="font-size:12px;">Link de vinculación</label>
+          <input id="pairLink" readonly placeholder="Aparecerá al crear sesión" />
+          <button id="copyPairLink" class="secondary">📋 Copiar link</button>
+        </div>
+      </div>
+
+      <!-- CONTACTS SECTION -->
+      <section id="contactsSection" style="display:none">
+        <p class="section-title">📋 Contactos</p>
+
+        <!-- ADD MANUALLY -->
+        <div class="row">
+          <input id="contactName" placeholder="Nombre" />
+          <input id="contactPhone" placeholder="+51999999999" style="font-family:monospace;" />
+          <input id="contactNote" placeholder="Nota (opcional)" />
+          <button id="addContact">＋ Agregar</button>
+        </div>
+
+        <!-- IMPORT PANEL -->
+        <div class="import-panel">
+          <p class="section-title" style="margin-top:0;">📥 Importar contactos</p>
+
+          <div class="import-tabs">
+            <button id="tabWord" class="import-tab active" data-tab="word">📄 Word / Excel</button>
+            <button id="tabUrl" class="import-tab" data-tab="url">🌐 Desde URL</button>
+          </div>
+
+          <!-- WORD IMPORT -->
+          <div id="importPanelWord" class="import-body">
+            <p class="muted" style="font-size:12px;margin-bottom:8px;">
+              Sube un archivo <strong>.docx</strong>, <strong>.xlsx</strong> o <strong>.csv</strong>.
+              Se detectarán columnas: <em>Nombre / Name, Teléfono / Phone / Tel / Celular, Nota</em>.
+            </p>
+            <div class="row" style="align-items:center;">
+              <label class="file-label" for="importFile">
+                📂 Seleccionar archivo
+                <input id="importFile" type="file" accept=".docx,.csv,.txt,.xlsx" hidden />
+              </label>
+              <span id="importFileName" class="muted" style="font-size:13px;">Ninguno seleccionado</span>
+            </div>
+          </div>
+
+          <!-- URL IMPORT -->
+          <div id="importPanelUrl" class="import-body" style="display:none">
+            <p class="muted" style="font-size:12px;margin-bottom:8px;">
+              Pega una URL de página web con tabla o lista de contactos. Se detectarán cabeceras automáticamente.
+            </p>
+            <div class="row">
+              <input id="importUrl" placeholder="https://..." style="flex:1;min-width:200px;" />
+              <button id="importUrlBtn">🔍 Importar</button>
+            </div>
+          </div>
+
+          <!-- PREVIEW -->
+          <div id="importPreview" style="display:none;margin-top:12px;">
+            <p class="section-title" style="margin-top:0;">Vista previa — <span id="previewCount">0</span> contactos
+              detectados</p>
+            <div class="table-wrap" style="max-height:200px;overflow-y:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Nota</th>
+                  </tr>
+                </thead>
+                <tbody id="previewBody"></tbody>
+              </table>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <button id="importConfirmBtn">✅ Agregar todos (importar)</button>
+              <button id="importCancelBtn" class="secondary">✕ Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTACTS TABLE -->
+        <div class="table-wrap" style="margin-top:16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Nota</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contactsBody"></tbody>
+          </table>
+        </div>
+        <div id="contactsPagination" class="pagination" style="display:none">
+          <button id="prevPageBtn" class="secondary">← Anterior</button>
+          <span id="pageInfo" class="muted">Página 1 de 1</span>
+          <button id="nextPageBtn" class="secondary">Siguiente →</button>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <!-- CALL MODAL -->
+  <div id="callModal" class="call-modal" style="display:none">
+    <div class="call-card">
+      <div class="call-pulse-ring" id="callRing">📞</div>
+      <div class="call-card-inner">
+        <p class="call-kicker" id="callKicker">Llamada activa</p>
+        <h3 id="callName">Sin contacto</h3>
+        <p class="call-number" id="callNumber">-</p>
+        <p class="call-note" id="callNote">-</p>
+
+        <div class="call-meta">
+          <span id="callStateBadge" class="badge">idle</span>
+          <span id="callDuration" style="font-variant-numeric:tabular-nums;font-weight:600;font-size:16px;">00:00</span>
+          <span id="micBadge" class="mic-indicator muted">🎙️ —</span>
+        </div>
+
+        <div class="call-controls">
+          <button id="modalMuteBtn" class="icon-btn" title="Silenciar micrófono">🎙️</button>
+          <button id="modalHangupBtn" class="danger">📵 Cortar</button>
+          <button id="modalCloseBtn" class="danger-soft">✕ Cerrar</button>
+        </div>
+
+        <small id="callHint" class="muted" style="display:block;margin-top:12px;font-size:12px;"></small>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/dashboard.js"></script>
+</body>
+
+</html>

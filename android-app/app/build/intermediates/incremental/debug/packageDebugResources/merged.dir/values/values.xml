@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_name">Phone VC</string>
+    <style name="Theme.KeniaBridge" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="colorPrimary">#0B3B20</item>
+        <item name="colorPrimaryVariant">#166534</item>
+        <item name="colorSecondary">#16A34A</item>
+    </style>
+</resources>
