@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-88:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-88:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-88:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-88:12
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
+INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
+INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
+INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:2:1-9:12
 MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\2513e894d292adb3f06ac91373929ba4\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:2:1-7:12
@@ -108,9 +108,13 @@ uses-permission#android.permission.POST_NOTIFICATIONS
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:24:5-77
 	android:name
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:24:22-74
+uses-permission#android.permission.USE_FULL_SCREEN_INTENT
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:25:5-81
+	android:name
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:25:22-78
 application
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:26:5-86:19
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:26:5-86:19
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:27:5-97:19
+INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:27:5-97:19
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:7:5-20
@@ -134,103 +138,121 @@ MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:29:9-35
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:32:9-35
 	android:label
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:28:9-41
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:30:9-41
+	android:roundIcon
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:31:9-54
+	android:icon
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:29:9-43
 	android:allowBackup
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:27:9-35
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:28:9-35
 	android:theme
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:30:9-49
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-49
 	android:networkSecurityConfig
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:32:9-69
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:35:9-69
 	android:usesCleartextTraffic
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:31:9-44
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:34:9-44
 activity#com.kenia.bridge.MainActivity
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:34:9-50:20
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:37:9-53:20
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:36:13-36
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:13-36
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:35:13-41
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:38:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:37:13-40:29
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:40:13-43:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:38:17-69
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:41:17-69
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:38:25-66
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:41:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:17-77
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:17-77
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:27-74
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:27-74
 intent-filter#action:name:android.intent.action.DIAL+category:name:android.intent.category.DEFAULT
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:41:13-44:29
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:44:13-47:29
 action#android.intent.action.DIAL
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:17-69
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:45:17-69
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:25-66
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:45:25-66
 category#android.intent.category.DEFAULT
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:43:17-76
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:46:17-76
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:43:27-73
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:46:27-73
 intent-filter#action:name:android.intent.action.DIAL+category:name:android.intent.category.DEFAULT+data:scheme:tel
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:45:13-49:29
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:48:13-52:29
 data
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:48:17-46
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:17-46
 	android:scheme
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:48:23-43
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:23-43
+activity#com.kenia.bridge.IncomingCallActivity
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:55:9-61:43
+	android:turnScreenOn
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:61:13-40
+	android:excludeFromRecents
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:57:13-46
+	android:showWhenLocked
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:60:13-42
+	android:launchMode
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:59:13-43
+	android:exported
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:58:13-37
+	android:name
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:56:13-49
 service#com.kenia.bridge.KeniaInCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:53:9-66:19
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:9-77:19
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:56:13-36
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:67:13-36
 	android:permission
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:55:13-72
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:66:13-72
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:54:13-47
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-47
 meta-data#android.telecom.IN_CALL_SERVICE_UI
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:57:13-59:40
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:68:13-70:40
 	android:value
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:59:17-37
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:70:17-37
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:58:17-66
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:69:17-66
 meta-data#android.telecom.IN_CALL_SERVICE_CAR_MODE_UI
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:60:13-62:41
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:71:13-73:41
 	android:value
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:62:17-38
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:73:17-38
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:61:17-75
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:72:17-75
 intent-filter#action:name:android.telecom.InCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:63:13-65:29
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:74:13-76:29
 action#android.telecom.InCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:17-72
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:17-72
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:25-69
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:25-69
 service#com.kenia.bridge.BridgeService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:69:9-73:57
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:80:9-84:57
 	android:enabled
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:71:13-35
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:13-35
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:72:13-37
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:83:13-37
 	android:foregroundServiceType
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:73:13-54
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:84:13-54
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:70:13-42
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:13-42
 receiver#com.kenia.bridge.BootReceiver
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:76:9-84:20
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:87:9-95:20
 	android:enabled
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:78:13-35
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:89:13-35
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:79:13-36
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:90:13-36
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:77:13-41
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:88:13-41
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.QUICKBOOT_POWERON
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:80:13-83:29
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:91:13-94:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:17-79
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:92:17-79
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:25-76
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:92:25-76
 action#android.intent.action.QUICKBOOT_POWERON
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:17-82
+ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:93:17-82
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:25-79
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:93:25-79
 uses-sdk
 INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml

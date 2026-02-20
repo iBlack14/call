@@ -6,6 +6,8 @@ const statusTextEl = document.getElementById("statusText");
 const createBtn = document.getElementById("createSession");
 const sessionCodeIn = document.getElementById("sessionCode");
 const joinBtn = document.getElementById("joinSession");
+const sessionBarEl = document.getElementById("sessionBar");
+const apkBarEl = document.getElementById("apkBar");
 const pairQrEl = document.getElementById("pairQr");
 const qrHintEl = document.getElementById("qrHint");
 const pairLinkEl = document.getElementById("pairLink");
@@ -33,15 +35,17 @@ const callNoteEl = document.getElementById("callNote");
 const callBadgeEl = document.getElementById("callStateBadge");
 const callDurEl = document.getElementById("callDuration");
 const micBadgeEl = document.getElementById("micBadge");
+const apkAckBadgeEl = document.getElementById("apkAckBadge");
 const muteBtnEl = document.getElementById("modalMuteBtn");
+const speakerBtnEl = document.getElementById("modalSpeakerBtn");
 const hangupBtnEl = document.getElementById("modalHangupBtn");
-const closeBtnEl = document.getElementById("modalCloseBtn");
 const callHintEl = document.getElementById("callHint");
 
 // APK
 const apkNameEl = document.getElementById("apkName");
 const apkMetaEl = document.getElementById("apkMeta");
 const apkDlBtn = document.getElementById("apkDownloadBtn");
+const apkVersionSelectEl = document.getElementById("apkVersionSelect");
 const apkHelpBtn = document.getElementById("apkInstallHelp");
 const installGuide = document.getElementById("installGuide");
 
@@ -59,6 +63,19 @@ const previewCountEl = document.getElementById("previewCount");
 const previewBody = document.getElementById("previewBody");
 const importConfirm = document.getElementById("importConfirmBtn");
 const importCancel = document.getElementById("importCancelBtn");
+const floatingAddContactBtn = document.getElementById("floatingAddContactBtn");
+const addContactModalEl = document.getElementById("addContactModal");
+const addCloseBtn = document.getElementById("addCloseBtn");
+const addSaveBtn = document.getElementById("addSaveBtn");
+const addNameInput = document.getElementById("addNameInput");
+const addPhoneInput = document.getElementById("addPhoneInput");
+const addNoteInput = document.getElementById("addNoteInput");
+const editModalEl = document.getElementById("editContactModal");
+const editCloseBtn = document.getElementById("editCloseBtn");
+const editSaveBtn = document.getElementById("editSaveBtn");
+const editNameInput = document.getElementById("editNameInput");
+const editPhoneInput = document.getElementById("editPhoneInput");
+const editNoteInput = document.getElementById("editNoteInput");
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let sessionCode = "";
@@ -69,11 +86,18 @@ let callTimerId = null;
 let callStartedAt = null;
 let currentState = "idle";
 let micStream = null;
-let micEnabled = false;
+let micEnabled = true;
+let speakerEnabled = false;
 let audioCtx = null;
 let importPreviewData = [];
 let currentPage = 1;
+let editContactId = null;
+let apkVersionsCache = [];
+let currentCallingContactId = null;
+const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
+const CALLED_COUNTS_KEY = "kenia.calledCounts";
+let calledCounts = {};
 
 // ── CONTACTS STORAGE ────────────────────────────────────────────────────
 function loadContacts() {
@@ -83,6 +107,15 @@ function loadContacts() {
 
 function saveContacts() {
   localStorage.setItem("kenia.contacts", JSON.stringify(contacts));
+}
+
+function loadCalledCounts() {
+  try { calledCounts = JSON.parse(localStorage.getItem(CALLED_COUNTS_KEY) || "{}"); }
+  catch { calledCounts = {}; }
+}
+
+function saveCalledCounts() {
+  localStorage.setItem(CALLED_COUNTS_KEY, JSON.stringify(calledCounts));
 }
 
 function escHtml(str) {
@@ -107,13 +140,18 @@ function renderContacts() {
 
   for (const c of pageRows) {
     const tr = document.createElement("tr");
+    const callCount = Number(calledCounts[c.id] || 0);
+    if (callCount > 0) tr.classList.add("contact-row-called");
     tr.innerHTML = `
       <td>${escHtml(c.name)}</td>
       <td style="font-family:monospace;font-size:13px;">${escHtml(c.phone)}</td>
-      <td>${escHtml(c.note || "—")}</td>
+      <td>
+        ${escHtml(c.note || "—")}
+        ${callCount > 0 ? `<span class="call-count-chip">📞 ${callCount}</span>` : ""}
+      </td>
       <td class="actions-cell">
         <button data-action="dial"   data-id="${c.id}">📞 Llamar</button>
-        <button data-action="hangup" data-id="${c.id}" class="danger-soft">📵 Colgar</button>
+        <button data-action="edit" data-id="${c.id}" class="secondary">✏️ Editar</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
       </td>`;
     cBodyEl.appendChild(tr);
@@ -147,19 +185,64 @@ function stopTimer() { clearInterval(callTimerId); callTimerId = null; }
 // ── BADGE ──────────────────────────────────────────────────────────────
 function setBadge(state) {
   callBadgeEl.className = `badge state-${state}`;
-  callBadgeEl.textContent = state.replace("_", " ");
+  const labels = {
+    dialing: "LLAMANDO...",
+    ringing: "SONANDO",
+    in_call: "EN LLAMADA",
+    ended: "FINALIZADA",
+    idle: "ESPERA",
+    failed: "ERROR"
+  };
+  callBadgeEl.textContent = labels[state] || state.replace("_", " ");
+}
+
+function setAckBadge(state, text) {
+  apkAckBadgeEl.className = `badge ${state ? `ack-${state}` : ""}`.trim();
+  apkAckBadgeEl.textContent = text || "APK · —";
+}
+
+function makeCommandId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  return `cmd_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+}
+
+function emitCallActionWithAck(action, payload = {}) {
+  const commandId = makeCommandId();
+  socket.emit("call:action", { action, commandId, ...payload });
+  setAckBadge("pending", `APK · enviando ${action}...`);
+
+  const timerId = setTimeout(() => {
+    pendingCommandTimeouts.delete(commandId);
+    setAckBadge("fail", `APK · sin respuesta (${action})`);
+  }, 3500);
+  pendingCommandTimeouts.set(commandId, timerId);
+  return commandId;
 }
 
 // ── CALL MODAL ─────────────────────────────────────────────────────────
-function openCallWindow(phone) {
+function openCallWindow(phone, opts = {}) {
   const c = contacts.find(x => x.phone === phone);
-  callCtx = { phone, name: c?.name || "Número desconocido", note: c?.note || "" };
+  callCtx = {
+    phone,
+    name: opts.contactName || c?.name || "Número desconocido",
+    companyName: opts.companyName || c?.name || "",
+    note: opts.note || c?.note || "",
+    imageUrl: opts.imageUrl || `${window.location.origin}/logotipo-VCMAS.ico`
+  };
   callNameEl.textContent = callCtx.name;
   callNumberEl.textContent = phone || "—";
   callNoteEl.textContent = callCtx.note || "Sin nota";
   callHintEl.textContent = "";
   callDurEl.textContent = "00:00";
-  callKickerEl.textContent = "Llamada activa";
+  callKickerEl.textContent = "Llamando...";
+  micEnabled = true;
+  speakerEnabled = false;
+  muteBtnEl.textContent = "🎙️ Micrófono";
+  muteBtnEl.style.background = "";
+  speakerBtnEl.textContent = "🔈 Altavoz OFF";
+  micBadgeEl.textContent = "⏺ REC —";
+  micBadgeEl.className = "badge";
+  setAckBadge("", "APK · —");
   setBadge("dialing");
   callModalEl.style.display = "grid";
 }
@@ -204,20 +287,36 @@ function stopMic() {
 }
 
 function toggleMute() {
-  micEnabled = !micEnabled;
-  socket.emit("call:action", { action: micEnabled ? "unmute" : "mute" });
   if (micEnabled) {
-    muteBtnEl.textContent = "🎙️ Silenciar";
-    muteBtnEl.style.background = "";
-    micBadgeEl.textContent = "🎙️ Activo";
-    micBadgeEl.className = "badge success";
-    callHintEl.textContent = "Mic remoto activado";
-  } else {
-    muteBtnEl.textContent = "🔇 Activar Mic";
+    emitCallActionWithAck("mute");
+    micEnabled = false;
+    muteBtnEl.textContent = "🔇 Micrófono OFF";
     muteBtnEl.style.background = "#d63384";
-    micBadgeEl.textContent = "🔇 Muteado";
-    micBadgeEl.className = "badge warning";
-    callHintEl.textContent = "Mic remoto silenciado";
+    micBadgeEl.textContent = "⏺ REC OFF";
+    micBadgeEl.className = "badge";
+    callHintEl.textContent = "Micrófono silenciado";
+  } else {
+    emitCallActionWithAck("unmute");
+    micEnabled = true;
+    muteBtnEl.textContent = "🎙️ Micrófono";
+    muteBtnEl.style.background = "";
+    micBadgeEl.textContent = "⏺ REC";
+    micBadgeEl.className = "badge";
+    callHintEl.textContent = "Micrófono activado";
+  }
+}
+
+function toggleSpeaker() {
+  if (speakerEnabled) {
+    emitCallActionWithAck("speaker_off");
+    speakerEnabled = false;
+    speakerBtnEl.textContent = "🔈 Altavoz OFF";
+    callHintEl.textContent = "Altavoz desactivado";
+  } else {
+    emitCallActionWithAck("speaker_on");
+    speakerEnabled = true;
+    speakerBtnEl.textContent = "🔊 Altavoz ON";
+    callHintEl.textContent = "Altavoz activado";
   }
 }
 
@@ -229,10 +328,13 @@ function applyState(state, lastNum) {
   if (lastNum && callCtx.phone !== lastNum) openCallWindow(lastNum);
   setBadge(state);
   if (state === "in_call") {
+    callKickerEl.textContent = "Llamada activa";
     if (!callStartedAt) callStartedAt = Date.now();
     startTimer();
     callHintEl.textContent = "Llamada en curso";
     callRingEl.textContent = "🔊";
+    micBadgeEl.textContent = "⏺ REC";
+    micBadgeEl.className = "badge";
     // Start audio bridge
     phoneAudioEnabled = true;
     ensurePhoneAudioCtx();
@@ -240,21 +342,32 @@ function applyState(state, lastNum) {
     return;
   }
   if (state === "ringing") {
+    callKickerEl.textContent = "Llamando...";
     callHintEl.textContent = "Conectando...";
     callRingEl.textContent = "📞";
+    micBadgeEl.textContent = "⏺ REC —";
+    micBadgeEl.className = "badge";
     // Pre-enable audio reception
     phoneAudioEnabled = true;
     ensurePhoneAudioCtx();
     return;
   }
   if (state === "dialing") {
+    callKickerEl.textContent = "Llamando...";
     callHintEl.textContent = "Conectando...";
     callRingEl.textContent = "📞";
+    micBadgeEl.textContent = "⏺ REC —";
+    micBadgeEl.className = "badge";
     return;
   }
   if (state === "ended" || state === "idle") {
+    currentCallingContactId = null;
+    renderContacts();
+    callKickerEl.textContent = "Llamada finalizada";
     callHintEl.textContent = "Llamada finalizada";
     callRingEl.textContent = "📵";
+    micBadgeEl.textContent = "⏺ REC —";
+    micBadgeEl.className = "badge";
     stopTimer(); callStartedAt = null;
     stopPhoneAudio();
     setTimeout(() => {
@@ -272,11 +385,17 @@ function setLinkedUi(linked, devName) {
     qrBlockEl.style.display = "none";
     linkedBanner.style.display = "flex";
     contactsSec.style.display = "block";
+    sessionBarEl.style.display = "none";
+    apkBarEl.style.display = "none";
+    floatingAddContactBtn.style.display = "grid";
     linkedDevice.textContent = devName || "Android conectado";
   } else {
     qrBlockEl.style.display = "grid";
     linkedBanner.style.display = "none";
     contactsSec.style.display = "none";
+    sessionBarEl.style.display = "flex";
+    apkBarEl.style.display = "flex";
+    floatingAddContactBtn.style.display = "none";
   }
 }
 
@@ -301,24 +420,81 @@ pairQrEl.addEventListener("error", () => { pairQrEl.style.display = "none"; qrHi
 
 
 // ── APK INFO ───────────────────────────────────────────────────────────
+function paintApkMeta(name, sizeKb, modified, downloadHref) {
+  apkNameEl.textContent = name || "Phone-VC Android";
+  const updatedAt = modified
+    ? new Date(modified).toLocaleString("es", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+    : "fecha desconocida";
+  apkMetaEl.textContent = `${sizeKb || 0} KB · ${updatedAt}`;
+  apkDlBtn.href = downloadHref || "/api/apk/download";
+  apkDlBtn.style.opacity = "1";
+  apkDlBtn.style.pointerEvents = "auto";
+}
+
 async function loadApkInfo() {
   try {
-    const res = await fetch("/api/apk/info");
+    const res = await fetch("/api/apk/versions");
+    if (!res.ok) throw new Error("versions endpoint unavailable");
     const data = await res.json();
-    if (data.ok) {
-      apkNameEl.textContent = `Phone-VC (${data.type})`;
-      apkMetaEl.textContent = `${data.sizeKb} KB · ${new Date(data.modified).toLocaleDateString("es")}`;
-      apkDlBtn.style.opacity = "1";
-      apkDlBtn.style.pointerEvents = "auto";
-    } else {
-      apkMetaEl.textContent = "APK no disponible — compila el proyecto";
-      apkDlBtn.style.opacity = "0.4";
-      apkDlBtn.style.pointerEvents = "none";
+    if (data.ok && data.versions?.length) {
+      apkVersionsCache = data.versions;
+      apkVersionSelectEl.style.display = "inline-block";
+      apkVersionSelectEl.innerHTML = "";
+      for (const v of data.versions) {
+        const ts = new Date(v.modified).toLocaleString("es", {
+          year: "2-digit",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+        const option = document.createElement("option");
+        option.value = v.id;
+        option.textContent = `${v.version} · ${v.type} · ${v.sizeKb}KB · ${ts}`;
+        apkVersionSelectEl.appendChild(option);
+      }
+
+      const selected = data.versions.find(v => v.id === data.latestId) || data.versions[0];
+      apkVersionSelectEl.value = selected.id;
+      paintApkMeta(selected.name, selected.sizeKb, selected.modified, `/api/apk/download/${encodeURIComponent(selected.id)}`);
+      return;
     }
+    throw new Error("no versions");
   } catch {
-    apkMetaEl.textContent = "No se pudo cargar info del APK";
+    try {
+      const infoRes = await fetch("/api/apk/info");
+      const info = await infoRes.json();
+      if (info?.ok) {
+        apkVersionsCache = [];
+        apkVersionSelectEl.style.display = "none";
+        apkVersionSelectEl.innerHTML = "";
+        paintApkMeta(info.name || "Phone-VC Android", info.sizeKb, info.modified, "/api/apk/download");
+        return;
+      }
+    } catch {
+      // final fallback below
+    }
+    apkMetaEl.textContent = "APK no disponible — compila el proyecto";
+    apkDlBtn.style.opacity = "0.4";
+    apkDlBtn.style.pointerEvents = "none";
+    apkVersionSelectEl.style.display = "none";
+    apkVersionSelectEl.innerHTML = `<option value="">Sin versiones</option>`;
   }
 }
+
+apkVersionSelectEl.addEventListener("change", async () => {
+  const selectedId = apkVersionSelectEl.value;
+  if (!selectedId) return;
+  const v = apkVersionsCache.find(x => x.id === selectedId);
+  if (!v) return;
+  paintApkMeta(v.name, v.sizeKb, v.modified, `/api/apk/download/${encodeURIComponent(v.id)}`);
+});
 
 apkHelpBtn.addEventListener("click", () => {
   installGuide.style.display = installGuide.style.display === "none" ? "block" : "none";
@@ -526,15 +702,34 @@ tabUrl.addEventListener("click", () => {
 });
 
 // ── CONTACT TABLE ACTIONS ──────────────────────────────────────────────
-addContactBtn.addEventListener("click", () => {
-  const name = cNameIn.value.trim();
-  const phone = cPhoneIn.value.trim();
-  const note = cNoteIn.value.trim();
-  if (!name || !phone) return;
+function closeAddModal() {
+  addContactModalEl.style.display = "none";
+  addNameInput.value = "";
+  addPhoneInput.value = "";
+  addNoteInput.value = "";
+}
+
+floatingAddContactBtn.addEventListener("click", () => {
+  addContactModalEl.style.display = "grid";
+  addNameInput.focus();
+});
+
+addCloseBtn.addEventListener("click", closeAddModal);
+
+addSaveBtn.addEventListener("click", () => {
+  const name = addNameInput.value.trim();
+  const phone = addPhoneInput.value.trim();
+  const note = addNoteInput.value.trim();
+  if (!name || !phone) {
+    setStatus("Nombre y teléfono son obligatorios.", true);
+    return;
+  }
   contacts.unshift({ id: crypto.randomUUID(), name, phone, note });
   currentPage = 1;
-  saveContacts(); renderContacts();
-  cNameIn.value = ""; cPhoneIn.value = ""; cNoteIn.value = "";
+  saveContacts();
+  renderContacts();
+  setStatus("Contacto agregado.", true);
+  closeAddModal();
 });
 
 cBodyEl.addEventListener("click", e => {
@@ -543,20 +738,78 @@ cBodyEl.addEventListener("click", e => {
   const { action, id } = btn.dataset;
   if (!action || !id) return;
   if (action === "delete") {
+    if (id === currentCallingContactId) currentCallingContactId = null;
+    delete calledCounts[id];
+    saveCalledCounts();
     contacts = contacts.filter(c => c.id !== id);
     saveContacts(); renderContacts(); return;
   }
   const c = contacts.find(x => x.id === id);
   if (!c) return;
+  if (action === "edit") {
+    editContactId = c.id;
+    editNameInput.value = c.name || "";
+    editPhoneInput.value = c.phone || "";
+    editNoteInput.value = c.note || "";
+    editModalEl.style.display = "grid";
+    editNameInput.focus();
+    setStatus("Editando contacto en popup.", true);
+    return;
+  }
   if (action === "dial") {
     if (["dialing", "ringing", "in_call"].includes(currentState)) {
       setStatus("Ya hay una llamada en curso.", true); return;
     }
-    openCallWindow(c.phone);
-    socket.emit("call:action", { action: "dial", phoneNumber: c.phone });
+    currentCallingContactId = c.id;
+    calledCounts[c.id] = Number(calledCounts[c.id] || 0) + 1;
+    saveCalledCounts();
+    renderContacts();
+    openCallWindow(c.phone, {
+      contactName: c.name,
+      companyName: c.name,
+      note: c.note,
+      imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
+    });
+    emitCallActionWithAck("dial", {
+      phoneNumber: c.phone,
+      contactName: c.name,
+      companyName: c.name,
+      imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
+    });
     return;
   }
-  if (action === "hangup") { socket.emit("call:action", { action: "hangup" }); }
+});
+
+function closeEditModal() {
+  editModalEl.style.display = "none";
+  editContactId = null;
+  editNameInput.value = "";
+  editPhoneInput.value = "";
+  editNoteInput.value = "";
+}
+
+editCloseBtn.addEventListener("click", closeEditModal);
+
+editSaveBtn.addEventListener("click", () => {
+  if (!editContactId) return;
+  const contact = contacts.find(x => x.id === editContactId);
+  if (!contact) return;
+
+  const name = editNameInput.value.trim();
+  const phone = editPhoneInput.value.trim();
+  const note = editNoteInput.value.trim();
+  if (!name || !phone) {
+    setStatus("Nombre y teléfono son obligatorios.", true);
+    return;
+  }
+
+  contact.name = name;
+  contact.phone = phone;
+  contact.note = note;
+  saveContacts();
+  renderContacts();
+  setStatus("Contacto editado.", true);
+  closeEditModal();
 });
 
 prevPageBtn.addEventListener("click", () => {
@@ -574,23 +827,12 @@ nextPageBtn.addEventListener("click", () => {
 
 // ── CALL MODAL EVENTS ──────────────────────────────────────────────────
 muteBtnEl.addEventListener("click", toggleMute);
+speakerBtnEl.addEventListener("click", toggleSpeaker);
 
 hangupBtnEl.addEventListener("click", () => {
-  socket.emit("call:action", { action: "hangup" });
+  emitCallActionWithAck("hangup");
   callHintEl.textContent = "Enviando orden de corte...";
-});
-
-closeBtnEl.addEventListener("click", () => {
-  if (["dialing", "ringing", "in_call"].includes(currentState)) {
-    callHintEl.textContent = "La llamada sigue activa. Usa Cortar."; return;
-  }
-  callModalEl.style.display = "none";
-});
-
-callModalEl.addEventListener("click", e => {
-  if (e.target === callModalEl && !["dialing", "ringing", "in_call"].includes(currentState)) {
-    callModalEl.style.display = "none";
-  }
+  applyState("ended", callCtx?.phone || "");
 });
 
 copyBtn.addEventListener("click", async () => {
@@ -638,6 +880,19 @@ socket.on("state:changed", st => {
 socket.on("connect", () => setStatus("Conectado al servidor. Crea una sesión."));
 socket.on("disconnect", () => { setStatus("Socket desconectado."); stopPhoneAudio(); });
 socket.on("connect_error", () => setStatus("No se pudo conectar al servidor."));
+
+socket.on("phone:command_ack", ({ commandId, action, ok, message }) => {
+  if (commandId && pendingCommandTimeouts.has(commandId)) {
+    clearTimeout(pendingCommandTimeouts.get(commandId));
+    pendingCommandTimeouts.delete(commandId);
+  }
+  if (ok) {
+    setAckBadge("ok", `APK · ${action} aplicado`);
+  } else {
+    setAckBadge("fail", `APK · error ${action}`);
+  }
+  if (message) callHintEl.textContent = message;
+});
 
 // ── AUDIO BRIDGE ──────────────────────────────────────────────────────────
 // Bidirectional audio: Android phone MIC ↔ Web browser MIC
@@ -762,5 +1017,6 @@ function float32ToInt16(f32) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadContacts();
+loadCalledCounts();
 renderContacts();
 loadApkInfo();

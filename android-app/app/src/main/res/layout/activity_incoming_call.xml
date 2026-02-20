@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp"
+    android:background="#0B1220">
+
+    <ImageView
+        android:id="@+id/companyImage"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_company_image"
+        android:padding="12dp"
+        android:src="@android:drawable/sym_call_incoming"
+        android:scaleType="centerInside" />
+
+    <TextView
+        android:id="@+id/companyNameText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Empresa"
+        android:textColor="#E5E7EB"
+        android:textStyle="bold"
+        android:textSize="28sp" />
+
+    <TextView
+        android:id="@+id/phoneNumberText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="-"
+        android:textColor="#94A3B8"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/callStateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_state_chip"
+        android:paddingLeft="12dp"
+        android:paddingTop="6dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="6dp"
+        android:text="ringing"
+        android:textAllCaps="true"
+        android:textColor="#34D399"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/callTimerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="00:00"
+        android:textColor="#E5E7EB"
+        android:textStyle="bold"
+        android:textSize="28sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/micButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="🎙️ Micrófono"
+            android:textAllCaps="false"
+            android:textColor="#E5E7EB"
+            android:backgroundTint="#1E293B" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/speakerButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="🔈 Altavoz"
+            android:textAllCaps="false"
+            android:textColor="#E5E7EB"
+            android:backgroundTint="#1E293B" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/hangupButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:text="📵 Cortar"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#BE123C" />
+
+</LinearLayout>

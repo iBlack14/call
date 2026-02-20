@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KENIA | Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="/logotipo-VCMAS.ico" />
   <link rel="stylesheet" href="/styles.css" />
   <!-- mammoth.js for Word (.docx) parsing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -26,13 +27,16 @@
       <!-- APK MANAGEMENT BAR -->
       <div id="apkBar" class="apk-bar">
         <div class="apk-info">
-          <span class="apk-icon">🤖</span>
+          <img class="apk-icon-img" src="/logotipo-VCMAS.ico" alt="VC icono" width="22" height="22" />
           <div>
             <strong id="apkName">Phone-VC Android</strong>
             <small id="apkMeta" class="muted">Cargando info del APK…</small>
           </div>
         </div>
         <div class="apk-actions">
+          <select id="apkVersionSelect" class="apk-version-select" title="Seleccionar versión APK">
+            <option value="">Versiones...</option>
+          </select>
           <a id="apkDownloadBtn" href="/api/apk/download" class="btn-apk-dl" download>
             ⬇️ Descargar APK
           </a>
@@ -56,7 +60,7 @@
       </div>
 
       <!-- SESSION BAR -->
-      <div class="session-bar">
+      <div id="sessionBar" class="session-bar">
         <button id="createSession">＋ Crear Sesión</button>
         <input id="sessionCode" placeholder="CÓDIGO (6 chars)" maxlength="8" style="text-transform:uppercase;" />
         <button id="joinSession" class="secondary">Vincular</button>
@@ -96,7 +100,7 @@
         <p class="section-title">📋 Contactos</p>
 
         <!-- ADD MANUALLY -->
-        <div class="row">
+        <div id="contactInlineRow" class="row">
           <input id="contactName" placeholder="Nombre" />
           <input id="contactPhone" placeholder="+51999999999" style="font-family:monospace;" />
           <input id="contactNote" placeholder="Nota (opcional)" />
@@ -185,12 +189,54 @@
     </section>
   </main>
 
+  <button id="floatingAddContactBtn" class="floating-add-btn" style="display:none" type="button">＋</button>
+
+  <!-- ADD CONTACT MODAL -->
+  <div id="addContactModal" class="edit-modal" style="display:none">
+    <div class="edit-card">
+      <button id="addCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3>Agregar contacto</h3>
+      <div class="edit-form">
+        <label for="addNameInput">Nombre</label>
+        <input id="addNameInput" type="text" placeholder="Nombre" />
+
+        <label for="addPhoneInput">Teléfono</label>
+        <input id="addPhoneInput" type="text" placeholder="+51999999999" />
+
+        <label for="addNoteInput">Nota</label>
+        <input id="addNoteInput" type="text" placeholder="Nota (opcional)" />
+      </div>
+      <button id="addSaveBtn" type="button">💾 Guardar contacto</button>
+    </div>
+  </div>
+
+  <!-- EDIT CONTACT MODAL -->
+  <div id="editContactModal" class="edit-modal" style="display:none">
+    <div class="edit-card">
+      <button id="editCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3>Editar contacto</h3>
+      <div class="edit-form">
+        <label for="editNameInput">Nombre</label>
+        <input id="editNameInput" type="text" placeholder="Nombre" />
+
+        <label for="editPhoneInput">Teléfono</label>
+        <input id="editPhoneInput" type="text" placeholder="+51999999999" />
+
+        <label for="editNoteInput">Nota</label>
+        <input id="editNoteInput" type="text" placeholder="Nota (opcional)" />
+      </div>
+      <button id="editSaveBtn" type="button">💾 Guardar cambios</button>
+    </div>
+  </div>
+
   <!-- CALL MODAL -->
   <div id="callModal" class="call-modal" style="display:none">
     <div class="call-card">
-      <div class="call-pulse-ring" id="callRing">📞</div>
+      <div class="call-pulse-ring" id="callRing">
+        <img src="/logotipo-VCMAS.ico" alt="VC logo" />
+      </div>
       <div class="call-card-inner">
-        <p class="call-kicker" id="callKicker">Llamada activa</p>
+        <p class="call-kicker" id="callKicker">Llamando...</p>
         <h3 id="callName">Sin contacto</h3>
         <p class="call-number" id="callNumber">-</p>
         <p class="call-note" id="callNote">-</p>
@@ -199,12 +245,16 @@
           <span id="callStateBadge" class="badge">idle</span>
           <span id="callDuration" style="font-variant-numeric:tabular-nums;font-weight:600;font-size:16px;">00:00</span>
           <span id="micBadge" class="mic-indicator muted">🎙️ —</span>
+          <span id="apkAckBadge" class="badge">APK · —</span>
         </div>
 
         <div class="call-controls">
-          <button id="modalMuteBtn" class="icon-btn" title="Silenciar micrófono">🎙️</button>
+          <button id="modalMuteBtn" class="secondary" title="Silenciar micrófono">🎙️ Micrófono</button>
+          <button id="modalSpeakerBtn" class="secondary" title="Altavoz">🔊 Altavoz</button>
+        </div>
+
+        <div class="call-controls call-controls-main">
           <button id="modalHangupBtn" class="danger">📵 Cortar</button>
-          <button id="modalCloseBtn" class="danger-soft">✕ Cerrar</button>
         </div>
 
         <small id="callHint" class="muted" style="display:block;margin-top:12px;font-size:12px;"></small>

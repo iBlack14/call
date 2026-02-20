@@ -3019,6 +3019,8 @@ drawable abc_textfield_search_material
 drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
+drawable bg_company_image
+drawable bg_state_chip
 drawable btn_checkbox_checked_mtrl
 drawable btn_checkbox_checked_to_unchecked_mtrl_animation
 drawable btn_checkbox_unchecked_mtrl
@@ -3232,6 +3234,8 @@ id bounceStart
 id buttonPanel
 id cache_measures
 id callMeasure
+id callStateText
+id callTimerText
 id cancel_button
 id carryVelocity
 id center
@@ -3254,6 +3258,8 @@ id closest
 id codeInput
 id codeLayout
 id collapseActionView
+id companyImage
+id companyNameText
 id compress
 id confirm_button
 id constraint
@@ -3342,6 +3348,7 @@ id graph_wrap
 id group_divider
 id grouping
 id groups
+id hangupButton
 id header_title
 id hide_ime_id
 id hideable
@@ -3403,6 +3410,7 @@ id material_timepicker_view
 id material_value_index
 id matrix
 id message
+id micButton
 id middle
 id mini
 id month_grid
@@ -3486,6 +3494,7 @@ id path
 id pathRelative
 id peekHeight
 id percent
+id phoneNumberText
 id pin
 id position
 id postLayout
@@ -3544,6 +3553,7 @@ id snap
 id snapMargins
 id south
 id spacer
+id speakerButton
 id special_effects_controller_view_tag
 id spline
 id split_action_bar
@@ -3771,6 +3781,7 @@ layout abc_search_dropdown_item_icons_2line
 layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
+layout activity_incoming_call
 layout activity_main
 layout custom_dialog
 layout design_bottom_navigation_item
@@ -3853,6 +3864,8 @@ layout select_dialog_singlechoice_material
 layout support_simple_spinner_dropdown_item
 layout zxing_barcode_scanner
 layout zxing_capture
+mipmap ic_launcher
+mipmap ic_launcher_round
 plurals mtrl_badge_content_description
 raw zxing_beep
 string abc_action_bar_home_description

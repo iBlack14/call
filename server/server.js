@@ -24,6 +24,9 @@ function getOrCreateSession(code) {
       phoneSocketId: null,
       callState: "idle",
       lastNumber: "",
+      lastCompanyName: "",
+      lastContactName: "",
+      lastImageUrl: "",
       pairingToken: nanoid(20),
       phoneDevice: null,
       updatedAt: Date.now()
@@ -52,6 +55,9 @@ function emitState(code) {
     phoneDevice: session.phoneDevice,
     callState: session.callState,
     lastNumber: session.lastNumber,
+    lastCompanyName: session.lastCompanyName,
+    lastContactName: session.lastContactName,
+    lastImageUrl: session.lastImageUrl,
     updatedAt: session.updatedAt
   });
 }
@@ -107,7 +113,7 @@ io.on("connection", (socket) => {
     emitState(normalizedCode);
   });
 
-  socket.on("call:action", ({ action, phoneNumber }) => {
+  socket.on("call:action", ({ action, phoneNumber, companyName, contactName, imageUrl, commandId }) => {
     const code = socket.data.code;
     const role = socket.data.role;
     if (!code || role !== "dashboard") return;
@@ -118,6 +124,9 @@ io.on("connection", (socket) => {
     if (action === "dial") {
       session.callState = "dialing";
       session.lastNumber = phoneNumber || "";
+      session.lastCompanyName = companyName || "";
+      session.lastContactName = contactName || "";
+      session.lastImageUrl = imageUrl || "";
     }
 
     if (action === "hangup") {
@@ -128,7 +137,15 @@ io.on("connection", (socket) => {
 
     const peerId = getPeer(session, role);
     if (peerId) {
-      io.to(peerId).emit("call:action", { action, phoneNumber, from: "dashboard" });
+      io.to(peerId).emit("call:action", {
+        action,
+        phoneNumber,
+        companyName,
+        contactName,
+        imageUrl,
+        commandId,
+        from: "dashboard"
+      });
     }
 
     emitState(code);
@@ -145,6 +162,26 @@ io.on("connection", (socket) => {
     session.callState = callState || session.callState;
     session.updatedAt = Date.now();
     emitState(code);
+  });
+
+  socket.on("phone:command_ack", ({ commandId, action, ok, message }) => {
+    const code = socket.data.code;
+    const role = socket.data.role;
+    if (!code || role !== "phone") return;
+
+    const session = sessions.get(code);
+    if (!session) return;
+
+    const peerId = getPeer(session, "phone");
+    if (!peerId) return;
+
+    io.to(peerId).emit("phone:command_ack", {
+      commandId: commandId || "",
+      action: action || "",
+      ok: Boolean(ok),
+      message: message || "",
+      at: new Date().toISOString()
+    });
   });
 
   // ── Audio relay (binary PCM frames, 16kHz mono PCM16) ───────────────────
@@ -278,33 +315,133 @@ const APK_PATHS = [
   path.join(__dirname, "../android-app/app/build/intermediates/apk/debug/app-debug.apk")
 ];
 
-app.get("/api/apk/info", (_, res) => {
-  for (const p of APK_PATHS) {
-    if (fs.existsSync(p)) {
-      const stat = fs.statSync(p);
-      const isRelease = p.includes("release");
-      return res.json({
-        ok: true,
-        name: path.basename(p),
-        size: stat.size,
-        sizeKb: Math.round(stat.size / 1024),
-        type: isRelease ? "release" : "debug",
-        modified: stat.mtime
-      });
+const APK_SEARCH_DIRS = [
+  path.join(__dirname, "../android-app/app/build/outputs/apk"),
+  path.join(__dirname, "../android-app/releases")
+];
+
+function walkDirForApk(dir, out) {
+  if (!fs.existsSync(dir)) return;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkDirForApk(full, out);
+      continue;
+    }
+    if (entry.isFile() && entry.name.toLowerCase().endsWith(".apk")) {
+      out.push(full);
     }
   }
-  return res.json({ ok: false, error: "APK no encontrada. Compila el proyecto Android primero." });
+}
+
+function parseApkVersion(fileName) {
+  const base = fileName.replace(/\.apk$/i, "");
+  const semver = base.match(/(\d+\.\d+\.\d+(?:[-+._]?[a-zA-Z0-9]+)*)/);
+  if (semver) return semver[1].replace(/_/g, ".");
+
+  const vTag = base.match(/(?:^|[-_])v(\d+(?:[._]\d+)*)/i);
+  if (vTag) return `v${vTag[1].replace(/_/g, ".")}`;
+
+  if (/release/i.test(base)) return "release";
+  if (/debug/i.test(base)) return "debug";
+  return "custom";
+}
+
+function getAvailableApks() {
+  const found = [];
+  for (const dir of APK_SEARCH_DIRS) {
+    walkDirForApk(dir, found);
+  }
+  for (const p of APK_PATHS) {
+    if (fs.existsSync(p)) found.push(p);
+  }
+
+  const unique = [...new Set(found.map(p => path.resolve(p)))];
+  const versions = unique
+    .filter(p => fs.existsSync(p))
+    .map((p) => {
+      const stat = fs.statSync(p);
+      const file = path.basename(p);
+      const version = parseApkVersion(file);
+      const type = /release/i.test(file) ? "release" : (/debug/i.test(file) ? "debug" : "custom");
+      return {
+        id: Buffer.from(p).toString("base64url"),
+        name: file,
+        version,
+        type,
+        size: stat.size,
+        sizeKb: Math.round(stat.size / 1024),
+        modified: stat.mtime,
+        fullPath: p
+      };
+    })
+    .sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+
+  return versions;
+}
+
+function getApkById(id) {
+  if (!id) return null;
+  const versions = getAvailableApks();
+  return versions.find(v => v.id === id) || null;
+}
+
+app.get("/api/apk/versions", (_, res) => {
+  const versions = getAvailableApks();
+  if (!versions.length) {
+    return res.json({ ok: false, versions: [], error: "APK no encontrada. Compila el proyecto Android primero." });
+  }
+  return res.json({
+    ok: true,
+    latestId: versions[0].id,
+    versions: versions.map(v => ({
+      id: v.id,
+      name: v.name,
+      version: v.version,
+      type: v.type,
+      size: v.size,
+      sizeKb: v.sizeKb,
+      modified: v.modified
+    }))
+  });
+});
+
+app.get("/api/apk/info", (_, res) => {
+  const versions = getAvailableApks();
+  if (!versions.length) {
+    return res.json({ ok: false, error: "APK no encontrada. Compila el proyecto Android primero." });
+  }
+  const top = versions[0];
+  return res.json({
+    ok: true,
+    id: top.id,
+    name: top.name,
+    version: top.version,
+    size: top.size,
+    sizeKb: top.sizeKb,
+    type: top.type,
+    modified: top.modified
+  });
 });
 
 app.get("/api/apk/download", (_, res) => {
-  for (const p of APK_PATHS) {
-    if (fs.existsSync(p)) {
-      res.setHeader("Content-Disposition", `attachment; filename="Phone-VC.apk"`);
-      res.setHeader("Content-Type", "application/vnd.android.package-archive");
-      return res.sendFile(path.resolve(p));
-    }
+  const versions = getAvailableApks();
+  if (!versions.length) {
+    return res.status(404).json({ ok: false, error: "APK no encontrada." });
   }
-  return res.status(404).json({ ok: false, error: "APK no encontrada." });
+  const latest = versions[0];
+  res.setHeader("Content-Disposition", `attachment; filename="${latest.name}"`);
+  res.setHeader("Content-Type", "application/vnd.android.package-archive");
+  return res.sendFile(path.resolve(latest.fullPath));
+});
+
+app.get("/api/apk/download/:id", (req, res) => {
+  const apk = getApkById(String(req.params.id || "").trim());
+  if (!apk) return res.status(404).json({ ok: false, error: "Versión APK no encontrada." });
+  res.setHeader("Content-Disposition", `attachment; filename="${apk.name}"`);
+  res.setHeader("Content-Type", "application/vnd.android.package-archive");
+  return res.sendFile(path.resolve(apk.fullPath));
 });
 
 // ── URL proxy for contact import ─────────────────────────────────────────

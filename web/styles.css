@@ -41,11 +41,11 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: start center;
-  padding: 28px clamp(10px, 2vw, 28px);
+  padding: 20px 12px;
 }
 
 .panel {
-  width: min(1240px, 100%);
+  width: min(1680px, calc(100vw - 24px));
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 20px;
@@ -334,6 +334,35 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+tbody tr.contact-row-calling {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+tbody tr.contact-row-calling td {
+  border-bottom-color: rgba(245, 158, 11, 0.45);
+}
+
+tbody tr.contact-row-called {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+tbody tr.contact-row-called td {
+  border-bottom-color: rgba(245, 158, 11, 0.35);
+}
+
+.call-count-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fef3c7;
+  background: rgba(245, 158, 11, 0.28);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
 .actions-cell {
   display: flex;
   gap: 6px;
@@ -345,6 +374,80 @@ tbody tr:last-child td {
   min-height: 32px;
   padding: 0 12px;
   border-radius: 8px;
+}
+
+#contactInlineRow {
+  display: none;
+}
+
+.floating-add-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 58px;
+  height: 58px;
+  min-height: 58px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 30px;
+  line-height: 1;
+  z-index: 1300;
+  box-shadow: 0 10px 30px rgba(192, 38, 211, 0.45);
+}
+
+/* ── EDIT MODAL ─────────────────────────────────────── */
+.edit-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.75);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 1200;
+}
+
+.edit-card {
+  width: min(480px, 100%);
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border-bright);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.edit-card h3 {
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+
+.edit-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.edit-form label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.edit-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  min-height: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(120, 0, 180, 0.12);
+  box-shadow: none;
+  padding: 0;
 }
 
 .pagination {
@@ -371,23 +474,27 @@ tbody tr:last-child td {
 .call-modal {
   position: fixed;
   inset: 0;
-  background: rgba(5, 0, 15, 0.75);
-  backdrop-filter: blur(6px);
+  background: linear-gradient(140deg, rgba(8, 0, 20, 0.82), rgba(17, 0, 31, 0.78));
+  backdrop-filter: blur(12px);
   display: grid;
   place-items: center;
   padding: 20px;
   z-index: 1000;
+  transition: opacity 0.22s ease;
 }
 
 .call-card {
-  width: min(440px, 100%);
+  width: min(500px, 100%);
   border: 1px solid var(--border-bright);
-  border-radius: 22px;
-  background: var(--card2);
+  border-radius: 28px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(15, 0, 24, 0.72);
+  backdrop-filter: blur(12px);
   padding: 28px;
   box-shadow:
     0 0 0 1px var(--border),
-    0 30px 80px rgba(124, 58, 237, 0.25),
+    0 35px 90px rgba(124, 58, 237, 0.3),
     0 0 60px rgba(192, 38, 211, 0.1);
 }
 
@@ -402,7 +509,14 @@ tbody tr:last-child td {
   margin: 0 auto 20px;
   position: relative;
   box-shadow: 0 0 30px var(--accent-glow);
-  animation: pulse-ring 2s ease-in-out infinite;
+  animation: pulse-ring 2.2s ease-in-out infinite;
+}
+
+.call-pulse-ring img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: cover;
 }
 
 @keyframes pulse-ring {
@@ -431,7 +545,7 @@ tbody tr:last-child td {
 }
 
 .call-card h3 {
-  font-size: 26px;
+  font-size: clamp(24px, 3.6vw, 32px);
   font-weight: 700;
   margin: 0 0 4px;
 }
@@ -453,7 +567,8 @@ tbody tr:last-child td {
   justify-content: center;
   gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .call-controls {
@@ -461,12 +576,27 @@ tbody tr:last-child td {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .call-controls button {
-  flex: 1;
-  min-width: 100px;
-  max-width: 160px;
+  min-width: 88px;
+  max-width: 180px;
+}
+
+.call-controls-main {
+  margin-top: 6px;
+}
+
+.call-controls-main button {
+  min-width: 130px;
+  width: 100%;
+}
+
+.call-controls .icon-btn.secondary {
+  background: rgba(120, 0, 180, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #dcc2ff;
 }
 
 /* ── BADGE ───────────────────────────────────────────── */
@@ -510,6 +640,30 @@ tbody tr:last-child td {
   color: var(--green);
   border-color: rgba(16, 185, 129, 0.4);
   background: rgba(16, 185, 129, 0.08);
+}
+
+.badge.state-failed {
+  color: #f87171;
+  border-color: rgba(225, 29, 72, 0.5);
+  background: rgba(225, 29, 72, 0.14);
+}
+
+.badge.ack-pending {
+  color: var(--yellow);
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.badge.ack-ok {
+  color: var(--green);
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.badge.ack-fail {
+  color: #f87171;
+  border-color: rgba(225, 29, 72, 0.5);
+  background: rgba(225, 29, 72, 0.14);
 }
 
 @keyframes blink-badge {
@@ -731,6 +885,21 @@ tbody tr:last-child td {
   flex-shrink: 0;
 }
 
+.apk-icon-img {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px;
+  min-height: 22px;
+  max-width: 22px;
+  max-height: 22px;
+  border-radius: 0;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 22px;
+  box-shadow: none;
+  background: transparent;
+}
+
 .apk-info strong {
   display: block;
   font-size: 14px;
@@ -747,6 +916,18 @@ tbody tr:last-child td {
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
+}
+
+.apk-version-select {
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(120, 0, 180, 0.12);
+  color: var(--text2);
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
 }
 
 .btn-apk-dl {
