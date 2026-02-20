@@ -15,6 +15,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 app.use(express.json());
 
+const WHATSAPP_LOCAL_BASE = process.env.WHATSAPP_LOCAL_BASE || "http://127.0.0.1:3010";
+
 const sessions = new Map();
 
 function getOrCreateSession(code) {
@@ -462,6 +464,55 @@ app.get("/api/fetch-url", async (req, res) => {
     return res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// ── WhatsApp proxy (single public origin via :3000/ngrok) ─────────────────
+async function proxyToWhatsApp(req, res, pathSuffix) {
+  const targetUrl = `${WHATSAPP_LOCAL_BASE}${pathSuffix}`;
+  const method = req.method || "GET";
+
+  console.log(`[PROXY] ${method} ${pathSuffix} -> ${targetUrl}`);
+
+  const headers = {};
+  if (req.headers["content-type"]) headers["content-type"] = req.headers["content-type"];
+  headers["ngrok-skip-browser-warning"] = "1";
+
+  try {
+    let upstream;
+    const fetchOptions = {
+      method,
+      headers,
+      signal: AbortSignal.timeout(30000) // 30s timeout for files
+    };
+
+    if (method === "GET" || method === "HEAD") {
+      upstream = await fetch(targetUrl, fetchOptions);
+    } else {
+      upstream = await fetch(targetUrl, {
+        ...fetchOptions,
+        body: req,
+        duplex: "half"
+      });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "";
+    const text = await upstream.text();
+    res.status(upstream.status);
+    if (contentType) res.setHeader("Content-Type", contentType);
+    return res.send(text);
+  } catch (e) {
+    console.error(`Proxy Error (${method} ${pathSuffix}):`, e);
+    return res.status(502).json({
+      ok: false,
+      error: "Error en el puente de WhatsApp.",
+      details: e.message
+    });
+  }
+}
+
+app.get("/api/whatsapp/status", (req, res) => proxyToWhatsApp(req, res, "/status"));
+app.get("/api/whatsapp/qr", (req, res) => proxyToWhatsApp(req, res, "/qr"));
+app.post("/api/whatsapp/send", (req, res) => proxyToWhatsApp(req, res, "/send"));
+app.post("/api/whatsapp/send-message", (req, res) => proxyToWhatsApp(req, res, "/send-message"));
 
 app.use(express.static(path.join(__dirname, "../web")));
 app.get("/phone", (_, res) => res.sendFile(path.join(__dirname, "../web/phone.html")));

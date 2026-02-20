@@ -98,12 +98,15 @@
       <!-- CONTACTS SECTION -->
       <section id="contactsSection" style="display:none">
         <p class="section-title">📋 Contactos</p>
+        <div class="row" style="margin-top:0;">
+          <button id="exportWordBtn" class="secondary">📄 Exportar Word</button>
+        </div>
 
         <!-- ADD MANUALLY -->
         <div id="contactInlineRow" class="row">
           <input id="contactName" placeholder="Nombre" />
           <input id="contactPhone" placeholder="+51999999999" style="font-family:monospace;" />
-          <input id="contactNote" placeholder="Nota (opcional)" />
+          <input id="contactNote" placeholder="Nota (opcional)" list="noteOptions" />
           <button id="addContact">＋ Agregar</button>
         </div>
 
@@ -204,7 +207,7 @@
         <input id="addPhoneInput" type="text" placeholder="+51999999999" />
 
         <label for="addNoteInput">Nota</label>
-        <input id="addNoteInput" type="text" placeholder="Nota (opcional)" />
+        <input id="addNoteInput" type="text" placeholder="Nota (opcional)" list="noteOptions" />
       </div>
       <button id="addSaveBtn" type="button">💾 Guardar contacto</button>
     </div>
@@ -223,11 +226,48 @@
         <input id="editPhoneInput" type="text" placeholder="+51999999999" />
 
         <label for="editNoteInput">Nota</label>
-        <input id="editNoteInput" type="text" placeholder="Nota (opcional)" />
+        <input id="editNoteInput" type="text" placeholder="Nota (opcional)" list="noteOptions" />
       </div>
       <button id="editSaveBtn" type="button">💾 Guardar cambios</button>
     </div>
   </div>
+
+  <!-- WHATSAPP MODAL -->
+  <div id="whatsappModal" class="edit-modal" style="display:none">
+    <div class="edit-card whatsapp-card">
+      <button id="whatsappCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3 id="whatsappTitle">WhatsApp</h3>
+      <p id="whatsappPhone" class="muted whatsapp-phone">-</p>
+
+      <div id="whatsappQrPanel" class="whatsapp-panel" style="display:none">
+        <p class="muted" style="font-size:13px;">Escanea este QR para vincular WhatsApp.</p>
+        <img id="whatsappQrImg" alt="QR WhatsApp" style="display:none" />
+        <small id="whatsappQrHint" class="muted">Cargando estado de WhatsApp...</small>
+      </div>
+
+      <div id="whatsappFormPanel" class="whatsapp-panel" style="display:none">
+        <label for="whatsappMessageInput">Mensaje</label>
+        <textarea id="whatsappMessageInput" rows="4" placeholder="Escribe tu mensaje..."></textarea>
+
+        <label>Archivo (opcional)</label>
+        <div id="whatsappDropZone" class="whatsapp-drop-zone">
+          <div class="drop-zone-content">
+            <span class="drop-icon">📁</span>
+            <span id="whatsappFileName" class="drop-text">Arrastra un archivo aquí o haz clic</span>
+          </div>
+          <input id="whatsappFileInput" type="file"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
+            hidden />
+        </div>
+
+        <button id="whatsappSendBtn" type="button">Enviar por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="noteOptions">
+    <option value="No contestó"></option>
+  </datalist>
 
   <!-- CALL MODAL -->
   <div id="callModal" class="call-modal" style="display:none">

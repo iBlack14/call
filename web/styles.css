@@ -207,6 +207,24 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(192, 38, 211, 0.15);
 }
 
+textarea {
+  background: rgba(10, 0, 20, 0.6);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(192, 38, 211, 0.15);
+}
+
 input {
   min-width: 160px;
 }
@@ -376,6 +394,13 @@ tbody tr.contact-row-called td {
   border-radius: 8px;
 }
 
+.actions-cell .wa-action-btn {
+  background: linear-gradient(135deg, #1b8f44, #25d366);
+  border: 1px solid rgba(37, 211, 102, 0.55);
+  color: #ffffff;
+  box-shadow: 0 2px 12px rgba(37, 211, 102, 0.3);
+}
+
 #contactInlineRow {
   display: none;
 }
@@ -420,6 +445,74 @@ tbody tr.contact-row-called td {
 .edit-card h3 {
   font-size: 20px;
   margin-bottom: 14px;
+}
+
+.whatsapp-card {
+  width: min(520px, 100%);
+}
+
+.whatsapp-phone {
+  font-family: monospace;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.whatsapp-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.whatsapp-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(120, 0, 180, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.whatsapp-drop-zone:hover {
+  border-color: var(--accent);
+  background: rgba(192, 38, 211, 0.08);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.whatsapp-drop-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(192, 38, 211, 0.15);
+  transform: scale(1.02);
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.drop-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+
+.drop-text {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+#whatsappQrImg {
+  width: 220px;
+  height: 220px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px;
+  justify-self: center;
 }
 
 .edit-form {

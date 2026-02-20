@@ -1,0 +1,433 @@
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618142965,"pid":4148,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771618304838,"pid":4148,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618394619,"pid":5460,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618416549,"pid":772,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618574188,"pid":14488,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618695494,"pid":14716,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771618789680,"pid":16320,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771619021244,"pid":14888,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771619183456,"pid":14888,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771619285558,"pid":9884,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771619386989,"pid":14604,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771619548087,"pid":14604,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771619557803,"pid":7908,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771619718875,"pid":7908,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771619745540,"pid":16772,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771619907450,"pid":16772,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771620822553,"pid":15536,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771620986766,"pid":16872,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771621031717,"pid":16872,"hostname":"DESKTOP-BV1E0F4","statusCode":515,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771621034439,"pid":16872,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+Closing session: SessionEntry {
+  _chains: {
+    'BcThQ4IYZk/Bn4zULAJoYkqvhu1gkp4cawJLjXmWZzgM': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 c4 e1 43 82 18 66 4f c1 9f 8c d4 2c 02 68 62 4a af 86 ed 60 92 9e 1c 6b 02 4b 8d 79 96 67 38 0c>,
+      privKey: <Buffer 18 b1 e2 7c 1d bf 59 d9 45 68 91 3d 4d 1d 52 bc 09 58 bb 75 d0 31 07 90 02 cd 98 8c 6e 57 1f 40>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 44 ac 5e 64 cd 0c b7 93 06 19 71 b7 39 1c 77 b7 20 1a 1f bb 07 fd 55 97 29 2f ab ea fb 5d 16 7b>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 2a 61 1c bd 47 cd 6b d8 91 d3 0d 07 2b 32 38 4d e9 67 09 62 73 79 18 0a 94 29 10 eb c0 a1 06 15>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621165699,
+    created: 1771621165699,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 2a 61 1c bd 47 cd 6b d8 91 d3 0d 07 2b 32 38 4d e9 67 09 62 73 79 18 0a 94 29 10 eb c0 a1 06 15>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BQZVl7kCNiSOf7quEOE/iuMTY0P+V0weyOkccyaKPX91': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 06 55 97 b9 02 36 24 8e 7f ba ae 10 e1 3f 8a e3 13 63 43 fe 57 4c 1e c8 e9 1c 73 26 8a 3d 7f 75>,
+      privKey: <Buffer 00 52 b4 d7 bf 3d bc 34 74 9e 2f 3a 46 ed 6a 8d 67 55 72 fa 69 04 15 30 85 4c 62 fa a0 92 0b 4e>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer da f6 bb 28 2d 8a be 74 d9 6b a4 f0 07 22 92 40 4a 65 7c 15 4f 9e dc 93 5a 55 1c 81 df 1c f6 7b>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 07 4b 2a d7 20 fa 67 8e 72 4d 4a fe 35 92 c9 b6 3f 59 dd 99 48 d9 a2 b0 ce 07 f4 0f a8 e6 2e 1e>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621166032,
+    created: 1771621166032,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 07 4b 2a d7 20 fa 67 8e 72 4d 4a fe 35 92 c9 b6 3f 59 dd 99 48 d9 a2 b0 ce 07 f4 0f a8 e6 2e 1e>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BR/2LXXoWfT+y73n6KYq85emvproh5TcBh+8AYLw2yJW': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 1f f6 2d 75 e8 59 f4 fe cb bd e7 e8 a6 2a f3 97 a6 be 9a e8 87 94 dc 06 1f bc 01 82 f0 db 22 56>,
+      privKey: <Buffer 40 1a 85 ff 90 1c ab ca 8c 6a 63 83 de 28 d7 a4 90 f3 2b 4a cc 19 32 0c 37 58 ec ca eb 8c 31 4d>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 42 de 75 8a 04 b7 46 94 b3 ee 74 07 6e d5 3c 66 30 dd 5b f3 6e f2 d6 e1 2d af e6 50 1e 44 c1 9e>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 25 b6 a5 19 9d 73 f3 20 32 d1 e7 d2 66 13 38 a8 da 8b fe 8f 8e 27 60 d0 d3 71 98 3a 11 40 67 3d>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621197116,
+    created: 1771621197116,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 25 b6 a5 19 9d 73 f3 20 32 d1 e7 d2 66 13 38 a8 da 8b fe 8f 8e 27 60 d0 d3 71 98 3a 11 40 67 3d>
+  }
+}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771621511259,"pid":19132,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771621515077,"pid":19132,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+Closing session: SessionEntry {
+  _chains: {
+    'BUlf9+IMVEN91hYahfT6sDXV7aulXDNCaV7rVi4lo0JX': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 49 5f f7 e2 0c 54 43 7d d6 16 1a 85 f4 fa b0 35 d5 ed ab a5 5c 33 42 69 5e eb 56 2e 25 a3 42 57>,
+      privKey: <Buffer 38 4a 6a 16 2f 9d f3 bc 34 d9 53 eb 6e a4 68 6b da b4 98 82 27 30 47 5c 67 e0 22 d9 d3 e7 00 40>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 20 ed 60 82 1c c6 24 b3 59 c4 bb 32 da 93 d8 97 f6 a4 1f ed f1 dc cc 72 2a b9 17 d4 d4 cf 5d df>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 51 78 b6 26 70 da 13 6c d0 90 d1 48 40 d8 d1 b9 52 42 3c c6 93 aa fa 04 b3 c3 41 64 7e 59 0e 60>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621451878,
+    created: 1771621451878,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 51 78 b6 26 70 da 13 6c d0 90 d1 48 40 d8 d1 b9 52 42 3c c6 93 aa fa 04 b3 c3 41 64 7e 59 0e 60>
+  }
+}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771621800306,"pid":17612,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771621802245,"pid":17612,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+{"level":30,"time":1771621828426,"pid":17612,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","text":"holaaaa","hasFile":false,"msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771621830071,"pid":17612,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","msgId":"3EB0D6C943EC9AB4F3298B","msg":"Texto enviado con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    'BfBAkoS+t4V5tTOZT/q0HoZCWO9fMu7j7CN2yEFO05t5': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 f0 40 92 84 be b7 85 79 b5 33 99 4f fa b4 1e 86 42 58 ef 5f 32 ee e3 ec 23 76 c8 41 4e d3 9b 79>,
+      privKey: <Buffer 68 56 77 c2 7b 08 23 29 76 d1 7f e6 b6 9e e0 87 1c ea bd 41 35 6c 36 ef af 50 92 cb d9 bb 31 47>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 91 91 4c 1b bf 80 da c4 69 43 26 72 c8 85 c3 bc 6c f9 ef 32 95 f7 4a 4f 89 00 7b 0c 62 a1 5d e7>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 22 50 80 21 1e f6 44 4a fc ab 52 07 3b b7 52 32 1c 7b 53 7a 90 8a 38 a9 e2 a9 e7 9f 14 ab b2 15>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621571965,
+    created: 1771621571964,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 22 50 80 21 1e f6 44 4a fc ab 52 07 3b b7 52 32 1c 7b 53 7a 90 8a 38 a9 e2 a9 e7 9f 14 ab b2 15>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BWsAVhtJIy/D30RCo5nalebVztUnqmOzCH4umVCLSJAU': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 1427989215,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 6b 00 56 1b 49 23 2f c3 df 44 42 a3 99 da 95 e6 d5 ce d5 27 aa 63 b3 08 7e 2e 99 50 8b 48 90 14>,
+      privKey: <Buffer c8 ef ff 1a be 48 a3 cc 9f ac ea b1 12 2b 11 39 c6 ee 92 fd 95 3e c7 ba 8d 28 61 a1 99 5a 5f 53>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 ab 14 f4 18 6a 3d 2f 0c df 33 41 08 3c a2 e5 70 d7 9a a9 cb d3 4d 56 b4 19 a3 7a c7 d5 6d b7 0a>,
+    previousCounter: 0,
+    rootKey: <Buffer 90 a5 fa 98 e9 70 7b 48 da 0b b3 d9 0f e9 f8 2f d9 fc 13 c8 ba 8b 0b 00 f4 a7 e0 9c 1b ac 1d 96>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 85 b7 d4 a7 f5 60 33 ef 53 b6 0c 99 f3 57 fc 90 d2 fd ec 36 d1 81 cd 41 c6 f2 da b7 82 d8 78 5c>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621830050,
+    created: 1771621830050,
+    remoteIdentityKey: <Buffer 05 ab 30 eb 18 65 0e ad c1 91 cb b0 c2 58 98 a6 ad a9 03 7f 85 07 aa 2f 76 d9 f0 76 80 54 86 3d 17>
+  },
+  pendingPreKey: {
+    signedKeyId: 11226504,
+    baseKey: <Buffer 05 85 b7 d4 a7 f5 60 33 ef 53 b6 0c 99 f3 57 fc 90 d2 fd ec 36 d1 81 cd 41 c6 f2 da b7 82 d8 78 5c>,
+    preKeyId: 13366497
+  }
+}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771622153987,"pid":4396,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771622155777,"pid":4396,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+{"level":30,"time":1771622178411,"pid":4396,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622178809,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"hola","hasFile":false,"msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622179426,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","msgId":"3EB0603027122091C42FB0","msg":"Texto enviado con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    'BQWlokOke2zZ+QgtJdQhx3zSWkCrr5HmhDifqcXS3rtA': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 05 a5 a2 43 a4 7b 6c d9 f9 08 2d 25 d4 21 c7 7c d2 5a 40 ab af 91 e6 84 38 9f a9 c5 d2 de bb 40>,
+      privKey: <Buffer 78 88 10 2c 01 78 cf 16 fd b7 1e 8d b3 d7 67 da 26 00 83 dd 01 4b a3 dc 62 61 3c 32 5a b2 54 71>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 85 b6 71 a9 6e 63 3a 3a 1d 99 e7 55 df fc 5e 17 5a b0 a6 10 c8 cb 8e a4 03 8d da 2d c7 6b 86 4b>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 d0 c4 42 a0 11 d1 d0 0f 8e b6 fe 24 af 96 d0 b1 c8 fb fb e4 96 c7 14 45 c8 f8 d1 2c 79 33 d6 65>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621831287,
+    created: 1771621831287,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 d0 c4 42 a0 11 d1 d0 0f 8e b6 fe 24 af 96 d0 b1 c8 fb fb e4 96 c7 14 45 c8 f8 d1 2c 79 33 d6 65>
+  }
+}
+{"level":30,"time":1771622237716,"pid":4396,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622237721,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"holaaa","hasFile":true,"fileName":"admin-ajax.jpg","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622237721,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","fileName":"admin-ajax.jpg","fileMime":"image/jpeg","size":31474,"msg":"Enviando archivo"}
+{"level":30,"time":1771622238570,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","msgId":"3EB0C72E44FE85A56B48C4","msg":"Imagen enviada con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    Bfyr7zH0juwrNKC6N2OX2XMyGcRbdZdWIMvaKnvKApM2: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 fc ab ef 31 f4 8e ec 2b 34 a0 ba 37 63 97 d9 73 32 19 c4 5b 75 97 56 20 cb da 2a 7b ca 02 93 36>,
+      privKey: <Buffer 68 e1 d1 20 80 f4 5b 53 04 f9 4f 91 48 ee 9f f5 88 59 89 0a 11 de af 18 f3 19 59 bf 11 8d f0 70>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer ba 5b d1 31 33 31 6a f4 34 3e 83 b7 a0 a1 44 76 de bc bb b2 c1 6f 52 a9 db 00 85 66 ba 07 65 da>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 9d 3a 71 5c a5 f1 75 1f a9 72 d9 8e 1b d3 27 de 5a b8 a0 88 c2 28 91 a6 79 19 2f ba fd 92 3b 2b>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622180461,
+    created: 1771622180461,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 9d 3a 71 5c a5 f1 75 1f a9 72 d9 8e 1b d3 27 de 5a b8 a0 88 c2 28 91 a6 79 19 2f ba fd 92 3b 2b>
+  }
+}
+{"level":30,"time":1771622296425,"pid":4396,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622297030,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"dasd","hasFile":true,"fileName":"8f2cc289-95c2-481c-96ae-8768a1bef091.jpg","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622297031,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","fileName":"8f2cc289-95c2-481c-96ae-8768a1bef091.jpg","fileMime":"image/jpeg","size":421714,"msg":"Enviando archivo"}
+{"level":30,"time":1771622298138,"pid":4396,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","msgId":"3EB0448B477C026AE374A5","msg":"Imagen enviada con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    BQpRDbEm7oElmQe6I7k3OmHuvk5e4miN0xKn737r61Qj: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 0a 51 0d b1 26 ee 81 25 99 07 ba 23 b9 37 3a 61 ee be 4e 5e e2 68 8d d3 12 a7 ef 7e eb eb 54 23>,
+      privKey: <Buffer d0 c1 45 48 ef 80 bb 94 98 6f 61 84 9f 67 46 51 f9 c8 b3 87 0d 6b 6f fc 21 66 ae a1 68 14 32 42>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 8c f5 7e fd 88 83 db 3f ff e4 00 3b 82 46 bc 91 5f e5 97 d4 58 15 cc e6 c3 8b 07 0b 79 a7 96 cc>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 2e 09 ba b0 52 2c c1 14 79 9d 94 b1 a0 6f 6c 46 df d3 12 e6 a8 13 91 c3 ca 50 4d 04 c0 02 47 73>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622239654,
+    created: 1771622239654,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 2e 09 ba b0 52 2c c1 14 79 9d 94 b1 a0 6f 6c 46 df d3 12 e6 a8 13 91 c3 ca 50 4d 04 c0 02 47 73>
+  }
+}

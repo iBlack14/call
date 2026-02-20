@@ -19,6 +19,7 @@ const cNameIn = document.getElementById("contactName");
 const cPhoneIn = document.getElementById("contactPhone");
 const cNoteIn = document.getElementById("contactNote");
 const addContactBtn = document.getElementById("addContact");
+const exportWordBtn = document.getElementById("exportWordBtn");
 const cBodyEl = document.getElementById("contactsBody");
 const contactsSec = document.getElementById("contactsSection");
 const contactsPaginationEl = document.getElementById("contactsPagination");
@@ -76,6 +77,19 @@ const editSaveBtn = document.getElementById("editSaveBtn");
 const editNameInput = document.getElementById("editNameInput");
 const editPhoneInput = document.getElementById("editPhoneInput");
 const editNoteInput = document.getElementById("editNoteInput");
+const whatsappModalEl = document.getElementById("whatsappModal");
+const whatsappCloseBtn = document.getElementById("whatsappCloseBtn");
+const whatsappTitleEl = document.getElementById("whatsappTitle");
+const whatsappPhoneEl = document.getElementById("whatsappPhone");
+const whatsappQrPanelEl = document.getElementById("whatsappQrPanel");
+const whatsappQrImgEl = document.getElementById("whatsappQrImg");
+const whatsappQrHintEl = document.getElementById("whatsappQrHint");
+const whatsappFormPanelEl = document.getElementById("whatsappFormPanel");
+const whatsappMessageInput = document.getElementById("whatsappMessageInput");
+const whatsappFileInput = document.getElementById("whatsappFileInput");
+const whatsappSendBtn = document.getElementById("whatsappSendBtn");
+const whatsappDropZone = document.getElementById("whatsappDropZone");
+const whatsappFileNameEl = document.getElementById("whatsappFileName");
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let sessionCode = "";
@@ -94,10 +108,17 @@ let currentPage = 1;
 let editContactId = null;
 let apkVersionsCache = [];
 let currentCallingContactId = null;
+let currentPhoneLinked = false;
+let whatsappCurrentContact = null;
 const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const CALLED_COUNTS_KEY = "kenia.calledCounts";
 let calledCounts = {};
+const WHATSAPP_API_BASE = window.location.origin;
+const WA_STATUS_PATHS = ["/api/whatsapp/status"];
+const WA_QR_PATHS = ["/api/whatsapp/qr"];
+const WA_SEND_PATHS = ["/api/whatsapp/send-message", "/api/whatsapp/send"];
+const NGROK_SKIP_WARNING_HEADERS = { "ngrok-skip-browser-warning": "1" };
 
 // ── CONTACTS STORAGE ────────────────────────────────────────────────────
 function loadContacts() {
@@ -116,6 +137,69 @@ function loadCalledCounts() {
 
 function saveCalledCounts() {
   localStorage.setItem(CALLED_COUNTS_KEY, JSON.stringify(calledCounts));
+}
+
+function exportContactsToWord() {
+  const rows = contacts.map((c) => {
+    const count = Number(calledCounts[c.id] || 0);
+    const rowBg = count > 0 ? "#FEF3C7" : "#FFFFFF";
+    return `
+      <tr style="background:${rowBg};">
+        <td style="border:1px solid #D1D5DB;padding:8px;">${escHtml(c.name || "—")}</td>
+        <td style="border:1px solid #D1D5DB;padding:8px;">${escHtml(c.phone || "—")}</td>
+        <td style="border:1px solid #D1D5DB;padding:8px;">${escHtml(c.note || "—")}</td>
+        <td style="border:1px solid #D1D5DB;padding:8px;text-align:center;">${count}</td>
+      </tr>`;
+  }).join("");
+
+  const now = new Date();
+  const fileStamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Contactos</title>
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 1.2cm;
+            mso-page-orientation: landscape;
+          }
+          body { font-family: Calibri, Arial, sans-serif; }
+          table { border-collapse: collapse; width: 100%; font-size: 12pt; }
+        </style>
+      </head>
+      <body>
+        <h2 style="margin-bottom:4px;">Reporte de Contactos</h2>
+        <p style="margin-top:0;color:#6B7280;">Generado: ${now.toLocaleString("es")}</p>
+        <table style="writing-mode:horizontal-tb;">
+          <thead>
+            <tr style="background:#F3F4F6;">
+              <th style="border:1px solid #D1D5DB;padding:8px;">Nombre</th>
+              <th style="border:1px solid #D1D5DB;padding:8px;">Teléfono</th>
+              <th style="border:1px solid #D1D5DB;padding:8px;">Nota</th>
+              <th style="border:1px solid #D1D5DB;padding:8px;">Llamadas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || `<tr><td colspan="4" style="border:1px solid #D1D5DB;padding:8px;">Sin contactos</td></tr>`}
+          </tbody>
+        </table>
+        <p style="margin-top:10px;font-size:11px;color:#6B7280;">Filas amarillas = contacto llamado al menos una vez.</p>
+      </body>
+    </html>`;
+
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `contactos_${fileStamp}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setStatus("Exportación Word completada.", true);
 }
 
 function escHtml(str) {
@@ -150,8 +234,9 @@ function renderContacts() {
         ${callCount > 0 ? `<span class="call-count-chip">📞 ${callCount}</span>` : ""}
       </td>
       <td class="actions-cell">
-        <button data-action="dial"   data-id="${c.id}">📞 Llamar</button>
         <button data-action="edit" data-id="${c.id}" class="secondary">✏️ Editar</button>
+        <button data-action="whatsapp" data-id="${c.id}" class="wa-action-btn" title="WhatsApp">🟢 WhatsApp</button>
+        <button data-action="dial"   data-id="${c.id}">📞 Llamar</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
       </td>`;
     cBodyEl.appendChild(tr);
@@ -381,6 +466,7 @@ function applyState(state, lastNum) {
 }
 
 function setLinkedUi(linked, devName) {
+  currentPhoneLinked = Boolean(linked);
   if (linked) {
     qrBlockEl.style.display = "none";
     linkedBanner.style.display = "flex";
@@ -396,6 +482,254 @@ function setLinkedUi(linked, devName) {
     sessionBarEl.style.display = "flex";
     apkBarEl.style.display = "flex";
     floatingAddContactBtn.style.display = "none";
+  }
+}
+
+function normalizePhoneForWa(phone) {
+  let clean = String(phone || "").replace(/\D/g, "");
+  if (!clean) return "";
+
+  if (clean.length === 9) {
+    return "+51" + clean;
+  }
+  return clean.startsWith("+") ? clean : "+" + clean;
+}
+
+async function fetchWhatsAppJson(paths, options) {
+  for (const p of paths) {
+    try {
+      const mergedOptions = {
+        ...(options || {}),
+        headers: {
+          ...NGROK_SKIP_WARNING_HEADERS,
+          ...(options?.headers || {})
+        }
+      };
+      const res = await fetch(`${WHATSAPP_API_BASE}${p}`, mergedOptions);
+      if (!res.ok) continue;
+      try {
+        const data = await res.json();
+        return data;
+      } catch {
+        const text = await res.text();
+        return { raw: text, qr: text };
+      }
+    } catch {
+      // try next candidate path
+    }
+  }
+  return null;
+}
+
+function isWaLinked(data) {
+  if (!data || typeof data !== "object") return false;
+  return Boolean(
+    data.linked ??
+    data.connected ??
+    data.isConnected ??
+    data.ready ??
+    data.isReady ??
+    data.authenticated
+  );
+}
+
+function extractWaQr(data) {
+  const raw = data?.qr || data?.qrCode || data?.qrcode || data?.dataUrl;
+  if (!raw || typeof raw !== "string") return "";
+  if (raw.startsWith("data:image")) return raw;
+  if (raw.startsWith("<svg")) return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(raw)))}`;
+  return `data:image/png;base64,${raw}`;
+}
+
+async function refreshWhatsAppModal() {
+  if (!whatsappCurrentContact) return;
+  whatsappQrPanelEl.style.display = "none";
+  whatsappFormPanelEl.style.display = "none";
+  whatsappQrImgEl.style.display = "none";
+  whatsappQrImgEl.src = "";
+
+  if (!currentPhoneLinked) {
+    whatsappQrPanelEl.style.display = "grid";
+    whatsappQrHintEl.textContent = "Primero vincula el celular en esta sesión para usar WhatsApp.";
+    if (sessionCode) {
+      whatsappQrImgEl.src = `/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?ts=${Date.now()}`;
+      whatsappQrImgEl.style.display = "block";
+    } else {
+      whatsappQrHintEl.textContent = "Primero crea o vincula una sesión.";
+    }
+    return;
+  }
+
+  whatsappQrHintEl.textContent = "Verificando estado de WhatsApp...";
+  const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS);
+  const linked = isWaLinked(statusData);
+  if (!linked) {
+    whatsappQrPanelEl.style.display = "grid";
+    const qrData = await fetchWhatsAppJson(WA_QR_PATHS);
+    const qrSrc = extractWaQr(qrData);
+    if (qrSrc) {
+      whatsappQrImgEl.src = qrSrc;
+      whatsappQrImgEl.style.display = "block";
+      whatsappQrHintEl.textContent = "Escanea el QR para vincular WhatsApp.";
+    } else {
+      whatsappQrHintEl.textContent = "WhatsApp no vinculado. Verifica que el servicio en puerto 3010 esté activo.";
+    }
+    return;
+  }
+
+  whatsappFormPanelEl.style.display = "grid";
+  whatsappQrPanelEl.style.display = "none";
+}
+
+function openWhatsAppModal(contact) {
+  whatsappCurrentContact = contact;
+  whatsappTitleEl.textContent = `WhatsApp: ${contact.name || "Contacto"}`;
+
+  // Formateo automático: si tiene 9 dígitos, ponerle +51
+  let phone = String(contact.phone || "").replace(/\D/g, "");
+  if (phone.length === 9) {
+    phone = "+51" + phone;
+  } else if (phone && !phone.startsWith("+")) {
+    // Si no tiene + pero es internacional, mejor dejarlo limpio o intentar normalizarlo
+    phone = "+" + phone;
+  }
+
+  whatsappPhoneEl.textContent = phone || "-";
+  whatsappQrPanelEl.style.display = "grid";
+  whatsappFormPanelEl.style.display = "none";
+  whatsappQrImgEl.style.display = "none";
+  whatsappQrHintEl.textContent = "Cargando estado de WhatsApp...";
+  whatsappModalEl.style.display = "grid";
+
+  // Limpiar archivo previo
+  whatsappFileInput.value = "";
+  whatsappFileNameEl.textContent = "Arrastra un archivo aquí o haz clic";
+
+  whatsappMessageInput.focus();
+  refreshWhatsAppModal();
+}
+
+function closeWhatsAppModal() {
+  whatsappModalEl.style.display = "none";
+  whatsappCurrentContact = null;
+  whatsappMessageInput.value = "";
+  whatsappFileInput.value = "";
+  whatsappQrImgEl.src = "";
+  whatsappQrImgEl.style.display = "none";
+}
+
+async function sendWhatsAppMessage() {
+  if (!whatsappCurrentContact) return;
+
+  const phone = whatsappPhoneEl.textContent;
+  const message = whatsappMessageInput.value.trim();
+  const file = whatsappFileInput.files?.[0] || null;
+
+  if (!phone || phone === "-") {
+    alert("El contacto no tiene un número de teléfono válido.");
+    return;
+  }
+
+  if (!message && !file) {
+    alert("Por favor, escribe un mensaje o selecciona un archivo para enviar.");
+    return;
+  }
+
+  whatsappSendBtn.disabled = true;
+  whatsappSendBtn.textContent = "🚀 Enviando...";
+  setStatus("Enviando mensaje de WhatsApp...", true);
+
+  try {
+    let sent = false;
+    let lastError = "Error desconocido";
+
+    for (const p of WA_SEND_PATHS) {
+      const fd = new FormData();
+      fd.append("to", phone);
+      fd.append("message", message);
+      if (file) {
+        fd.append("file", file);
+        console.log(`[WA] Adjuntando archivo: ${file.name} (${file.size} bytes)`);
+      }
+
+      try {
+        const res = await fetch(`${WHATSAPP_API_BASE}${p}`, {
+          method: "POST",
+          body: fd,
+          headers: NGROK_SKIP_WARNING_HEADERS
+        });
+
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          sent = true;
+          console.log(`[WA] Mensaje enviado con exito via ${p}`);
+          break;
+        } else {
+          lastError = data.error || `Error HTTP ${res.status}`;
+          console.error(`[WA] Error en intento via ${p}:`, lastError);
+        }
+      } catch (e) {
+        lastError = e.message;
+        console.error(`[WA] Excepcion en intento via ${p}:`, e);
+      }
+    }
+
+    if (!sent) {
+      throw new Error(lastError);
+    }
+
+    setStatus(`✅ Enviado a ${phone}`, true);
+    setTimeout(() => setStatus("Listo.", true), 3000);
+    closeWhatsAppModal();
+  } catch (err) {
+    console.error("WhatsApp Send Error:", err);
+    alert(`No se pudo enviar: ${err.message}`);
+    setStatus(`❌ Error: ${err.message}`, true);
+  } finally {
+    whatsappSendBtn.disabled = false;
+    whatsappSendBtn.textContent = "Enviar por WhatsApp";
+  }
+}
+
+// ── DRAG & DROP WHATSAPP ───────────────────────────────────────────
+if (whatsappDropZone) {
+  whatsappDropZone.addEventListener("click", () => whatsappFileInput.click());
+
+  whatsappDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    whatsappDropZone.classList.add("dragover");
+  });
+
+  ["dragleave", "dragend"].forEach(type => {
+    whatsappDropZone.addEventListener(type, () => {
+      whatsappDropZone.classList.remove("dragover");
+    });
+  });
+
+  whatsappDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    whatsappDropZone.classList.remove("dragover");
+    if (e.dataTransfer.files?.length) {
+      whatsappFileInput.files = e.dataTransfer.files;
+      updateWhatsAppFileLabel();
+    }
+  });
+
+  whatsappFileInput.addEventListener("change", updateWhatsAppFileLabel);
+}
+
+function updateWhatsAppFileLabel() {
+  const file = whatsappFileInput.files?.[0];
+  if (file) {
+    let icon = "📄";
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".pdf")) icon = "📕";
+    else if (name.endsWith(".doc") || name.endsWith(".docx")) icon = "📘";
+    else if (/\.(jpg|jpeg|png|gif|webp)$/.test(name)) icon = "🖼️";
+
+    whatsappFileNameEl.textContent = `${icon} ${file.name} (${Math.round(file.size / 1024)} KB)`;
+  } else {
+    whatsappFileNameEl.textContent = "Arrastra un archivo aquí o haz clic";
   }
 }
 
@@ -499,6 +833,8 @@ apkVersionSelectEl.addEventListener("change", async () => {
 apkHelpBtn.addEventListener("click", () => {
   installGuide.style.display = installGuide.style.display === "none" ? "block" : "none";
 });
+
+exportWordBtn?.addEventListener("click", exportContactsToWord);
 
 // ─────────────────────────────────────────────────────────────────────
 // ── CONTACT IMPORT ────────────────────────────────────────────────────
@@ -756,6 +1092,10 @@ cBodyEl.addEventListener("click", e => {
     setStatus("Editando contacto en popup.", true);
     return;
   }
+  if (action === "whatsapp") {
+    openWhatsAppModal(c);
+    return;
+  }
   if (action === "dial") {
     if (["dialing", "ringing", "in_call"].includes(currentState)) {
       setStatus("Ya hay una llamada en curso.", true); return;
@@ -789,6 +1129,15 @@ function closeEditModal() {
 }
 
 editCloseBtn.addEventListener("click", closeEditModal);
+whatsappCloseBtn.addEventListener("click", closeWhatsAppModal);
+whatsappSendBtn.addEventListener("click", sendWhatsAppMessage);
+whatsappModalEl.addEventListener("click", (e) => {
+  if (e.target === whatsappModalEl) closeWhatsAppModal();
+});
+whatsappQrImgEl.addEventListener("error", () => {
+  whatsappQrImgEl.style.display = "none";
+  whatsappQrHintEl.textContent = "No se pudo cargar el QR de WhatsApp.";
+});
 
 editSaveBtn.addEventListener("click", () => {
   if (!editContactId) return;

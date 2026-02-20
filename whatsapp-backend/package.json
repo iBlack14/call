@@ -1,0 +1,19 @@
+{
+  "name": "kenia-whatsapp-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mime-types": "^2.1.35",
+    "multer": "^2.0.2",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  }
+}

@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "node --watch server/server.js"
+    "dev": "node --watch server/server.js",
+    "start:calls": "node server/server.js",
+    "start:whatsapp": "npm --prefix whatsapp-backend run start",
+    "dev:whatsapp": "npm --prefix whatsapp-backend run dev"
   },
   "dependencies": {
     "express": "^4.21.2",

@@ -290,6 +290,9 @@ class BridgeService : Service() {
         if (number.isBlank()) return
         dialAttemptToken += 1
         val thisAttempt = dialAttemptToken
+        // Every new call must start with speaker OFF by default.
+        isSpeakerOn = false
+        setSpeakerOn(false)
         currentPhoneNumber = number
         currentContactName = when {
             contactName.isNotBlank() -> contactName
@@ -484,6 +487,7 @@ class BridgeService : Service() {
                 stopAudio()
                 lastCallState = "ended"
                 currentPhoneNumber = ""
+                isSpeakerOn = false
                 emitCallUiState()
                 return true
             }

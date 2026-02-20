@@ -1,0 +1,5 @@
+
+> kenia-call-bridge-skeleton@0.1.0 start
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
