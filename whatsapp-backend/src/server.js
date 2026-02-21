@@ -36,6 +36,13 @@ app.use(cors({
 app.use(express.json({ limit: "5mb" }));
 
 const log = pino({ level: process.env.LOG_LEVEL || "info" });
+const SAFE_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const JPEG_ALIASES = new Set(["image/jpg", "image/pjpeg", "image/jfif"]);
+const OUTGOING_TRACK_LIMIT = 300;
+const OUTGOING_STATUSES = new Map();
+const OUTGOING_WAITERS = new Map();
+const DELIVERY_ACK_STATUS = 2;
+const DELIVERY_WAIT_MS = Number(process.env.WA_DELIVERY_WAIT_MS || 25000);
 
 let sock = null;
 let linked = false;
@@ -50,8 +57,13 @@ function normalizePhone(input) {
   let digits = raw.replace(/\D/g, "");
   if (!digits) return "";
 
-  // Si tiene 9 dígitos (común en Perú), agregar el código de país 51
-  if (digits.length === 9) {
+  // Si ya tiene 51 al inicio y tiene una longitud razonable (11 o más)
+  if (digits.startsWith("51") && digits.length >= 11) {
+    return digits;
+  }
+
+  // Caso Perú: Si tiene 9 dígitos y empieza con 9
+  if (digits.length === 9 && digits.startsWith("9")) {
     digits = "51" + digits;
   }
 
@@ -88,6 +100,106 @@ function currentStatus() {
   };
 }
 
+function rememberOutgoing(result, meta) {
+  const msgId = result?.key?.id;
+  if (!msgId) return msgId || null;
+
+  OUTGOING_STATUSES.set(msgId, {
+    jid: result?.key?.remoteJid || meta?.jid || "",
+    kind: meta?.kind || "unknown",
+    fileName: meta?.fileName || null,
+    status: 0,
+    createdAt: Date.now()
+  });
+
+  if (OUTGOING_STATUSES.size > OUTGOING_TRACK_LIMIT) {
+    const oldest = OUTGOING_STATUSES.keys().next().value;
+    if (oldest) OUTGOING_STATUSES.delete(oldest);
+  }
+
+  return msgId;
+}
+
+function statusToText(status) {
+  if (status === 0) return "PENDING";
+  if (status === 1) return "SERVER_ACK";
+  if (status === 2) return "DELIVERY_ACK";
+  if (status === 3) return "READ";
+  if (status === 4) return "PLAYED";
+  return `UNKNOWN_${status}`;
+}
+
+function resolveStatusWaiters(msgId, status) {
+  const waiters = OUTGOING_WAITERS.get(msgId);
+  if (!waiters?.length) return;
+
+  const pending = [];
+  for (const waiter of waiters) {
+    if (status >= waiter.targetStatus) {
+      clearTimeout(waiter.timer);
+      waiter.resolve(status);
+    } else {
+      pending.push(waiter);
+    }
+  }
+
+  if (!pending.length) {
+    OUTGOING_WAITERS.delete(msgId);
+  } else {
+    OUTGOING_WAITERS.set(msgId, pending);
+  }
+}
+
+function rejectAllStatusWaiters(reason) {
+  for (const waiters of OUTGOING_WAITERS.values()) {
+    for (const waiter of waiters) {
+      clearTimeout(waiter.timer);
+      waiter.reject(new Error(reason));
+    }
+  }
+  OUTGOING_WAITERS.clear();
+}
+
+function waitForOutgoingStatus(msgId, targetStatus = DELIVERY_ACK_STATUS, timeoutMs = DELIVERY_WAIT_MS) {
+  if (!msgId) {
+    throw new Error("No se pudo esperar confirmacion: msgId vacio.");
+  }
+
+  const tracked = OUTGOING_STATUSES.get(msgId);
+  if (typeof tracked?.status === "number" && tracked.status >= targetStatus) {
+    return Promise.resolve(tracked.status);
+  }
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const list = OUTGOING_WAITERS.get(msgId) || [];
+      const next = list.filter((item) => item.resolve !== resolve);
+      if (next.length) OUTGOING_WAITERS.set(msgId, next);
+      else OUTGOING_WAITERS.delete(msgId);
+      const err = new Error(`Tiempo agotado esperando estado ${statusToText(targetStatus)} para msgId ${msgId}`);
+      err.code = "DELIVERY_TIMEOUT";
+      reject(err);
+    }, timeoutMs);
+
+    const list = OUTGOING_WAITERS.get(msgId) || [];
+    list.push({ targetStatus, resolve, reject, timer });
+    OUTGOING_WAITERS.set(msgId, list);
+  });
+}
+
+async function sendAndConfirmDelivery({ jid, payload, kind, fileName = null, timeoutMs = DELIVERY_WAIT_MS }) {
+  const result = await sock.sendMessage(jid, payload);
+  const msgId = rememberOutgoing(result, { jid, kind, fileName });
+  await waitForOutgoingStatus(msgId, DELIVERY_ACK_STATUS, timeoutMs);
+  return {
+    jid,
+    msgId,
+    kind,
+    deliveryStatus: DELIVERY_ACK_STATUS,
+    deliveryStatusText: statusToText(DELIVERY_ACK_STATUS)
+  };
+}
+
 async function startWhatsApp() {
   if (connecting) return;
   connecting = true;
@@ -104,6 +216,32 @@ async function startWhatsApp() {
     });
 
     sock.ev.on("creds.update", saveCreds);
+    sock.ev.on("messages.update", (updates) => {
+      for (const item of updates || []) {
+        const key = item?.key;
+        const update = item?.update || {};
+        if (!key?.fromMe) continue;
+        if (typeof update.status !== "number") continue;
+
+        const msgId = key.id || "";
+        const tracked = OUTGOING_STATUSES.get(msgId);
+        const statusText = statusToText(update.status);
+        if (tracked) tracked.status = update.status;
+        resolveStatusWaiters(msgId, update.status);
+        log.info({
+          jid: key.remoteJid || tracked?.jid || "",
+          msgId,
+          status: update.status,
+          statusText,
+          kind: tracked?.kind || null,
+          fileName: tracked?.fileName || null
+        }, "Estado mensaje saliente");
+
+        if (update.status >= 3) {
+          OUTGOING_STATUSES.delete(msgId);
+        }
+      }
+    });
 
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -141,6 +279,7 @@ async function startWhatsApp() {
         }
 
         connecting = false;
+        rejectAllStatusWaiters("Conexion WhatsApp cerrada antes de confirmar entrega.");
         sock = null;
         if (shouldReconnect) {
           setTimeout(() => {
@@ -176,40 +315,97 @@ async function sendMessage({ to, message, file }) {
   try {
     if (!hasFile) {
       const result = await sock.sendMessage(jid, { text });
-      log.info({ jid, msgId: result?.key?.id }, "Texto enviado con exito");
-      return;
+      const msgId = rememberOutgoing(result, { jid, kind: "text" });
+      log.info({ jid, msgId }, "Texto enviado con exito");
+      return { jid, msgId, kind: "text", deliveryStatus: 1, deliveryStatusText: statusToText(1) };
     }
 
     const fileName = file.originalname || `archivo-${Date.now()}`;
-    const fileMime = file.mimetype || mime.lookup(fileName) || "application/octet-stream";
+    const inferredMime = mime.lookup(fileName) || "application/octet-stream";
+    const rawMime = String(file.mimetype || inferredMime || "application/octet-stream").toLowerCase();
+    const fileMime = JPEG_ALIASES.has(rawMime) ? "image/jpeg" : rawMime;
     const buf = file.buffer;
 
-    log.info({ jid, fileName, fileMime, size: buf.length }, "Enviando archivo");
+    log.info({ jid, fileName, fileMime, rawMime, size: buf.length }, "Enviando archivo");
 
     if (String(fileMime).startsWith("image/")) {
-      const result = await sock.sendMessage(jid, { image: buf, caption: text || undefined, mimetype: fileMime });
-      log.info({ jid, msgId: result?.key?.id }, "Imagen enviada con exito");
-      return;
+      if (!SAFE_IMAGE_MIMES.has(fileMime)) {
+        log.warn({ jid, fileName, fileMime }, "Imagen con MIME no recomendado. Se envia como documento para evitar perdida");
+        const sent = await sendAndConfirmDelivery({
+          jid,
+          kind: "image-as-document",
+          fileName,
+          payload: {
+            document: buf,
+            fileName,
+            mimetype: fileMime,
+            caption: text || undefined
+          }
+        });
+        log.info({ jid, msgId: sent.msgId }, "Imagen enviada como documento y entregada");
+        return sent;
+      }
+      try {
+        const sent = await sendAndConfirmDelivery({
+          jid,
+          kind: "image",
+          fileName,
+          payload: { image: buf, caption: text || undefined, mimetype: fileMime }
+        });
+        log.info({ jid, msgId: sent.msgId }, "Imagen enviada y entregada");
+        return sent;
+      } catch (primaryErr) {
+        log.warn({ jid, fileName, err: primaryErr?.message }, "No se confirmo entrega de imagen. Reintento como documento");
+        const sent = await sendAndConfirmDelivery({
+          jid,
+          kind: "image-fallback-document",
+          fileName,
+          payload: {
+            document: buf,
+            fileName,
+            mimetype: fileMime,
+            caption: text || undefined
+          }
+        });
+        log.info({ jid, msgId: sent.msgId }, "Imagen entregada en fallback como documento");
+        return sent;
+      }
     }
     if (String(fileMime).startsWith("video/")) {
-      const result = await sock.sendMessage(jid, { video: buf, caption: text || undefined, mimetype: fileMime });
-      log.info({ jid, msgId: result?.key?.id }, "Video enviado con exito");
-      return;
+      const sent = await sendAndConfirmDelivery({
+        jid,
+        kind: "video",
+        fileName,
+        payload: { video: buf, caption: text || undefined, mimetype: fileMime }
+      });
+      log.info({ jid, msgId: sent.msgId }, "Video enviado y entregado");
+      return sent;
     }
     if (String(fileMime).startsWith("audio/")) {
       const result = await sock.sendMessage(jid, { audio: buf, mimetype: fileMime, ptt: false });
-      log.info({ jid, msgId: result?.key?.id }, "Audio enviado con exito");
-      if (text) await sock.sendMessage(jid, { text });
-      return;
+      const msgId = rememberOutgoing(result, { jid, kind: "audio", fileName });
+      log.info({ jid, msgId }, "Audio enviado con exito");
+      let textMsgId = null;
+      if (text) {
+        const textResult = await sock.sendMessage(jid, { text });
+        textMsgId = rememberOutgoing(textResult, { jid, kind: "text" });
+      }
+      return { jid, msgId, kind: "audio", textMsgId, deliveryStatus: 1, deliveryStatusText: statusToText(1) };
     }
 
-    const result = await sock.sendMessage(jid, {
-      document: buf,
+    const sent = await sendAndConfirmDelivery({
+      jid,
+      kind: fileMime === "application/pdf" ? "pdf" : "document",
       fileName,
-      mimetype: fileMime,
-      caption: text || undefined
+      payload: {
+        document: buf,
+        fileName,
+        mimetype: fileMime,
+        caption: text || undefined
+      }
     });
-    log.info({ jid, msgId: result?.key?.id }, "Documento enviado con exito");
+    log.info({ jid, msgId: sent.msgId }, "Documento enviado y entregado");
+    return sent;
   } catch (err) {
     log.error({ err, jid }, "Error critico al enviar via Baileys");
     throw err;
@@ -255,8 +451,8 @@ function registerSendRoutes(base) {
 
       log.info({ to, messageLength: message.length, hasFile }, "Processing WhatsApp send request");
 
-      await sendMessage({ to, message, file: req.file || null });
-      return res.json({ ok: true, to, sentAt: new Date().toISOString() });
+      const sent = await sendMessage({ to, message, file: req.file || null });
+      return res.json({ ok: true, to, sentAt: new Date().toISOString(), sent });
     } catch (err) {
       log.error({ err }, "Error in WhatsApp send route");
       return res.status(400).json({ ok: false, error: err.message || "No se pudo enviar mensaje." });
@@ -270,8 +466,8 @@ function registerSendRoutes(base) {
     try {
       const to = req.body?.to || req.body?.phone || req.body?.number;
       const message = req.body?.message || req.body?.text || "";
-      await sendMessage({ to, message, file: req.file || null });
-      return res.json({ ok: true, to, sentAt: new Date().toISOString() });
+      const sent = await sendMessage({ to, message, file: req.file || null });
+      return res.json({ ok: true, to, sentAt: new Date().toISOString(), sent });
     } catch (err) {
       log.error({ err }, "Error in WhatsApp send-message route");
       return res.status(400).json({ ok: false, error: err.message || "No se pudo enviar mensaje." });

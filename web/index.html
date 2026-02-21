@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/styles.css" />
   <!-- mammoth.js for Word (.docx) parsing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -100,6 +102,8 @@
         <p class="section-title">📋 Contactos</p>
         <div class="row" style="margin-top:0;">
           <button id="exportWordBtn" class="secondary">📄 Exportar Word</button>
+          <button id="openQuotationBtn">🧾 Nueva Cotización</button>
+          <button id="connectWhatsAppBtn" class="secondary">🟢 Conectar WhatsApp</button>
         </div>
 
         <!-- ADD MANUALLY -->
@@ -240,12 +244,26 @@
       <p id="whatsappPhone" class="muted whatsapp-phone">-</p>
 
       <div id="whatsappQrPanel" class="whatsapp-panel" style="display:none">
-        <p class="muted" style="font-size:13px;">Escanea este QR para vincular WhatsApp.</p>
+        <p id="whatsappQrLead" class="muted" style="font-size:13px;">Escanea este QR para vincular WhatsApp.</p>
+        <div id="whatsappConnectOk" class="wa-connect-ok" style="display:none;">
+          <strong>Cuenta conectada</strong>
+          <small id="whatsappLinkedNumber">-</small>
+        </div>
         <img id="whatsappQrImg" alt="QR WhatsApp" style="display:none" />
         <small id="whatsappQrHint" class="muted">Cargando estado de WhatsApp...</small>
+        <div class="row" style="margin-top:10px;justify-content:flex-start;">
+          <button id="whatsappLogoutBtn" type="button" class="secondary" style="display:none;">Cerrar sesión</button>
+        </div>
       </div>
 
       <div id="whatsappFormPanel" class="whatsapp-panel" style="display:none">
+        <label>Mensajes predeterminados</label>
+        <div class="whatsapp-template-create-row">
+          <input id="whatsappTemplateInput" type="text" placeholder="Escribe un mensaje predeterminado..." />
+          <button id="whatsappTemplateSaveBtn" type="button" class="secondary">💾 Guardar</button>
+        </div>
+        <div id="whatsappTemplates" class="whatsapp-templates"></div>
+
         <label for="whatsappMessageInput">Mensaje</label>
         <textarea id="whatsappMessageInput" rows="4" placeholder="Escribe tu mensaje..."></textarea>
 
@@ -265,9 +283,85 @@
     </div>
   </div>
 
+  <!-- QUOTATION MODAL -->
+  <div id="quotationModal" class="edit-modal" style="display:none">
+    <div class="edit-card quotation-card">
+      <button id="quotationCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3>Nueva Cotización</h3>
+      <p class="muted" style="margin-bottom:10px;">Sin PHP. Se genera y descarga directamente desde el navegador.</p>
+
+      <div class="edit-form quotation-form-grid">
+        <label for="qDate">Fecha</label>
+        <input id="qDate" type="date" />
+
+        <label for="qCompany">Empresa / Razón Social</label>
+        <input id="qCompany" type="text" placeholder="Empresa" />
+
+        <label for="qRuc">RUC</label>
+        <input id="qRuc" type="text" placeholder="RUC" />
+
+        <label for="qPhone">Teléfono</label>
+        <input id="qPhone" type="text" placeholder="+51999999999" />
+
+        <label for="qEmail">Correo</label>
+        <input id="qEmail" type="email" placeholder="correo@dominio.com" />
+
+        <label for="qAddress">Dirección</label>
+        <input id="qAddress" type="text" placeholder="Dirección" />
+      </div>
+
+      <div class="table-wrap quotation-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Servicio / Producto</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="quotationItemsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="quotationAddItemBtn" type="button" class="secondary">＋ Agregar ítem</button>
+      </div>
+
+      <div class="quotation-totals">
+        <label class="quotation-igv-label">
+          <input id="quotationApplyIgv" type="checkbox" />
+          <span>Aplicar IGV (18%)</span>
+        </label>
+        <div class="quotation-total-line"><span>Subtotal:</span><strong id="quotationSubtotal">S/ 0.00</strong></div>
+        <div class="quotation-total-line"><span>IGV:</span><strong id="quotationIgv">S/ 0.00</strong></div>
+        <div class="quotation-total-line grand"><span>Total:</span><strong id="quotationTotal">S/ 0.00</strong></div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end;">
+        <button id="quotationPreviewBtn" type="button" class="secondary">👁️ Vista previa</button>
+        <button id="quotationDownloadBtn" type="button">💾 Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUOTATION PREVIEW MODAL -->
+  <div id="quotationPreviewModal" class="edit-modal quotation-preview-modal" style="display:none">
+    <div class="edit-card quotation-preview-card">
+      <button id="quotationPreviewCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <div class="quotation-preview-actions">
+        <button id="quotationPreviewDownloadBtn" type="button">💾 Descargar PDF</button>
+        <span id="quotationSendFeedback" class="quotation-send-feedback" aria-live="polite"></span>
+      </div>
+      <iframe id="quotationPreviewFrame" class="quotation-preview-frame" title="Vista previa cotización"></iframe>
+    </div>
+  </div>
+
   <datalist id="noteOptions">
     <option value="No contestó"></option>
   </datalist>
+  <datalist id="quotationServicesDatalist"></datalist>
 
   <!-- CALL MODAL -->
   <div id="callModal" class="call-modal" style="display:none">

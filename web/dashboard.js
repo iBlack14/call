@@ -82,14 +82,45 @@ const whatsappCloseBtn = document.getElementById("whatsappCloseBtn");
 const whatsappTitleEl = document.getElementById("whatsappTitle");
 const whatsappPhoneEl = document.getElementById("whatsappPhone");
 const whatsappQrPanelEl = document.getElementById("whatsappQrPanel");
+const whatsappQrLeadEl = document.getElementById("whatsappQrLead");
+const whatsappConnectOkEl = document.getElementById("whatsappConnectOk");
+const whatsappLinkedNumberEl = document.getElementById("whatsappLinkedNumber");
 const whatsappQrImgEl = document.getElementById("whatsappQrImg");
 const whatsappQrHintEl = document.getElementById("whatsappQrHint");
+const whatsappLogoutBtn = document.getElementById("whatsappLogoutBtn");
 const whatsappFormPanelEl = document.getElementById("whatsappFormPanel");
 const whatsappMessageInput = document.getElementById("whatsappMessageInput");
 const whatsappFileInput = document.getElementById("whatsappFileInput");
 const whatsappSendBtn = document.getElementById("whatsappSendBtn");
 const whatsappDropZone = document.getElementById("whatsappDropZone");
 const whatsappFileNameEl = document.getElementById("whatsappFileName");
+const whatsappTemplatesEl = document.getElementById("whatsappTemplates");
+const whatsappTemplateInput = document.getElementById("whatsappTemplateInput");
+const whatsappTemplateSaveBtn = document.getElementById("whatsappTemplateSaveBtn");
+const connectWhatsAppBtn = document.getElementById("connectWhatsAppBtn");
+const openQuotationBtn = document.getElementById("openQuotationBtn");
+const quotationModalEl = document.getElementById("quotationModal");
+const quotationCloseBtn = document.getElementById("quotationCloseBtn");
+const quotationItemsBodyEl = document.getElementById("quotationItemsBody");
+const quotationAddItemBtn = document.getElementById("quotationAddItemBtn");
+const quotationApplyIgvEl = document.getElementById("quotationApplyIgv");
+const quotationSubtotalEl = document.getElementById("quotationSubtotal");
+const quotationIgvEl = document.getElementById("quotationIgv");
+const quotationTotalEl = document.getElementById("quotationTotal");
+const quotationPreviewBtn = document.getElementById("quotationPreviewBtn");
+const quotationDownloadBtn = document.getElementById("quotationDownloadBtn");
+const quotationPreviewModalEl = document.getElementById("quotationPreviewModal");
+const quotationPreviewCloseBtn = document.getElementById("quotationPreviewCloseBtn");
+const quotationPreviewDownloadBtn = document.getElementById("quotationPreviewDownloadBtn");
+const quotationSendFeedbackEl = document.getElementById("quotationSendFeedback");
+const quotationPreviewFrameEl = document.getElementById("quotationPreviewFrame");
+const qDateEl = document.getElementById("qDate");
+const qCompanyEl = document.getElementById("qCompany");
+const qRucEl = document.getElementById("qRuc");
+const qPhoneEl = document.getElementById("qPhone");
+const qEmailEl = document.getElementById("qEmail");
+const qAddressEl = document.getElementById("qAddress");
+const quotationServicesDatalistEl = document.getElementById("quotationServicesDatalist");
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let sessionCode = "";
@@ -110,6 +141,8 @@ let apkVersionsCache = [];
 let currentCallingContactId = null;
 let currentPhoneLinked = false;
 let whatsappCurrentContact = null;
+let whatsappModalMode = "contact";
+let whatsappQrPollTimer = null;
 const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const CALLED_COUNTS_KEY = "kenia.calledCounts";
@@ -117,8 +150,53 @@ let calledCounts = {};
 const WHATSAPP_API_BASE = window.location.origin;
 const WA_STATUS_PATHS = ["/api/whatsapp/status"];
 const WA_QR_PATHS = ["/api/whatsapp/qr"];
+const WA_LOGOUT_PATHS = ["/api/whatsapp/logout"];
 const WA_SEND_PATHS = ["/api/whatsapp/send-message", "/api/whatsapp/send"];
 const NGROK_SKIP_WARNING_HEADERS = { "ngrok-skip-browser-warning": "1" };
+const WHATSAPP_PRESETS_KEY = "kenia.whatsappPresetMessages";
+const DEFAULT_WHATSAPP_PRESET_MESSAGES = [
+  "Hola, te escribo de VCMAS. Quedo atento a tu respuesta.",
+  "Buenas, te contacto para coordinar una llamada.",
+  "Hola, te comparto seguimiento del tema pendiente."
+];
+let whatsappPresetMessages = [...DEFAULT_WHATSAPP_PRESET_MESSAGES];
+let quotationItems = [];
+let quotationMessageBridgeBound = false;
+const QUOTATION_SERVICE_OPTIONS = [
+  "WEB INFORMATIVA",
+  "WEB E-COMMERCE",
+  "WEB AULA VIRTUAL",
+  "POSICIONAMIENTO SEO",
+  "LICENCIA DE ANTIVIRUS",
+  "PLUGIN YOAST SEO",
+  "RESTRUCTURACION BASICA",
+  "RESTRUCTURACION E-COMMERCE",
+  "WEB FUSION E-COMMERCE",
+  "WEB FUSION AULA VIRTUAL",
+  "REDES SOCIALES"
+];
+const QUOTATION_IMAGE_OPTIONS = [
+  "/quotation-images/web-informativa.png",
+  "/quotation-images/E-COMERCE.png",
+  "/quotation-images/aula-virtual.png",
+  "/quotation-images/posicionamiento-seo.png",
+  "/quotation-images/1764976277_ANTIVIRUS.png",
+  "/quotation-images/yoast-seo.png",
+  "/quotation-images/restructuracion.png",
+  "/quotation-images/REDES.png"
+];
+const QUOTATION_SERVICE_IMAGE_MAP = {
+  "WEB INFORMATIVA": ["/quotation-images/web-informativa.png"],
+  "WEB E-COMMERCE": ["/quotation-images/E-COMERCE.png"],
+  "WEB FUSION E-COMMERCE": ["/quotation-images/web-informativa.png", "/quotation-images/E-COMERCE.png"],
+  "POSICIONAMIENTO SEO": ["/quotation-images/posicionamiento-seo.png"],
+  "WEB AULA VIRTUAL": ["/quotation-images/aula-virtual.png"],
+  "WEB FUSION AULA VIRTUAL": ["/quotation-images/web-informativa.png", "/quotation-images/aula-virtual.png"],
+  "PLUGIN YOAST SEO": ["/quotation-images/yoast-seo.png"],
+  "RESTRUCTURACION BASICA": ["/quotation-images/restructuracion.png"],
+  "RESTRUCTURACION E-COMMERCE": ["/quotation-images/restructuracion.png"],
+  "REDES SOCIALES": ["/quotation-images/REDES.png"]
+};
 
 // ── CONTACTS STORAGE ────────────────────────────────────────────────────
 function loadContacts() {
@@ -137,6 +215,28 @@ function loadCalledCounts() {
 
 function saveCalledCounts() {
   localStorage.setItem(CALLED_COUNTS_KEY, JSON.stringify(calledCounts));
+}
+
+function loadWhatsAppPresetMessages() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WHATSAPP_PRESETS_KEY) || "[]");
+    if (Array.isArray(raw)) {
+      whatsappPresetMessages = raw
+        .map((msg) => String(msg || "").trim())
+        .filter(Boolean);
+    }
+  } catch {
+    whatsappPresetMessages = [];
+  }
+
+  if (!whatsappPresetMessages.length) {
+    whatsappPresetMessages = [...DEFAULT_WHATSAPP_PRESET_MESSAGES];
+    saveWhatsAppPresetMessages();
+  }
+}
+
+function saveWhatsAppPresetMessages() {
+  localStorage.setItem(WHATSAPP_PRESETS_KEY, JSON.stringify(whatsappPresetMessages));
 }
 
 function exportContactsToWord() {
@@ -489,10 +589,18 @@ function normalizePhoneForWa(phone) {
   let clean = String(phone || "").replace(/\D/g, "");
   if (!clean) return "";
 
-  if (clean.length === 9) {
+  // Si ya empieza con 51 y tiene longitud de internacional (11 dígitos para Perú)
+  if (clean.startsWith("51") && clean.length >= 11) {
+    return "+" + clean;
+  }
+
+  // Si tiene 9 dígitos y empieza con 9, es un móvil de Perú
+  if (clean.length === 9 && clean.startsWith("9")) {
     return "+51" + clean;
   }
-  return clean.startsWith("+") ? clean : "+" + clean;
+
+  // Otros casos, solo asegurar el +
+  return "+" + clean;
 }
 
 async function fetchWhatsAppJson(paths, options) {
@@ -541,81 +649,194 @@ function extractWaQr(data) {
   return `data:image/png;base64,${raw}`;
 }
 
+function showWaConnectionBadge({ connected, text }) {
+  if (!whatsappConnectOkEl) return;
+  whatsappConnectOkEl.style.display = "grid";
+  whatsappConnectOkEl.classList.toggle("is-offline", !connected);
+  const strong = whatsappConnectOkEl.querySelector("strong");
+  if (strong) strong.textContent = connected ? "Cuenta conectada" : "Cuenta desconectada";
+  if (whatsappLinkedNumberEl) whatsappLinkedNumberEl.textContent = text || (connected ? "Dispositivo vinculado" : "Sin vínculo activo");
+}
+
 async function refreshWhatsAppModal() {
-  if (!whatsappCurrentContact) return;
-  whatsappQrPanelEl.style.display = "none";
-  whatsappFormPanelEl.style.display = "none";
-  whatsappQrImgEl.style.display = "none";
-  whatsappQrImgEl.src = "";
+  if (whatsappModalEl.style.display !== "grid") return;
 
-  if (!currentPhoneLinked) {
-    whatsappQrPanelEl.style.display = "grid";
-    whatsappQrHintEl.textContent = "Primero vincula el celular en esta sesión para usar WhatsApp.";
-    if (sessionCode) {
-      whatsappQrImgEl.src = `/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?ts=${Date.now()}`;
-      whatsappQrImgEl.style.display = "block";
-    } else {
-      whatsappQrHintEl.textContent = "Primero crea o vincula una sesión.";
-    }
-    return;
-  }
-
-  whatsappQrHintEl.textContent = "Verificando estado de WhatsApp...";
-  const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS);
+  const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS, { cache: "no-store" });
   const linked = isWaLinked(statusData);
-  if (!linked) {
-    whatsappQrPanelEl.style.display = "grid";
-    const qrData = await fetchWhatsAppJson(WA_QR_PATHS);
-    const qrSrc = extractWaQr(qrData);
-    if (qrSrc) {
-      whatsappQrImgEl.src = qrSrc;
-      whatsappQrImgEl.style.display = "block";
-      whatsappQrHintEl.textContent = "Escanea el QR para vincular WhatsApp.";
+  const linkedPhone = statusData?.phone ? String(statusData.phone).replace("@s.whatsapp.net", "") : "";
+
+  if (linked) {
+    whatsappQrImgEl.src = "";
+    whatsappQrImgEl.style.display = "none";
+    if (whatsappLogoutBtn) whatsappLogoutBtn.style.display = "inline-flex";
+    if (whatsappQrLeadEl) whatsappQrLeadEl.style.display = "none";
+    showWaConnectionBadge({ connected: true, text: linkedPhone || "Dispositivo vinculado" });
+
+    if (whatsappModalMode === "connect") {
+      whatsappFormPanelEl.style.display = "none";
+      whatsappQrPanelEl.style.display = "grid";
+      whatsappQrHintEl.textContent = "Listo. Puedes continuar.";
     } else {
-      whatsappQrHintEl.textContent = "WhatsApp no vinculado. Verifica que el servicio en puerto 3010 esté activo.";
+      whatsappQrPanelEl.style.display = "none";
+      whatsappFormPanelEl.style.display = "grid";
+      if (!whatsappMessageInput.value) {
+        whatsappMessageInput.focus();
+      }
     }
+
+    stopWhatsAppQrPolling();
     return;
   }
 
-  whatsappFormPanelEl.style.display = "grid";
-  whatsappQrPanelEl.style.display = "none";
+  whatsappFormPanelEl.style.display = "none";
+  whatsappQrPanelEl.style.display = "grid";
+  if (whatsappLogoutBtn) whatsappLogoutBtn.style.display = "none";
+  showWaConnectionBadge({ connected: false, text: "Sin vínculo activo" });
+  if (whatsappQrLeadEl) whatsappQrLeadEl.style.display = "block";
+  whatsappQrHintEl.textContent = "Cuenta desconectada. Generando QR de WhatsApp...";
+
+  const qrData = await fetchWhatsAppJson(WA_QR_PATHS, { cache: "no-store" });
+  const qrSrc = extractWaQr(qrData);
+  if (qrSrc) {
+    whatsappQrImgEl.src = qrSrc;
+    whatsappQrImgEl.style.display = "block";
+    whatsappQrHintEl.textContent = "Escanea este QR en WhatsApp para vincular.";
+  } else {
+    whatsappQrImgEl.src = "";
+    whatsappQrImgEl.style.display = "none";
+    whatsappQrHintEl.textContent = "Esperando QR. Si tarda, verifica que el backend WhatsApp esté activo.";
+  }
+
+  startWhatsAppQrPolling();
 }
 
 function openWhatsAppModal(contact) {
-  whatsappCurrentContact = contact;
-  whatsappTitleEl.textContent = `WhatsApp: ${contact.name || "Contacto"}`;
-
-  // Formateo automático: si tiene 9 dígitos, ponerle +51
-  let phone = String(contact.phone || "").replace(/\D/g, "");
-  if (phone.length === 9) {
-    phone = "+51" + phone;
-  } else if (phone && !phone.startsWith("+")) {
-    // Si no tiene + pero es internacional, mejor dejarlo limpio o intentar normalizarlo
-    phone = "+" + phone;
+  const phone = normalizePhoneForWa(contact?.phone || "");
+  const waNumber = String(phone).replace(/\D/g, "");
+  if (!waNumber) {
+    alert("El contacto no tiene un número válido para WhatsApp.");
+    return;
   }
 
-  whatsappPhoneEl.textContent = phone || "-";
-  whatsappQrPanelEl.style.display = "grid";
-  whatsappFormPanelEl.style.display = "none";
-  whatsappQrImgEl.style.display = "none";
-  whatsappQrHintEl.textContent = "Cargando estado de WhatsApp...";
+  whatsappCurrentContact = { ...contact, phone };
+  whatsappModalMode = "contact";
+  whatsappTitleEl.textContent = `WhatsApp · ${contact?.name || "Contacto"}`;
+  whatsappPhoneEl.textContent = phone;
   whatsappModalEl.style.display = "grid";
-
-  // Limpiar archivo previo
+  whatsappFormPanelEl.style.display = "none";
+  whatsappQrPanelEl.style.display = "grid";
+  whatsappQrImgEl.style.display = "none";
+  whatsappQrImgEl.src = "";
+  if (whatsappConnectOkEl) whatsappConnectOkEl.style.display = "none";
+  if (whatsappQrLeadEl) whatsappQrLeadEl.style.display = "block";
+  whatsappMessageInput.value = "";
   whatsappFileInput.value = "";
-  whatsappFileNameEl.textContent = "Arrastra un archivo aquí o haz clic";
-
-  whatsappMessageInput.focus();
+  updateWhatsAppFileLabel();
+  renderWhatsAppPresetMessages();
+  whatsappQrHintEl.textContent = "Cargando estado de WhatsApp...";
+  setStatus(`Verificando conexion de WhatsApp para ${phone}...`, true);
   refreshWhatsAppModal();
 }
 
+function openWhatsAppConnectModal() {
+  whatsappModalMode = "connect";
+  whatsappCurrentContact = null;
+  whatsappTitleEl.textContent = "Conectar WhatsApp";
+  whatsappPhoneEl.textContent = "Escanea el QR para vincular el dispositivo.";
+  whatsappModalEl.style.display = "grid";
+  whatsappFormPanelEl.style.display = "none";
+  whatsappQrPanelEl.style.display = "grid";
+  whatsappQrImgEl.style.display = "none";
+  whatsappQrImgEl.src = "";
+  if (whatsappConnectOkEl) whatsappConnectOkEl.style.display = "none";
+  if (whatsappQrLeadEl) whatsappQrLeadEl.style.display = "block";
+  whatsappQrHintEl.textContent = "Cargando estado de WhatsApp...";
+  refreshWhatsAppModal();
+}
+
+function startWhatsAppQrPolling() {
+  if (whatsappQrPollTimer) return;
+  whatsappQrPollTimer = setInterval(() => {
+    refreshWhatsAppModal().catch(() => {
+      // El hint ya maneja errores visuales en la siguiente iteracion.
+    });
+  }, 3000);
+}
+
+function stopWhatsAppQrPolling() {
+  if (!whatsappQrPollTimer) return;
+  clearInterval(whatsappQrPollTimer);
+  whatsappQrPollTimer = null;
+}
+
 function closeWhatsAppModal() {
+  stopWhatsAppQrPolling();
   whatsappModalEl.style.display = "none";
   whatsappCurrentContact = null;
+  whatsappModalMode = "contact";
   whatsappMessageInput.value = "";
   whatsappFileInput.value = "";
   whatsappQrImgEl.src = "";
   whatsappQrImgEl.style.display = "none";
+  if (whatsappLogoutBtn) whatsappLogoutBtn.style.display = "none";
+  if (whatsappConnectOkEl) whatsappConnectOkEl.style.display = "none";
+  if (whatsappQrLeadEl) whatsappQrLeadEl.style.display = "block";
+}
+
+async function logoutWhatsAppAccount() {
+  if (!confirm("Se cerrará la sesión de WhatsApp vinculada. ¿Continuar?")) return;
+  try {
+    if (whatsappLogoutBtn) {
+      whatsappLogoutBtn.disabled = true;
+      whatsappLogoutBtn.textContent = "Cerrando...";
+    }
+    let ok = false;
+    let lastError = "No se pudo cerrar sesión.";
+    for (const path of WA_LOGOUT_PATHS) {
+      try {
+        const res = await fetch(`${WHATSAPP_API_BASE}${path}`, {
+          method: "POST",
+          headers: {
+            ...NGROK_SKIP_WARNING_HEADERS,
+            "Content-Type": "application/json"
+          },
+          body: "{}"
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.ok) {
+          ok = true;
+          break;
+        }
+        lastError = data?.error || `HTTP ${res.status}`;
+      } catch (err) {
+        lastError = err?.message || "Error de red";
+      }
+    }
+
+    // Fallback: si backend ya reporta desconectado, lo tomamos como cierre exitoso.
+    if (!ok) {
+      const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS, { cache: "no-store" });
+      if (!isWaLinked(statusData)) {
+        ok = true;
+      }
+    }
+    if (!ok) throw new Error(lastError);
+
+    whatsappQrImgEl.src = "";
+    whatsappQrImgEl.style.display = "none";
+    showWaConnectionBadge({ connected: false, text: "Sin vínculo activo" });
+    whatsappQrHintEl.textContent = "Cuenta desconectada. Generando nuevo QR...";
+    setStatus("Sesión de WhatsApp cerrada.", true);
+    await refreshWhatsAppModal();
+  } catch (err) {
+    alert(`No se pudo cerrar sesión: ${err.message}`);
+    setStatus(`Error cerrando sesión de WhatsApp: ${err.message}`, true);
+  } finally {
+    if (whatsappLogoutBtn) {
+      whatsappLogoutBtn.disabled = false;
+      whatsappLogoutBtn.textContent = "Cerrar sesión";
+    }
+  }
 }
 
 async function sendWhatsAppMessage() {
@@ -636,41 +857,37 @@ async function sendWhatsAppMessage() {
   }
 
   whatsappSendBtn.disabled = true;
-  whatsappSendBtn.textContent = "🚀 Enviando...";
-  setStatus("Enviando mensaje de WhatsApp...", true);
+  whatsappSendBtn.textContent = "Enviando...";
+  setStatus(`Enviando por Baileys a ${phone}...`, true);
 
   try {
-    let sent = false;
-    let lastError = "Error desconocido";
+    const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS, { cache: "no-store" });
+    if (!isWaLinked(statusData)) {
+      throw new Error("WhatsApp no está conectado. Usa 'Conectar WhatsApp' primero.");
+    }
 
-    for (const p of WA_SEND_PATHS) {
+    let sent = false;
+    let lastError = "No se pudo enviar por WhatsApp.";
+    for (const path of WA_SEND_PATHS) {
       const fd = new FormData();
       fd.append("to", phone);
-      fd.append("message", message);
-      if (file) {
-        fd.append("file", file);
-        console.log(`[WA] Adjuntando archivo: ${file.name} (${file.size} bytes)`);
-      }
+      fd.append("message", message || "");
+      if (file) fd.append("file", file, file.name || "archivo");
 
       try {
-        const res = await fetch(`${WHATSAPP_API_BASE}${p}`, {
+        const res = await fetch(`${WHATSAPP_API_BASE}${path}`, {
           method: "POST",
           body: fd,
           headers: NGROK_SKIP_WARNING_HEADERS
         });
-
-        const data = await res.json();
-        if (res.ok && data.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.ok) {
           sent = true;
-          console.log(`[WA] Mensaje enviado con exito via ${p}`);
           break;
-        } else {
-          lastError = data.error || `Error HTTP ${res.status}`;
-          console.error(`[WA] Error en intento via ${p}:`, lastError);
         }
-      } catch (e) {
-        lastError = e.message;
-        console.error(`[WA] Excepcion en intento via ${p}:`, e);
+        lastError = data?.error || `HTTP ${res.status}`;
+      } catch (err) {
+        lastError = err?.message || "Error de red";
       }
     }
 
@@ -678,7 +895,7 @@ async function sendWhatsAppMessage() {
       throw new Error(lastError);
     }
 
-    setStatus(`✅ Enviado a ${phone}`, true);
+    setStatus(`✅ Mensaje enviado a ${phone}`, true);
     setTimeout(() => setStatus("Listo.", true), 3000);
     closeWhatsAppModal();
   } catch (err) {
@@ -731,6 +948,66 @@ function updateWhatsAppFileLabel() {
   } else {
     whatsappFileNameEl.textContent = "Arrastra un archivo aquí o haz clic";
   }
+}
+
+function renderWhatsAppPresetMessages() {
+  if (!whatsappTemplatesEl) return;
+  whatsappTemplatesEl.innerHTML = "";
+
+  for (const msg of whatsappPresetMessages) {
+    const row = document.createElement("div");
+    row.className = "whatsapp-template-row";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "whatsapp-template-btn";
+    btn.textContent = msg;
+    btn.title = "Usar mensaje";
+    btn.addEventListener("click", () => {
+      whatsappMessageInput.value = msg;
+      whatsappMessageInput.focus();
+      whatsappMessageInput.setSelectionRange(whatsappMessageInput.value.length, whatsappMessageInput.value.length);
+    });
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "whatsapp-template-remove-btn";
+    removeBtn.textContent = "✕";
+    removeBtn.title = "Eliminar mensaje";
+    removeBtn.addEventListener("click", () => {
+      whatsappPresetMessages = whatsappPresetMessages.filter((x) => x !== msg);
+      if (!whatsappPresetMessages.length) {
+        whatsappPresetMessages = [...DEFAULT_WHATSAPP_PRESET_MESSAGES];
+      }
+      saveWhatsAppPresetMessages();
+      renderWhatsAppPresetMessages();
+      setStatus("Mensaje predeterminado eliminado.", true);
+    });
+
+    row.appendChild(btn);
+    row.appendChild(removeBtn);
+    whatsappTemplatesEl.appendChild(row);
+  }
+}
+
+function saveNewWhatsAppPresetMessage() {
+  const newMsg = (whatsappTemplateInput?.value || "").trim();
+  if (!newMsg) {
+    setStatus("Escribe un mensaje para guardarlo como predeterminado.", true);
+    return;
+  }
+
+  const alreadyExists = whatsappPresetMessages.some((x) => x.toLowerCase() === newMsg.toLowerCase());
+  if (alreadyExists) {
+    setStatus("Ese mensaje ya existe en los predeterminados.", true);
+    return;
+  }
+
+  whatsappPresetMessages.unshift(newMsg);
+  saveWhatsAppPresetMessages();
+  renderWhatsAppPresetMessages();
+  whatsappTemplateInput.value = "";
+  setStatus("Mensaje predeterminado guardado.", true);
 }
 
 // ── PAIRING ────────────────────────────────────────────────────────────
@@ -1131,10 +1408,28 @@ function closeEditModal() {
 editCloseBtn.addEventListener("click", closeEditModal);
 whatsappCloseBtn.addEventListener("click", closeWhatsAppModal);
 whatsappSendBtn.addEventListener("click", sendWhatsAppMessage);
+if (connectWhatsAppBtn) {
+  connectWhatsAppBtn.addEventListener("click", openWhatsAppConnectModal);
+}
+if (whatsappLogoutBtn) {
+  whatsappLogoutBtn.addEventListener("click", logoutWhatsAppAccount);
+}
+if (whatsappTemplateSaveBtn) {
+  whatsappTemplateSaveBtn.addEventListener("click", saveNewWhatsAppPresetMessage);
+}
+if (whatsappTemplateInput) {
+  whatsappTemplateInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveNewWhatsAppPresetMessage();
+    }
+  });
+}
 whatsappModalEl.addEventListener("click", (e) => {
   if (e.target === whatsappModalEl) closeWhatsAppModal();
 });
 whatsappQrImgEl.addEventListener("error", () => {
+  if (!whatsappQrImgEl.src) return;
   whatsappQrImgEl.style.display = "none";
   whatsappQrHintEl.textContent = "No se pudo cargar el QR de WhatsApp.";
 });
@@ -1363,9 +1658,619 @@ function float32ToInt16(f32) {
   return i16;
 }
 
+// ── QUOTATION (FRONTEND ONLY, NO PHP) ───────────────────────────────────
+function qMoney(value) {
+  return `S/ ${Number(value || 0).toFixed(2)}`;
+}
+
+function qToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function resetQuotationForm() {
+  quotationItems = [{
+    id: crypto.randomUUID(),
+    service: "",
+    customMode: false,
+    quantity: 1,
+    price: 0,
+    image: ""
+  }];
+  if (qDateEl) qDateEl.value = qToday();
+  if (qCompanyEl) qCompanyEl.value = "";
+  if (qRucEl) qRucEl.value = "";
+  if (qPhoneEl) qPhoneEl.value = "";
+  if (qEmailEl) qEmailEl.value = "";
+  if (qAddressEl) qAddressEl.value = "";
+  if (quotationApplyIgvEl) quotationApplyIgvEl.checked = false;
+  renderQuotationItems();
+  recalcQuotationTotals();
+}
+
+function getQuotationTotals() {
+  const subtotal = quotationItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.price || 0)), 0);
+  const igv = quotationApplyIgvEl?.checked ? subtotal * 0.18 : 0;
+  const total = subtotal + igv;
+  return { subtotal, igv, total };
+}
+
+function recalcQuotationTotals() {
+  const { subtotal, igv, total } = getQuotationTotals();
+  if (quotationSubtotalEl) quotationSubtotalEl.textContent = qMoney(subtotal);
+  if (quotationIgvEl) quotationIgvEl.textContent = qMoney(igv);
+  if (quotationTotalEl) quotationTotalEl.textContent = qMoney(total);
+}
+
+function renderQuotationItems() {
+  if (!quotationItemsBodyEl) return;
+  quotationItemsBodyEl.innerHTML = "";
+
+  quotationItems.forEach((item) => {
+    const serviceKnown = QUOTATION_SERVICE_OPTIONS.includes(item.service);
+    const isCustom = Boolean(item.customMode || (!serviceKnown && item.service));
+    const serviceOptions = [`<option value="">Seleccione...</option>`]
+      .concat(
+        QUOTATION_SERVICE_OPTIONS.map((service) =>
+          `<option value="${escHtml(service)}" ${item.service === service ? "selected" : ""}>${escHtml(service)}</option>`
+        )
+      )
+      .concat([`<option value="__other__" ${isCustom ? "selected" : ""}>OTRO (escribir)</option>`])
+      .join("");
+
+    const imageOptions = [`<option value="">Sin imagen</option>`]
+      .concat(QUOTATION_IMAGE_OPTIONS.map((img) => `<option value="${escHtml(img)}" ${item.image === img ? "selected" : ""}>${escHtml(img.split("/").pop())}</option>`))
+      .join("");
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <select data-q-field="service_select" data-q-id="${item.id}" style="width:100%;">${serviceOptions}</select>
+        ${isCustom ? `
+          <input data-q-field="service_custom" data-q-id="${item.id}" type="text" value="${escHtml(item.service || "")}" placeholder="Escribe servicio personalizado" style="margin-top:6px;width:100%;" />
+        ` : ""}
+        ${(isCustom && String(item.service || "").trim().length > 0) ? `
+          <div style="margin-top:6px;">
+            <label class="muted" style="font-size:11px;">Imagen</label>
+            <select data-q-field="image" data-q-id="${item.id}" style="width:100%;margin-top:4px;">${imageOptions}</select>
+            ${item.image ? `<img src="${item.image}" alt="img" style="display:block;margin-top:6px;max-height:56px;border-radius:8px;border:1px solid rgba(255,255,255,.15);" />` : ""}
+          </div>
+        ` : ""}
+      </td>
+      <td><input data-q-field="quantity" data-q-id="${item.id}" type="number" min="1" value="${Number(item.quantity || 1)}" /></td>
+      <td><input data-q-field="price" data-q-id="${item.id}" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(item.price || 0)}" /></td>
+      <td data-q-total="${item.id}" style="font-weight:700;">${qMoney(Number(item.quantity || 0) * Number(item.price || 0))}</td>
+      <td>
+        <div class="quote-item-actions">
+          <button data-q-action="remove" data-q-id="${item.id}" type="button" class="secondary">🗑️ Quitar</button>
+        </div>
+      </td>
+    `;
+    quotationItemsBodyEl.appendChild(tr);
+  });
+}
+
+function openQuotationModal(prefill = null) {
+  if (!quotationModalEl) return;
+  resetQuotationForm();
+  if (prefill) {
+    if (qCompanyEl) qCompanyEl.value = prefill.name || "";
+    if (qPhoneEl) qPhoneEl.value = prefill.phone || "";
+    if (qEmailEl) qEmailEl.value = prefill.email || "";
+  }
+  quotationModalEl.style.display = "grid";
+}
+
+function closeQuotationModal() {
+  if (!quotationModalEl) return;
+  quotationModalEl.style.display = "none";
+}
+
+function quotationToHtml() {
+  const { subtotal, igv, total } = getQuotationTotals();
+  const rows = quotationItems.map((item) => `
+    <tr>
+      <td style="border:1px solid #ddd;padding:8px;">
+        <div>${escHtml(item.service || "—")}</div>
+      </td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:right;">${Number(item.quantity || 0)}</td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:right;">${qMoney(item.price)}</td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:right;">${qMoney(Number(item.quantity || 0) * Number(item.price || 0))}</td>
+    </tr>
+  `).join("");
+
+  const now = new Date().toLocaleString("es-PE");
+  const date = qDateEl?.value || qToday();
+  const company = escHtml(qCompanyEl?.value || "");
+  const ruc = escHtml(qRucEl?.value || "");
+  const phone = escHtml(qPhoneEl?.value || "");
+  const email = escHtml(qEmailEl?.value || "");
+  const address = escHtml(qAddressEl?.value || "");
+  const datePretty = escHtml(date.split("-").reverse().join("/"));
+  const extraPages = [];
+  const seen = new Set();
+  quotationItems.forEach((item) => {
+    if (item.image) {
+      if (!seen.has(item.image)) {
+        seen.add(item.image);
+        extraPages.push(item.image);
+      }
+      return;
+    }
+    const key = String(item.service || "").trim().toUpperCase();
+    const mapped = QUOTATION_SERVICE_IMAGE_MAP[key] || (key.includes("REDES") ? ["/quotation-images/REDES.png"] : []);
+    mapped.forEach((src) => {
+      if (!seen.has(src)) {
+        seen.add(src);
+        extraPages.push(src);
+      }
+    });
+  });
+
+  const extraPagesHtml = extraPages.map((src) => `
+    <div class="page page--extra">
+      <img class="page--extra__image" src="${src}" alt="Detalle del servicio" />
+      <div class="page--extra__date">${datePretty}</div>
+    </div>
+  `).join("");
+
+  return `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Cotizacion ${company || ""}</title>
+        <style>
+          * { margin:0; padding:0; box-sizing:border-box; }
+          body {
+            font-family: Arial, sans-serif;
+            background:#f5f5f5;
+            padding:20px;
+            max-height:100vh;
+            overflow-y:auto;
+          }
+          .preview-actions {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-start;
+            margin: 0 auto 12px;
+            max-width: 210mm;
+            z-index: 5;
+          }
+          .preview-actions button {
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #fff;
+            margin-right: 8px;
+            cursor: default;
+            box-shadow: 0 6px 20px rgba(0,0,0,.15);
+          }
+          .btn-back { background: #666; }
+          .btn-pdf { background: #4b1c91; }
+          .btn-email { background: #28a745; }
+          .btn-wa { background: #25D366; }
+          .btn-email-wa { background: linear-gradient(135deg,#25D366 0%,#128C7E 100%); }
+          .page {
+            width:210mm;
+            min-height:297mm;
+            margin:0 auto;
+            background:#fff;
+            position:relative;
+            overflow:hidden;
+            box-shadow:0 0 20px rgba(0,0,0,.1);
+          }
+          .header-decoration {
+            position:absolute;
+            top:0; left:0; right:0;
+            height:70mm;
+            background:url('/quotation-assets/cabezera.png') no-repeat center top;
+            background-size:100% auto;
+            z-index:1;
+          }
+          .footer-decoration {
+            position:absolute;
+            bottom:0;
+            left:0;
+            right:0;
+            height:86mm;
+            overflow:hidden;
+            z-index:1;
+          }
+          .footer-decoration img {
+            position:absolute;
+            bottom:0;
+            left:0;
+            width:100%;
+            height:auto;
+            display:block;
+          }
+          .content {
+            position:relative;
+            z-index:2;
+            padding:70mm 20mm 90mm;
+            min-height:297mm;
+          }
+          .client-section { margin-bottom:25px; }
+          .section-title {
+            font-size:12px; font-weight:bold; text-transform:uppercase;
+            letter-spacing:2px; margin-bottom:10px; color:#333;
+          }
+          .client-data { font-size:13px; line-height:1.8; color:#333; }
+          .client-row { margin-bottom:5px; }
+          .client-label { display:inline-block; width:80px; }
+          .fecha-row { margin-top:15px; font-size:13px; font-weight:bold; color:#333; }
+          table { width:100%; border-collapse:collapse; margin:20px 0; font-size:13px; }
+          thead { background:#333; color:#fff; }
+          th { padding:10px; text-align:left; border:1px solid #333; }
+          td { padding:10px; border:1px solid #ddd; }
+          tbody tr { background:#f9f9f9; }
+          .amount { text-align:right; }
+          .total-section { text-align:right; margin:20px 0; font-size:14px; font-weight:bold; padding-right:10px; }
+          .total-label { display:inline-block; margin-right:20px; }
+          .total-value { display:inline-block; font-size:16px; color:#333; }
+          .page--extra {
+            margin:20px auto 0;
+            width:210mm;
+            min-height:297mm;
+            position:relative;
+            overflow:hidden;
+            box-shadow:0 0 20px rgba(0,0,0,.1);
+            background:#fff;
+          }
+          .page--extra__image {
+            width:100%;
+            height:100%;
+            object-fit:contain;
+            display:block;
+          }
+          .page--extra__date {
+            position:absolute;
+            top:58mm;
+            right:80mm;
+            background:rgba(255,255,255,.95);
+            padding:8px 20px;
+            border-radius:4px;
+            font-weight:bold;
+            color:#292927;
+            font-size:14px;
+            letter-spacing:1px;
+          }
+          @media print {
+            body { background:#fff; padding:0; }
+            .page, .page--extra { box-shadow:none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="preview-actions">
+          <button class="btn-wa" type="button" onclick="window.parent.postMessage({ type: 'quotation-send-whatsapp' }, '*')">Enviar por WhatsApp</button>
+        </div>
+        <div class="page">
+          <div class="header-decoration"></div>
+          <div class="footer-decoration">
+            <img src="/quotation-assets/footer2.png" alt="Footer" />
+          </div>
+          <div class="content">
+            <div class="client-section">
+              <div class="section-title">Datos del Cliente</div>
+              <div class="client-data">
+                <div class="client-row"><span class="client-label">Empresa :</span><span>${company || "—"}</span></div>
+                <div class="client-row"><span class="client-label">RUC :</span><span>${ruc || "—"}</span></div>
+                <div class="client-row"><span class="client-label">Teléfono :</span><span>${phone || "—"}</span></div>
+                <div class="client-row"><span class="client-label">Correo :</span><span>${email || "—"}</span></div>
+                <div class="client-row"><span class="client-label">Dirección :</span><span>${address || "—"}</span></div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Cantidad</th>
+                  <th class="amount">Precio</th>
+                  <th class="amount">Total</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+
+            <div class="total-section">
+              <div style="margin-bottom:5px;">
+                <span class="total-label">Subtotal:</span>
+                <span class="total-value">S/ ${Number(subtotal).toFixed(2)}</span>
+              </div>
+              <div style="margin-bottom:5px;">
+                <span class="total-label">IGV (18%):</span>
+                <span class="total-value">S/ ${Number(igv).toFixed(2)}</span>
+              </div>
+              <div>
+                <span class="total-label" style="font-size:18px;">Total:</span>
+                <span class="total-value" style="font-size:18px;color:#4b1c91;">S/ ${Number(total).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${extraPagesHtml}
+      </body>
+    </html>
+  `;
+}
+
+function previewQuotationHtml() {
+  const html = quotationToHtml();
+  if (!quotationPreviewModalEl || !quotationPreviewFrameEl) return;
+  quotationPreviewFrameEl.srcdoc = html;
+  quotationPreviewModalEl.style.display = "grid";
+  setQuotationSendFeedback("");
+}
+
+function closeQuotationPreview() {
+  if (!quotationPreviewModalEl || !quotationPreviewFrameEl) return;
+  quotationPreviewModalEl.style.display = "none";
+  quotationPreviewFrameEl.srcdoc = "";
+  setQuotationSendFeedback("");
+}
+
+function setQuotationSendFeedback(message, tone = "") {
+  if (!quotationSendFeedbackEl) return;
+  quotationSendFeedbackEl.textContent = message || "";
+  quotationSendFeedbackEl.classList.remove("is-sending", "is-ok", "is-error");
+  if (tone === "sending") quotationSendFeedbackEl.classList.add("is-sending");
+  if (tone === "ok") quotationSendFeedbackEl.classList.add("is-ok");
+  if (tone === "error") quotationSendFeedbackEl.classList.add("is-error");
+}
+
+async function downloadQuotationPdf() {
+  const payload = await buildQuotationPdfPayload();
+  if (!payload) return;
+  const { blob, filename } = payload;
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setStatus("PDF descargado.", true);
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+}
+
+async function buildQuotationPdfPayload() {
+  const jsPdfNamespace = window.jspdf || window.jsPDF;
+  const html2canvasFn = window.html2canvas;
+  if (!jsPdfNamespace?.jsPDF || typeof html2canvasFn !== "function") {
+    setStatus("No se pudo cargar el generador PDF.", true);
+    return null;
+  }
+
+  const wasOpen = quotationPreviewModalEl?.style.display === "grid";
+  if (!wasOpen) {
+    previewQuotationHtml();
+    await new Promise((resolve) => setTimeout(resolve, 260));
+  }
+
+  const frameDoc = quotationPreviewFrameEl?.contentDocument;
+  if (!frameDoc) {
+    setStatus("No se pudo abrir la vista previa.", true);
+    return null;
+  }
+
+  const pages = Array.from(frameDoc.querySelectorAll(".page, .page--extra"));
+  if (!pages.length) {
+    setStatus("No hay páginas para exportar.", true);
+    return null;
+  }
+
+  try {
+    const pdf = new jsPdfNamespace.jsPDF("p", "mm", "a4");
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await html2canvasFn(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pageWidth = 210;
+      const pageHeight = (canvas.height * pageWidth) / canvas.width;
+      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+      if (i < pages.length - 1) pdf.addPage("a4", "portrait");
+    }
+
+    const stamp = (qDateEl?.value || qToday()).replaceAll("-", "");
+    const companyRaw = (qCompanyEl?.value || "cliente").trim().toLowerCase().replace(/\s+/g, "-");
+    const filename = `cotizacion-${companyRaw || "cliente"}-${stamp}.pdf`;
+    const blob = pdf.output("blob");
+    return { blob, filename };
+  } catch (error) {
+    console.error(error);
+    setStatus("Error al generar PDF.", true);
+    return null;
+  }
+}
+
+async function sendQuotationPdfViaWhatsApp() {
+  const rawPhone = (qPhoneEl?.value || "").trim();
+  const to = normalizePhoneForWa(rawPhone);
+  if (!to) {
+    alert("Ingresa un teléfono válido en la cotización para enviar por WhatsApp.");
+    setQuotationSendFeedback("Falta teléfono válido", "error");
+    return;
+  }
+
+  const statusData = await fetchWhatsAppJson(WA_STATUS_PATHS, { cache: "no-store" });
+  if (!isWaLinked(statusData)) {
+    alert("WhatsApp no está conectado. Usa el botón Conectar WhatsApp.");
+    setQuotationSendFeedback("WhatsApp no conectado", "error");
+    return;
+  }
+
+  setQuotationSendFeedback("Enviando PDF por WhatsApp...", "sending");
+  setStatus(`Generando PDF para enviar a ${to}...`, true);
+  const payload = await buildQuotationPdfPayload();
+  if (!payload) return;
+
+  const { blob, filename } = payload;
+  let sent = false;
+  let lastError = "No se pudo enviar la cotización.";
+
+  for (const path of WA_SEND_PATHS) {
+    const fd = new FormData();
+    fd.append("to", to);
+    fd.append("message", `Hola, te comparto tu cotización en PDF.${qCompanyEl?.value ? `\nEmpresa: ${qCompanyEl.value.trim()}` : ""}`);
+    fd.append("file", blob, filename);
+
+    try {
+      const res = await fetch(`${WHATSAPP_API_BASE}${path}`, {
+        method: "POST",
+        body: fd,
+        headers: NGROK_SKIP_WARNING_HEADERS
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok) {
+        sent = true;
+        break;
+      }
+      lastError = data?.error || `HTTP ${res.status}`;
+    } catch (err) {
+      lastError = err?.message || "Error de red";
+    }
+  }
+
+  if (!sent) {
+    setStatus(`❌ Error enviando cotización: ${lastError}`, true);
+    setQuotationSendFeedback(`Error: ${lastError}`, "error");
+    alert(`No se pudo enviar la cotización: ${lastError}`);
+    return;
+  }
+
+  setStatus(`✅ Cotización enviada por WhatsApp a ${to}`, true);
+  setQuotationSendFeedback("Enviado correctamente", "ok");
+  alert(`✅ Cotización enviada a ${to}`);
+}
+
+function bindQuotationEvents() {
+  if (quotationServicesDatalistEl) {
+    quotationServicesDatalistEl.innerHTML = QUOTATION_SERVICE_OPTIONS
+      .map((service) => `<option value="${escHtml(service)}"></option>`)
+      .join("");
+  }
+  if (openQuotationBtn) openQuotationBtn.addEventListener("click", () => openQuotationModal());
+  if (quotationCloseBtn) quotationCloseBtn.addEventListener("click", closeQuotationModal);
+  // Cotizador: solo se cierra con Esc o botón X.
+  if (quotationAddItemBtn) {
+    quotationAddItemBtn.addEventListener("click", () => {
+      quotationItems.push({ id: crypto.randomUUID(), service: "", customMode: false, quantity: 1, price: 0, image: "" });
+      renderQuotationItems();
+      recalcQuotationTotals();
+    });
+  }
+  if (quotationApplyIgvEl) {
+    quotationApplyIgvEl.addEventListener("change", recalcQuotationTotals);
+  }
+  if (quotationPreviewBtn) quotationPreviewBtn.addEventListener("click", previewQuotationHtml);
+  if (quotationDownloadBtn) quotationDownloadBtn.addEventListener("click", downloadQuotationPdf);
+  if (quotationPreviewDownloadBtn) quotationPreviewDownloadBtn.addEventListener("click", downloadQuotationPdf);
+  if (quotationPreviewCloseBtn) quotationPreviewCloseBtn.addEventListener("click", closeQuotationPreview);
+  if (!quotationMessageBridgeBound) {
+    window.addEventListener("message", (event) => {
+      if (event?.data?.type === "quotation-send-whatsapp") {
+        sendQuotationPdfViaWhatsApp().catch((err) => {
+          setStatus(`❌ Error enviando cotización: ${err.message}`, true);
+        });
+      }
+    });
+    quotationMessageBridgeBound = true;
+  }
+
+  if (quotationItemsBodyEl) {
+    quotationItemsBodyEl.addEventListener("input", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.getAttribute("data-q-id");
+      const field = target.getAttribute("data-q-field");
+      if (!id || !field) return;
+      const item = quotationItems.find((x) => x.id === id);
+      if (!item) return;
+      const value = target.value;
+      if (field === "quantity" || field === "price") {
+        item[field] = value === "" ? 0 : Number(value);
+      } else if (field === "service_custom") {
+        const cursorPos = typeof target.selectionStart === "number" ? target.selectionStart : null;
+        item.service = value;
+        renderQuotationItems();
+        const refocused = quotationItemsBodyEl.querySelector(`input[data-q-field="service_custom"][data-q-id="${id}"]`);
+        if (refocused) {
+          refocused.focus();
+          if (cursorPos !== null && typeof refocused.setSelectionRange === "function") {
+            refocused.setSelectionRange(cursorPos, cursorPos);
+          }
+        }
+        recalcQuotationTotals();
+        return;
+      } else {
+        item[field] = value;
+      }
+      const totalEl = quotationItemsBodyEl.querySelector(`[data-q-total="${id}"]`);
+      if (totalEl) {
+        totalEl.textContent = qMoney(Number(item.quantity || 0) * Number(item.price || 0));
+      }
+      recalcQuotationTotals();
+    });
+
+    quotationItemsBodyEl.addEventListener("change", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.getAttribute("data-q-id");
+      const field = target.getAttribute("data-q-field");
+      if (!id || !field) return;
+      if (field !== "service_select" && field !== "image") return;
+      const item = quotationItems.find((x) => x.id === id);
+      if (!item) return;
+      if (field === "service_select") {
+        if (target.value === "__other__") {
+          item.customMode = true;
+          item.service = "";
+          item.image = "";
+        } else {
+          item.customMode = false;
+          item.service = target.value;
+        }
+      } else {
+        item.image = target.value;
+      }
+      renderQuotationItems();
+      recalcQuotationTotals();
+    });
+
+    quotationItemsBodyEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-q-action]");
+      if (!btn) return;
+      const action = btn.getAttribute("data-q-action");
+      const id = btn.getAttribute("data-q-id");
+      if (action === "remove" && id) {
+        quotationItems = quotationItems.filter((x) => x.id !== id);
+        if (!quotationItems.length) {
+          quotationItems.push({ id: crypto.randomUUID(), service: "", customMode: false, quantity: 1, price: 0, image: "" });
+        }
+        renderQuotationItems();
+        recalcQuotationTotals();
+      }
+    });
+  }
+}
+
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadContacts();
 loadCalledCounts();
+loadWhatsAppPresetMessages();
 renderContacts();
 loadApkInfo();
+bindQuotationEvents();
+resetQuotationForm();

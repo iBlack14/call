@@ -1,29 +1,52 @@
-t=2026-02-20T16:15:51-0500 lvl=info msg="open config file" path=C:\\Users\\via\\Downloads\\KENIA\\.run\\ngrok_auth.yml err=nil
-t=2026-02-20T16:15:52-0500 lvl=info msg="open config file" path=C:\\Users\\via\\Downloads\\KENIA\\.run\\ngrok_multi.yml err=nil
-t=2026-02-20T16:15:52-0500 lvl=info msg="FIPS 140 mode" enabled=false
-t=2026-02-20T16:15:52-0500 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
-t=2026-02-20T16:15:52-0500 lvl=info msg=start pg=/api/tunnels id=1f4a18e9d2840df3
-t=2026-02-20T16:15:52-0500 lvl=info msg=end pg=/api/tunnels id=1f4a18e9d2840df3 status=200 dur=21.5174ms
-t=2026-02-20T16:15:53-0500 lvl=info msg="client session established" obj=tunnels.session
-t=2026-02-20T16:15:53-0500 lvl=info msg="tunnel session started" obj=tunnels.session
-t=2026-02-20T16:15:53-0500 lvl=info msg="started tunnel" obj=tunnels name=kenia addr=http://localhost:3000 url=https://crooked-fanny-principally.ngrok-free.dev
-t=2026-02-20T16:15:54-0500 lvl=info msg="update available" obj=updater
-t=2026-02-20T16:15:54-0500 lvl=info msg="join connections" obj=join id=b783be543eec l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43356
-t=2026-02-20T16:15:54-0500 lvl=info msg=start pg=/api/tunnels id=3086545129347f35
-t=2026-02-20T16:15:54-0500 lvl=info msg=end pg=/api/tunnels id=3086545129347f35 status=200 dur=0s
-t=2026-02-20T16:15:55-0500 lvl=info msg="join connections" obj=join id=12a94b8d1645 l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43356
-t=2026-02-20T16:15:55-0500 lvl=info msg="join connections" obj=join id=ce06fd1cfe8b l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43362
-t=2026-02-20T16:16:02-0500 lvl=info msg="join connections" obj=join id=6a1611066c4e l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:16:03-0500 lvl=info msg="join connections" obj=join id=45282f45be63 l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:16:03-0500 lvl=info msg="join connections" obj=join id=7eb7a4515024 l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:16:03-0500 lvl=info msg="join connections" obj=join id=8b6ba024afdf l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:16:05-0500 lvl=info msg="join connections" obj=join id=98780fda9992 l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:62834
-t=2026-02-20T16:16:08-0500 lvl=info msg="join connections" obj=join id=53235804a838 l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43366
-t=2026-02-20T16:16:08-0500 lvl=info msg="join connections" obj=join id=0e2e6d322362 l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43356
-t=2026-02-20T16:16:09-0500 lvl=info msg="join connections" obj=join id=0c93823d2d80 l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43356
-t=2026-02-20T16:16:09-0500 lvl=info msg="join connections" obj=join id=9ceaab535b9b l=[::1]:3000 r=[2803:a3e0:1990:5e70:6823:3a96:1bff:8635]:43368
-t=2026-02-20T16:16:18-0500 lvl=info msg="join connections" obj=join id=5473654144fd l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:17:04-0500 lvl=info msg="join connections" obj=join id=ea3715bc1e5e l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:17:17-0500 lvl=info msg="join connections" obj=join id=32339cd51f1d l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:18:09-0500 lvl=info msg="join connections" obj=join id=27bcd870ef2e l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
-t=2026-02-20T16:18:16-0500 lvl=info msg="join connections" obj=join id=01a631662687 l=[::1]:3000 r=[2803:a3e0:1990:5e70:884a:291a:6f6e:5b15]:65088
+t=2026-02-20T22:16:03-0500 lvl=info msg="open config file" path=C:\\Users\\via\\Downloads\\KENIA\\.run\\ngrok_auth.yml err=nil
+t=2026-02-20T22:16:03-0500 lvl=info msg="open config file" path=C:\\Users\\via\\Downloads\\KENIA\\.run\\ngrok_multi.yml err=nil
+t=2026-02-20T22:16:03-0500 lvl=info msg="FIPS 140 mode" enabled=false
+t=2026-02-20T22:16:04-0500 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2026-02-20T22:16:04-0500 lvl=info msg=start pg=/api/tunnels id=98f816ed539325d2
+t=2026-02-20T22:16:04-0500 lvl=info msg=end pg=/api/tunnels id=98f816ed539325d2 status=200 dur=561.3µs
+t=2026-02-20T22:16:04-0500 lvl=info msg="client session established" obj=tunnels.session
+t=2026-02-20T22:16:04-0500 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-02-20T22:16:05-0500 lvl=info msg="started tunnel" obj=tunnels name=kenia addr=http://localhost:3000 url=https://crooked-fanny-principally.ngrok-free.dev
+t=2026-02-20T22:16:05-0500 lvl=info msg="update available" obj=updater
+t=2026-02-20T22:16:06-0500 lvl=warn msg="failed to open private leg" id=e7829d2ce952 privaddr=localhost:3000 err="dial tcp [::1]:3000: connectex: No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión."
+t=2026-02-20T22:16:07-0500 lvl=info msg=start pg=/api/tunnels id=0c8f0cac74142db0
+t=2026-02-20T22:16:07-0500 lvl=info msg=end pg=/api/tunnels id=0c8f0cac74142db0 status=200 dur=0s
+t=2026-02-20T22:16:11-0500 lvl=info msg="join connections" obj=join id=132838cd61f4 l=[::1]:3000 r=132.184.55.198:45185
+t=2026-02-20T22:16:11-0500 lvl=info msg="join connections" obj=join id=106f6943bb96 l=[::1]:3000 r=132.184.55.198:45185
+t=2026-02-20T22:16:11-0500 lvl=info msg="join connections" obj=join id=0cd5cc47a1fa l=[::1]:3000 r=132.184.55.198:45713
+t=2026-02-20T22:16:12-0500 lvl=info msg="join connections" obj=join id=f80c3d9056e8 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:60762
+t=2026-02-20T22:16:12-0500 lvl=info msg="join connections" obj=join id=561cc7482802 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:60762
+t=2026-02-20T22:16:13-0500 lvl=info msg="join connections" obj=join id=f313cf798e94 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:58714
+t=2026-02-20T22:40:11-0500 lvl=info msg="join connections" obj=join id=5d687055cf54 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:11-0500 lvl=info msg="join connections" obj=join id=ba09b13d8720 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:11-0500 lvl=info msg="join connections" obj=join id=177c99db9234 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:11-0500 lvl=info msg="join connections" obj=join id=5241cff0a5b9 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:11-0500 lvl=info msg="join connections" obj=join id=6a544d8d2b16 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:12-0500 lvl=info msg="join connections" obj=join id=a9bed63d06d5 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:54728
+t=2026-02-20T22:40:21-0500 lvl=info msg="join connections" obj=join id=a2da7f771838 l=[::1]:3000 r=[2803:a3e0:135d:a3e0:b4e1:47d1:5b42:6343]:63109
+t=2026-02-20T22:40:28-0500 lvl=info msg="join connections" obj=join id=d20ed6e0446c l=[::1]:3000 r=132.184.55.198:48871
+t=2026-02-20T22:40:29-0500 lvl=info msg="join connections" obj=join id=5d1ba43ed7a4 l=[::1]:3000 r=132.184.55.198:49744
+t=2026-02-20T22:40:30-0500 lvl=info msg="join connections" obj=join id=ff63cd05ff06 l=[::1]:3000 r=132.184.55.198:50479
+t=2026-02-20T22:40:30-0500 lvl=info msg="join connections" obj=join id=0d66f542c997 l=[::1]:3000 r=132.184.55.198:49744
+t=2026-02-20T22:40:57-0500 lvl=info msg="join connections" obj=join id=368a22062c92 l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:40:57-0500 lvl=info msg="join connections" obj=join id=a238a65e0b86 l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:41:20-0500 lvl=info msg="join connections" obj=join id=e3b7ce523919 l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:41:20-0500 lvl=info msg="join connections" obj=join id=d6373a22d01e l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:41:43-0500 lvl=info msg="join connections" obj=join id=413a345ed3fd l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:41:43-0500 lvl=info msg="join connections" obj=join id=0e6929dd8bef l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:42:00-0500 lvl=info msg="join connections" obj=join id=02453cfd7c7b l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:42:00-0500 lvl=info msg="join connections" obj=join id=86136067ffa6 l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:46:27-0500 lvl=info msg="join connections" obj=join id=298dd45d9a3d l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:46:27-0500 lvl=info msg="join connections" obj=join id=96391e49c272 l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:46:42-0500 lvl=info msg="join connections" obj=join id=9bcca84708ed l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:46:42-0500 lvl=info msg="join connections" obj=join id=acee225fd471 l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:47:41-0500 lvl=info msg="join connections" obj=join id=774267f4ff2a l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:47:42-0500 lvl=info msg="join connections" obj=join id=520edf9d9d4c l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:49:02-0500 lvl=info msg="join connections" obj=join id=a2163b20ee59 l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:49:02-0500 lvl=info msg="join connections" obj=join id=e8fbca5c3f4c l=[::1]:3000 r=132.184.55.198:11253
+t=2026-02-20T22:49:04-0500 lvl=info msg="join connections" obj=join id=6bcbb72c0d1d l=[::1]:3000 r=132.184.55.95:42872
+t=2026-02-20T22:49:04-0500 lvl=info msg="join connections" obj=join id=763fa1e2028a l=[::1]:3000 r=132.184.55.95:42872
+t=2026-02-20T22:49:04-0500 lvl=info msg="join connections" obj=join id=57521ad87bd5 l=[::1]:3000 r=132.184.55.95:42872
+t=2026-02-20T22:49:04-0500 lvl=info msg="join connections" obj=join id=331b523f07cd l=[::1]:3000 r=132.184.55.95:44241
+t=2026-02-20T22:49:56-0500 lvl=info msg="join connections" obj=join id=8b27ee897878 l=[::1]:3000 r=132.184.55.198:10987
+t=2026-02-20T22:49:56-0500 lvl=info msg="join connections" obj=join id=a4d8b3559a9c l=[::1]:3000 r=132.184.55.198:11253

@@ -111,3 +111,60 @@ Call bridge skeleton running on http://localhost:3000
 [PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
 [PROXY] GET /status -> http://127.0.0.1:3010/status
 [PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send -> http://127.0.0.1:3010/send
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] HEAD /status -> http://127.0.0.1:3010/status
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 

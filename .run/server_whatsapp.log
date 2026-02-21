@@ -431,3 +431,747 @@ Closing session: SessionEntry {
     baseKey: <Buffer 05 2e 09 ba b0 52 2c c1 14 79 9d 94 b1 a0 6f 6c 46 df d3 12 e6 a8 13 91 c3 ca 50 4d 04 c0 02 47 73>
   }
 }
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771622463627,"pid":17704,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771622465302,"pid":17704,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+{"level":30,"time":1771622498130,"pid":17704,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622498270,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","text":"HOLA","hasFile":true,"fileName":"admin-ajax.jpg","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622498270,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","fileName":"admin-ajax.jpg","fileMime":"image/jpeg","size":31474,"msg":"Enviando archivo"}
+{"level":30,"time":1771622500420,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","msgId":"3EB0FBC91FA7DD69441E22","msg":"Imagen enviada con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    BboIOHU0FVqPBSRe53Ay7BRsH2bbWlt3tEwzzy9nMX1O: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 ba 08 38 75 34 15 5a 8f 05 24 5e e7 70 32 ec 14 6c 1f 66 db 5a 5b 77 b4 4c 33 cf 2f 67 31 7d 4e>,
+      privKey: <Buffer 88 2e 68 45 20 1b c5 11 46 df 06 94 b5 a2 11 1b ba bd c1 8b 11 d2 78 32 bd e0 0a b6 5c ee 75 74>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 7a d2 26 8f 42 66 b7 80 64 c9 ee 3a 6e 29 83 cb 6e a4 1e a9 5c ee 89 4f 06 63 29 ad f5 8d 88 87>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 69 fc b4 c7 ea a0 0c 70 c9 d9 73 cd 58 14 dc 69 c4 13 3f 43 fe a9 09 e4 27 80 46 dd f6 17 66 36>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622299164,
+    created: 1771622299164,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 69 fc b4 c7 ea a0 0c 70 c9 d9 73 cd 58 14 dc 69 c4 13 3f 43 fe a9 09 e4 27 80 46 dd f6 17 66 36>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BYKWZKegrFcU2j6Rs68uTEXvvTDd/V4RQVC/cc0R1tZP': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 1427989215,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 82 96 64 a7 a0 ac 57 14 da 3e 91 b3 af 2e 4c 45 ef bd 30 dd fd 5e 11 41 50 bf 71 cd 11 d6 d6 4f>,
+      privKey: <Buffer e0 ce aa d9 94 56 d8 06 c6 d4 bf 71 30 e0 f2 c4 59 21 08 b6 ad ad 1c c1 42 06 7a c7 9d 8e fe 53>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 ab 14 f4 18 6a 3d 2f 0c df 33 41 08 3c a2 e5 70 d7 9a a9 cb d3 4d 56 b4 19 a3 7a c7 d5 6d b7 0a>,
+    previousCounter: 0,
+    rootKey: <Buffer 38 01 b7 95 6d 0d 28 47 92 98 6d 70 6f b7 05 37 7a f0 65 b8 fd de ae b1 6b 88 2b e1 cc 5a 4c 7c>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 68 cb 14 b4 3c b5 66 19 87 6d f3 b4 96 4a 5a 9a 61 d7 73 2f 31 e6 da 60 5d 4a 48 61 fd da ea 2e>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621831966,
+    created: 1771621831966,
+    remoteIdentityKey: <Buffer 05 ab 30 eb 18 65 0e ad c1 91 cb b0 c2 58 98 a6 ad a9 03 7f 85 07 aa 2f 76 d9 f0 76 80 54 86 3d 17>
+  },
+  pendingPreKey: {
+    signedKeyId: 11226504,
+    baseKey: <Buffer 05 68 cb 14 b4 3c b5 66 19 87 6d f3 b4 96 4a 5a 9a 61 d7 73 2f 31 e6 da 60 5d 4a 48 61 fd da ea 2e>,
+    preKeyId: 13367216
+  }
+}
+{"level":30,"time":1771622628007,"pid":17704,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622628014,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","text":"HOLAAA","hasFile":true,"fileName":"logotipo-VCMAS.ico","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622628014,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","fileName":"logotipo-VCMAS.ico","fileMime":"image/x-icon","size":14215,"msg":"Enviando archivo"}
+{"level":30,"time":1771622629814,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","msgId":"3EB075382DBD4E5259DA8C","msg":"Imagen enviada con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    Bf0oJrSpqF3tkMQSAZYDyeGpOI0ytgn50wWRMnMfuo98: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 fd 28 26 b4 a9 a8 5d ed 90 c4 12 01 96 03 c9 e1 a9 38 8d 32 b6 09 f9 d3 05 91 32 73 1f ba 8f 7c>,
+      privKey: <Buffer b8 8c d9 b6 de a5 66 d9 c7 6c 59 3a b2 aa 26 02 95 5f a2 ff 57 b0 08 b4 bd 5e 5d 58 30 fe c2 6b>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 25 91 e6 fa bc 80 06 c3 de 0d 59 40 d0 ad ba d1 9b 0f 99 c2 8f de 92 f0 f6 08 e7 6f 93 0b 71 92>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 32 9c 88 d6 fc a7 fe cd a3 aa a6 f5 61 40 e8 c7 e7 7f da d0 d6 51 87 17 1f a1 f0 df a7 d6 ad 51>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622501393,
+    created: 1771622501393,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 32 9c 88 d6 fc a7 fe cd a3 aa a6 f5 61 40 e8 c7 e7 7f da d0 d6 51 87 17 1f a1 f0 df a7 d6 ad 51>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    Ba1F0czr5xXXyZ7g6gpLH2gSVcXYbLOVzRc681e34BZZ: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 7383,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 ad 45 d1 cc eb e7 15 d7 c9 9e e0 ea 0a 4b 1f 68 12 55 c5 d8 6c b3 95 cd 17 3a f3 57 b7 e0 16 59>,
+      privKey: <Buffer 68 ef bb b7 3a 69 8c ce 93 2b 6c c7 64 b0 f7 b5 ca ec 4d 89 37 07 c2 e7 c8 5d 4e e0 3b 12 8d 62>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 90 8f aa ca b0 15 37 ce f1 23 25 50 be d4 e2 e9 21 82 27 72 bc 75 67 3c 4f 07 f7 01 d1 be 04 0b>,
+    previousCounter: 0,
+    rootKey: <Buffer c3 ac d8 1e da f8 00 2f 46 ba 14 df 9b aa e5 0f b5 4e 56 45 e2 e5 c2 44 83 83 bd 03 bc d9 61 27>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 6f f1 06 00 7b c9 06 40 1e 58 d2 a6 bf 23 75 ba fc 7a f5 d2 e0 f2 68 55 8e 0e 42 84 7f a7 f0 43>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622629720,
+    created: 1771622629720,
+    remoteIdentityKey: <Buffer 05 92 8a 46 24 95 0f 27 b7 c6 33 91 21 fc 37 4b d8 e7 f5 b9 72 56 6d d1 c7 3f d8 47 da 77 b7 58 49>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 6f f1 06 00 7b c9 06 40 1e 58 d2 a6 bf 23 75 ba fc 7a f5 d2 e0 f2 68 55 8e 0e 42 84 7f a7 f0 43>,
+    preKeyId: 11
+  }
+}
+{"level":30,"time":1771622661125,"pid":17704,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771622661129,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","text":"HOLA","hasFile":true,"fileName":"admin-ajax.jpg","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771622661129,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","fileName":"admin-ajax.jpg","fileMime":"image/jpeg","size":31474,"msg":"Enviando archivo"}
+{"level":30,"time":1771622661728,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","msgId":"3EB0FA0BC5ACBD43E9DEDF","msg":"Imagen enviada con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    'BSy1ILOJDujHVEk2V8/SSOwyzHytPbfYSCNAEyo7yDpW': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 2c b5 20 b3 89 0e e8 c7 54 49 36 57 cf d2 48 ec 32 cc 7c ad 3d b7 d8 48 23 40 13 2a 3b c8 3a 56>,
+      privKey: <Buffer 10 0b 1e a9 21 bb 5f 30 39 ec 07 90 8f 63 ba ad 47 c5 07 75 b3 1e 5d 9c 45 43 31 65 59 2e 1e 60>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 1f ba f9 aa b4 e5 cb fc b2 ab b3 a0 5e 41 4d 12 c2 2a cb 6b a0 1d 7e 86 41 2d 26 16 f8 00 6c 6e>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 b3 ce 00 13 fc 08 73 7f 44 8d 4b 0b 8c 9c 1a ff c6 42 be 74 25 3e 42 ce e5 e8 ea a5 c7 2f d9 3e>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622630742,
+    created: 1771622630742,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 b3 ce 00 13 fc 08 73 7f 44 8d 4b 0b 8c 9c 1a ff c6 42 be 74 25 3e 42 ce e5 e8 ea a5 c7 2f d9 3e>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    BcTDYkoPXwFcJxM3T2q6d7HqsitOZbR5BUF3swWcoI9P: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 7383,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 c4 c3 62 4a 0f 5f 01 5c 27 13 37 4f 6a ba 77 b1 ea b2 2b 4e 65 b4 79 05 41 77 b3 05 9c a0 8f 4f>,
+      privKey: <Buffer 58 9b 94 e4 b6 1f 4e 73 80 ad 8f d4 a4 7c cc e2 cf ce af 63 4f d4 0e cb ec 1f 97 62 6a f3 b3 62>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 90 8f aa ca b0 15 37 ce f1 23 25 50 be d4 e2 e9 21 82 27 72 bc 75 67 3c 4f 07 f7 01 d1 be 04 0b>,
+    previousCounter: 0,
+    rootKey: <Buffer 0d 21 0e 1c 29 7b 6b df c4 24 28 3d 8b de 55 74 03 ff 26 94 85 84 6d 8d 08 73 f8 6e 54 63 22 fa>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 88 0a 3d 79 b3 cd 16 10 0f ac b2 6c a1 64 9c 9e 3a 99 45 f0 3f ff 3a 1b b6 e7 d8 a4 b1 17 7d 77>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622631764,
+    created: 1771622631764,
+    remoteIdentityKey: <Buffer 05 92 8a 46 24 95 0f 27 b7 c6 33 91 21 fc 37 4b d8 e7 f5 b9 72 56 6d d1 c7 3f d8 47 da 77 b7 58 49>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 88 0a 3d 79 b3 cd 16 10 0f ac b2 6c a1 64 9c 9e 3a 99 45 f0 3f ff 3a 1b b6 e7 d8 a4 b1 17 7d 77>,
+    preKeyId: 77
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BTqGMP/a8fBTAtRlDW4V7UqGllhziVgD/RjK5gSJ5eFa': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2184,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 3a 86 30 ff da f1 f0 53 02 d4 65 0d 6e 15 ed 4a 86 96 58 73 89 58 03 fd 18 ca e6 04 89 e5 e1 5a>,
+      privKey: <Buffer a0 45 d6 9f 34 99 bf b4 16 74 96 31 79 1d 24 c5 26 07 63 73 d5 93 dc af 1a 59 ac fa 5d ba bd 4d>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 4e 62 8f 94 24 32 f2 53 31 08 22 da 1e c5 63 ec 26 ca 0b 74 1b 0e f0 da 2e 60 42 0f b9 2f 54 56>,
+    previousCounter: 0,
+    rootKey: <Buffer b8 c4 f0 cf c6 19 f6 26 c2 d1 03 b9 6a bc 6b a3 89 95 98 69 73 4c 5a 76 69 3e 70 ae bc 2b a5 2f>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 0e a2 df 30 a6 8f 31 7a 89 5c e7 c0 e7 11 c4 fa b4 32 a9 ca 38 bc 72 2d a1 a7 75 cc f0 3c ae 04>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771621830053,
+    created: 1771621830053,
+    remoteIdentityKey: <Buffer 05 dc 40 3a 5d 4a b4 1f 23 91 bb 37 d3 76 00 06 78 fd 4f 9c 83 77 81 f2 38 5a 29 8a 70 ea 1f 14 0e>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 0e a2 df 30 a6 8f 31 7a 89 5c e7 c0 e7 11 c4 fa b4 32 a9 ca 38 bc 72 2d a1 a7 75 cc f0 3c ae 04>,
+    preKeyId: 827
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'Bbo+zy+DlmBHEWMDXvmLNz7/9nuQ91WW1xyCUG7Y9nV3': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2184,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 ba 3e cf 2f 83 96 60 47 11 63 03 5e f9 8b 37 3e ff f6 7b 90 f7 55 96 d7 1c 82 50 6e d8 f6 75 77>,
+      privKey: <Buffer 48 74 f3 f0 4f 37 6c 2b 56 07 0f 83 75 eb e2 40 71 f0 c6 07 95 22 6d bb fa 85 51 f7 ba 9d 81 78>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 4e 62 8f 94 24 32 f2 53 31 08 22 da 1e c5 63 ec 26 ca 0b 74 1b 0e f0 da 2e 60 42 0f b9 2f 54 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 83 cb aa 63 4f ca 92 69 70 10 35 14 6d 24 ef 92 3e 2b 12 74 06 4b 61 7a 03 30 03 df c4 ad 9a 7d>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 64 0a 0f 36 76 9d dd 28 e2 fd 9c ff ca 35 1d 75 60 e1 aa dc 2f 24 2b 96 6b 45 ec be d7 18 1d 0a>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622880386,
+    created: 1771622880386,
+    remoteIdentityKey: <Buffer 05 dc 40 3a 5d 4a b4 1f 23 91 bb 37 d3 76 00 06 78 fd 4f 9c 83 77 81 f2 38 5a 29 8a 70 ea 1f 14 0e>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 64 0a 0f 36 76 9d dd 28 e2 fd 9c ff ca 35 1d 75 60 e1 aa dc 2f 24 2b 96 6b 45 ec be d7 18 1d 0a>,
+    preKeyId: 928
+  }
+}
+{"level":30,"time":1771623282824,"pid":17704,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771623282848,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","text":"gola","hasFile":false,"msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771623283448,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"51924461828@s.whatsapp.net","msgId":"3EB009EA183115B9B8EDB0","msg":"Texto enviado con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    'BbOec9Eslz3l+AnuZ3USf+t2gHt4rthatJ4jb1QU+CVe': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 b3 9e 73 d1 2c 97 3d e5 f8 09 ee 67 75 12 7f eb 76 80 7b 78 ae d8 5a b4 9e 23 6f 54 14 f8 25 5e>,
+      privKey: <Buffer f8 a6 82 44 44 4c fb 93 17 36 9d fd 24 09 e0 f0 af 7c e6 9b 17 f5 4a c0 b6 84 f1 08 79 24 29 47>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 5b 3e 86 d4 4b 12 08 61 d1 53 d9 47 33 1b 3c 8f b7 98 d8 87 f5 7c 7e dd 66 d3 53 c9 33 3d 14 fb>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 11 2f 6a 30 27 f3 ba c8 ef 37 6f fe ce af 0d 06 83 03 43 b6 98 6f e3 13 e8 f8 48 88 e4 1d 07 74>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622662679,
+    created: 1771622662679,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 11 2f 6a 30 27 f3 ba c8 ef 37 6f fe ce af 0d 06 83 03 43 b6 98 6f e3 13 e8 f8 48 88 e4 1d 07 74>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BbZYRn/320qvSGxVL9/LKM/7U62t90twbzw7Fok4/kh1': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 7383,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 b6 58 46 7f f7 db 4a af 48 6c 55 2f df cb 28 cf fb 53 ad ad f7 4b 70 6f 3c 3b 16 89 38 fe 48 75>,
+      privKey: <Buffer 48 21 9f 9e c1 13 d7 54 8e 2e bc db d5 86 65 e9 ac f5 9b ad 87 b5 95 93 55 b7 72 b9 08 b1 aa 5f>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 90 8f aa ca b0 15 37 ce f1 23 25 50 be d4 e2 e9 21 82 27 72 bc 75 67 3c 4f 07 f7 01 d1 be 04 0b>,
+    previousCounter: 0,
+    rootKey: <Buffer 5e b9 07 b3 39 a2 22 50 5a e3 bd b5 9a 80 e9 74 53 e5 ea 7c 09 ea 50 5d a4 39 06 6d 90 72 42 ee>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 c6 67 2e 1e 50 d2 12 89 89 a3 3d 6d a5 fc 10 84 be 48 b3 c8 1e 81 f3 9d 5f 13 16 62 30 ff b4 1c>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622663832,
+    created: 1771622663832,
+    remoteIdentityKey: <Buffer 05 92 8a 46 24 95 0f 27 b7 c6 33 91 21 fc 37 4b d8 e7 f5 b9 72 56 6d d1 c7 3f d8 47 da 77 b7 58 49>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 c6 67 2e 1e 50 d2 12 89 89 a3 3d 6d a5 fc 10 84 be 48 b3 c8 1e 81 f3 9d 5f 13 16 62 30 ff b4 1c>,
+    preKeyId: 730
+  }
+}
+{"level":30,"time":1771623347606,"pid":17704,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771623347770,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"HOLA ADJUNTO TU LIBRO","hasFile":true,"fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771623347771,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","fileMime":"application/pdf","size":80952,"msg":"Enviando archivo"}
+{"level":30,"time":1771623349631,"pid":17704,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","msgId":"3EB0DFE91A2C5B5E3363F5","msg":"Documento enviado con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    Bd5uHeQcqD1vt9Dz5upiwj238XdUlYjrDq5gqYAfxzQM: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 de 6e 1d e4 1c a8 3d 6f b7 d0 f3 e6 ea 62 c2 3d b7 f1 77 54 95 88 eb 0e ae 60 a9 80 1f c7 34 0c>,
+      privKey: <Buffer e8 1d 0a 62 31 19 c1 29 b1 1e d1 1a 07 07 cd 5b 19 40 19 2a 9a 54 17 73 af e6 e1 b4 40 b4 71 6e>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer f7 3a 8e 31 86 29 f3 30 4b d9 d1 69 16 5f 8a ac 3c af 48 00 f4 62 12 51 fc b2 cb d8 38 07 fb 1c>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 3c e4 f6 2b ee 65 97 b6 99 5e 35 c2 f4 ea b4 d5 be 87 6d f6 ff 60 52 ba cc 7b f3 68 54 aa df 7e>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771623284376,
+    created: 1771623284376,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 3c e4 f6 2b ee 65 97 b6 99 5e 35 c2 f4 ea b4 d5 be 87 6d f6 ff 60 52 ba cc 7b f3 68 54 aa df 7e>
+  }
+}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771623564825,"pid":12596,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771623566903,"pid":12596,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+{"level":30,"time":1771623598837,"pid":12596,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771623598980,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"hola","hasFile":true,"fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771623598980,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","fileMime":"application/pdf","rawMime":"application/pdf","size":80952,"msg":"Enviando archivo"}
+Closing session: SessionEntry {
+  _chains: {
+    'BRhYysBtN2BtcE5xhfJ1XMGLVGtFvCWCAK0M+8K6+c9Y': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 18 58 ca c0 6d 37 60 6d 70 4e 71 85 f2 75 5c c1 8b 54 6b 45 bc 25 82 00 ad 0c fb c2 ba f9 cf 58>,
+      privKey: <Buffer 70 e3 39 49 5b e1 78 03 ca eb 6a 67 7d 5d d4 d1 78 10 be 06 aa 65 e9 94 1e c2 c4 ed f9 8a 5e 48>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 33 d5 c7 7c 57 fc 93 d5 9e e0 b3 55 04 a9 25 1d 6a a8 fc 6f 4f 4c cf 62 f7 2e e8 66 52 2b 94 4f>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 61 bd 17 b4 fe 0c 78 3d d3 96 67 f6 07 e3 27 ef 79 f7 6d 6c ad 8e fd d8 b1 70 10 91 73 3c 65 4e>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771623350481,
+    created: 1771623350481,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 61 bd 17 b4 fe 0c 78 3d d3 96 67 f6 07 e3 27 ef 79 f7 6d 6c ad 8e fd d8 b1 70 10 91 73 3c 65 4e>
+  }
+}
+{"level":50,"time":1771623624807,"pid":12596,"hostname":"DESKTOP-BV1E0F4","err":{"type":"Error","message":"Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB0831EA174974DDC48D3","stack":"Error: Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB0831EA174974DDC48D3\n    at Timeout._onTimeout (file:///C:/Users/via/Downloads/KENIA/whatsapp-backend/src/server.js:179:19)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)","code":"DELIVERY_TIMEOUT"},"jid":"5195357234@s.whatsapp.net","msg":"Error critico al enviar via Baileys"}
+{"level":50,"time":1771623624807,"pid":12596,"hostname":"DESKTOP-BV1E0F4","err":{"type":"Error","message":"Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB0831EA174974DDC48D3","stack":"Error: Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB0831EA174974DDC48D3\n    at Timeout._onTimeout (file:///C:/Users/via/Downloads/KENIA/whatsapp-backend/src/server.js:179:19)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)","code":"DELIVERY_TIMEOUT"},"msg":"Error in WhatsApp send-message route"}
+{"level":30,"time":1771623625407,"pid":12596,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send","headers":{"host":"127.0.0.1:3010","connection":"keep-alive","content-type":"multipart/form-data; boundary=----WebKitFormBoundarygNVxuCt2HrOR9nf7","ngrok-skip-browser-warning":"1","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate","transfer-encoding":"chunked"},"msg":"Incoming WhatsApp send request"}
+{"level":30,"time":1771623625408,"pid":12596,"hostname":"DESKTOP-BV1E0F4","to":"+5195357234","messageLength":4,"hasFile":true,"msg":"Processing WhatsApp send request"}
+{"level":30,"time":1771623625409,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","text":"hola","hasFile":true,"fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771623625409,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"5195357234@s.whatsapp.net","fileName":"libro-de-reclamaciones-37735_logosenvector.com_4.pdf","fileMime":"application/pdf","rawMime":"application/pdf","size":80952,"msg":"Enviando archivo"}
+Closing session: SessionEntry {
+  _chains: {
+    'BX1MMT2uX5gRhk74j1mejI90OQwy0LhN/MFJAhOl3Hld': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 7d 4c 31 3d ae 5f 98 11 86 4e f8 8f 59 9e 8c 8f 74 39 0c 32 d0 b8 4d fc c1 49 02 13 a5 dc 79 5d>,
+      privKey: <Buffer 50 92 fa f2 ee e3 dc 03 82 fd 0a e3 4a d4 d9 45 a1 50 ef 07 5e 91 a4 c0 bd 88 90 4b 62 cd e2 68>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer d7 bb 8f 81 6b 70 8d 95 4c ba b8 2f d8 d7 b5 2e db d0 38 59 ec 40 ac 7f 96 c9 ee 15 d8 99 bc 57>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 92 e5 c5 b8 f6 6b 3b ea b8 ff 25 41 fc d1 e4 93 30 69 d7 b7 6b 60 f8 72 ba b4 91 14 a3 e0 21 54>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771623600230,
+    created: 1771623600230,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 92 e5 c5 b8 f6 6b 3b ea b8 ff 25 41 fc d1 e4 93 30 69 d7 b7 6b 60 f8 72 ba b4 91 14 a3 e0 21 54>
+  }
+}
+{"level":50,"time":1771623651524,"pid":12596,"hostname":"DESKTOP-BV1E0F4","err":{"type":"Error","message":"Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB06B64115D51D34D650A","stack":"Error: Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB06B64115D51D34D650A\n    at Timeout._onTimeout (file:///C:/Users/via/Downloads/KENIA/whatsapp-backend/src/server.js:179:19)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)","code":"DELIVERY_TIMEOUT"},"jid":"5195357234@s.whatsapp.net","msg":"Error critico al enviar via Baileys"}
+{"level":50,"time":1771623651524,"pid":12596,"hostname":"DESKTOP-BV1E0F4","err":{"type":"Error","message":"Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB06B64115D51D34D650A","stack":"Error: Tiempo agotado esperando estado DELIVERY_ACK para msgId 3EB06B64115D51D34D650A\n    at Timeout._onTimeout (file:///C:/Users/via/Downloads/KENIA/whatsapp-backend/src/server.js:179:19)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)","code":"DELIVERY_TIMEOUT"},"msg":"Error in WhatsApp send route"}
+{"level":30,"time":1771623669263,"pid":12596,"hostname":"DESKTOP-BV1E0F4","method":"POST","url":"/send-message","msg":"Incoming WhatsApp send-message request"}
+{"level":30,"time":1771623669264,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","text":"hola","hasFile":false,"msg":"Intentando enviar mensaje"}
+{"level":30,"time":1771623669501,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234@s.whatsapp.net","msgId":"3EB0B8AD4BFD481D04F258","msg":"Texto enviado con exito"}
+Closing session: SessionEntry {
+  _chains: {
+    BYCMpRBvoU11bYJW4ZqNTSV4xLpZOpPGA5aAy35LnXg3: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 613653096,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 80 8c a5 10 6f a1 4d 75 6d 82 56 e1 9a 8d 4d 25 78 c4 ba 59 3a 93 c6 03 96 80 cb 7e 4b 9d 78 37>,
+      privKey: <Buffer 18 84 59 48 01 b5 11 8b 21 f2 af bd 2e 21 85 30 ab 02 cd 44 44 3c b5 32 21 60 02 9e bd 30 34 65>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 0f b3 e5 dc 6a 98 a8 cb b0 99 05 58 a9 24 a1 0b ec b7 17 55 d2 e4 66 9e 18 19 7a 67 a3 53 aa 56>,
+    previousCounter: 0,
+    rootKey: <Buffer 3a f5 84 bb b8 52 23 e1 2c 51 f9 d1 65 7c 10 ef a7 ff 1c e1 c1 cb 8a 25 db 29 20 db 92 e1 e7 45>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 71 0c 96 67 6a 8b fa e8 9c a4 48 80 89 b5 50 a5 99 8e ee e5 91 ba ab ca 8f 8f df 53 11 24 0e 18>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771623626930,
+    created: 1771623626930,
+    remoteIdentityKey: <Buffer 05 21 01 0d d6 ae b9 34 a6 21 23 60 5d d0 90 4d e2 72 bf cf 78 e1 39 26 4b da a9 04 0f 73 06 8f 02>
+  },
+  pendingPreKey: {
+    signedKeyId: 11563340,
+    baseKey: <Buffer 05 71 0c 96 67 6a 8b fa e8 9c a4 48 80 89 b5 50 a5 99 8e ee e5 91 ba ab ca 8f 8f df 53 11 24 0e 18>
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    'BYo2DcVgcUSJjH+XmEEVUwsMd9ADb8mrjk7N6rmqyHp+': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2184,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 8a 36 0d c5 60 71 44 89 8c 7f 97 98 41 15 53 0b 0c 77 d0 03 6f c9 ab 8e 4e cd ea b9 aa c8 7a 7e>,
+      privKey: <Buffer b8 8b 2a ea 06 40 1d 53 db bb ef 2f 3e ea e4 b8 36 dd e1 9a 26 cd 72 88 62 f8 2d 8f 1c 85 3f 5b>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 4e 62 8f 94 24 32 f2 53 31 08 22 da 1e c5 63 ec 26 ca 0b 74 1b 0e f0 da 2e 60 42 0f b9 2f 54 56>,
+    previousCounter: 0,
+    rootKey: <Buffer da db ed 70 3a 26 8b 4a 3c 79 06 b2 49 20 2d 9e d8 10 8f 95 79 07 10 d5 d9 ba 6a 75 f2 9f 84 f1>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 a5 0e 3c 6a b4 e6 ed 7d ec ea bf 58 0d 0d 74 b6 7d af 0f 73 ca 28 e9 35 f6 58 41 63 db ff e9 7a>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622881037,
+    created: 1771622881037,
+    remoteIdentityKey: <Buffer 05 dc 40 3a 5d 4a b4 1f 23 91 bb 37 d3 76 00 06 78 fd 4f 9c 83 77 81 f2 38 5a 29 8a 70 ea 1f 14 0e>
+  },
+  pendingPreKey: {
+    signedKeyId: 1,
+    baseKey: <Buffer 05 a5 0e 3c 6a b4 e6 ed 7d ec ea bf 58 0d 0d 74 b6 7d af 0f 73 ca 28 e9 35 f6 58 41 63 db ff e9 7a>,
+    preKeyId: 1466
+  }
+}
+{"level":30,"time":1771623670175,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"24151121240118@lid","msgId":"3EB0B8AD4BFD481D04F258","status":2,"statusText":"DELIVERY_ACK","kind":"text","fileName":null,"msg":"Estado mensaje saliente"}
+Closing session: SessionEntry {
+  _chains: {
+    'BYrtbMZjgZFAQV4O+l3sSruCZij9rdjF8Doq5its3nQt': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 1427989215,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 8a ed 6c c6 63 81 91 40 41 5e 0e fa 5d ec 4a bb 82 66 28 fd ad d8 c5 f0 3a 2a e6 2b 6c de 74 2d>,
+      privKey: <Buffer 90 ff 4c af 4c e1 64 49 f2 3d 73 44 e8 52 9f 4b 3e b0 34 6d 0c 13 81 d0 c8 37 84 16 91 39 e5 5f>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 ab 14 f4 18 6a 3d 2f 0c df 33 41 08 3c a2 e5 70 d7 9a a9 cb d3 4d 56 b4 19 a3 7a c7 d5 6d b7 0a>,
+    previousCounter: 0,
+    rootKey: <Buffer d7 7c ce 0c 64 1e 3b 09 44 37 78 e8 13 cd 13 d6 a6 b1 64 fd 30 da 84 be 55 15 4d 2a 6e 4f fa 92>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 60 ed 57 0b a1 63 24 22 06 44 bf 51 12 e8 30 4c 1b 30 ed 7e ec b2 dc 4c 86 38 64 2c 80 7e 24 52>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1771622501975,
+    created: 1771622501975,
+    remoteIdentityKey: <Buffer 05 ab 30 eb 18 65 0e ad c1 91 cb b0 c2 58 98 a6 ad a9 03 7f 85 07 aa 2f 76 d9 f0 76 80 54 86 3d 17>
+  },
+  pendingPreKey: {
+    signedKeyId: 11226504,
+    baseKey: <Buffer 05 60 ed 57 0b a1 63 24 22 06 44 bf 51 12 e8 30 4c 1b 30 ed 7e ec b2 dc 4c 86 38 64 2c 80 7e 24 52>,
+    preKeyId: 13367287
+  }
+}
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+{"level":30,"time":1771623699010,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"24151121240118:20@lid","msgId":"A51A6F7E350757B4E724BE461B4E953D","status":3,"statusText":"READ","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771623699061,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"24151121240118@lid","msgId":"A51A6F7E350757B4E724BE461B4E953D","status":3,"statusText":"READ","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771623699211,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"51953576234:20@s.whatsapp.net","msgId":"A51A6F7E350757B4E724BE461B4E953D","status":4,"statusText":"PLAYED","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Closing open session in favor of incoming prekey bundle
+Closing session: SessionEntry {
+  _chains: {
+    Baf6mh8kgWhgI1hphUGJIl2t67fbZjhVbm14ur4Gnqpr: { chainKey: [Object], chainType: 2, messageKeys: {} },
+    BecrcvuKVSnPw6o3AmpnuzOAi1RoYvbKPK719VEwxip5: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2052356629,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 e7 2b 72 fb 8a 55 29 cf c3 aa 37 02 6a 67 bb 33 80 8b 54 68 62 f6 ca 3c ae f5 f5 51 30 c6 2a 79>,
+      privKey: <Buffer 08 d4 79 ba 59 61 85 0f 55 14 ad fd 33 c7 69 ff 76 07 d0 21 c9 87 56 42 d6 03 ec f4 de 97 d6 75>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 a7 fa 9a 1f 24 81 68 60 23 58 69 85 41 89 22 5d ad eb b7 db 66 38 55 6e 6d 78 ba be 06 9e aa 6b>,
+    previousCounter: 0,
+    rootKey: <Buffer cc 8a 53 f2 d9 aa d5 91 c7 8a 85 90 d1 14 25 dd 68 47 fa 4b 5b 0e 94 54 c7 68 22 00 51 65 5f a2>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 05 ba c3 ab 1b 21 35 65 0b 6d 9a 25 ca cb 5b 63 38 ea a8 ab de 73 1a 49 5f 11 de 90 0b 5a 9f 2d>,
+    baseKeyType: 2,
+    closed: -1,
+    used: 1771622809562,
+    created: 1771622809562,
+    remoteIdentityKey: <Buffer 05 fb 03 bd ac b0 49 39 12 d7 80 8c ae a1 67 07 14 4b 3f ea 79 ae 29 03 46 e4 2a 71 bb 92 8d 34 0b>
+  }
+}
+{"level":30,"time":1771623819322,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"3EB08D31FCE94F37D27C1A","status":4,"statusText":"PLAYED","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771623819322,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"3EB01FDC87222FC249CA90","status":4,"statusText":"PLAYED","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771623819322,"pid":12596,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"3EB02001AFF4C189A637DC","status":4,"statusText":"PLAYED","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771624602785,"pid":18608,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771624603773,"pid":18608,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+{"level":40,"time":1771630319914,"pid":18608,"hostname":"DESKTOP-BV1E0F4","statusCode":503,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":30,"time":1771630324058,"pid":18608,"hostname":"DESKTOP-BV1E0F4","user":"51917313107:39@s.whatsapp.net","name":"Alonso Huancas","msg":"WhatsApp vinculado"}
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+{"level":30,"time":1771631221889,"pid":18608,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"A5CA7371859853CC6B87333D488AEE82","status":3,"statusText":"READ","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771631221892,"pid":18608,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"A56FD0BEF2302D4C35836A0DE5B2F76C","status":3,"statusText":"READ","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+{"level":30,"time":1771631221894,"pid":18608,"hostname":"DESKTOP-BV1E0F4","jid":"79689309782140@lid","msgId":"A5771BA08CA82D6F05D8CAF241197FBE","status":3,"statusText":"READ","kind":null,"fileName":null,"msg":"Estado mensaje saliente"}
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Failed to decrypt message with any known session...
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Session error:Error: Bad MAC Error: Bad MAC
+    at Object.verifyMAC (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\crypto.js:87:15)
+    at SessionCipher.doDecryptWhisperMessage (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:250:16)
+    at async SessionCipher.decryptWithSessions (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:147:29)
+    at async 88296692695219.0 [as awaitable] (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\session_cipher.js:171:28)
+    at async _asyncQueueExecutor (C:\Users\via\Downloads\KENIA\whatsapp-backend\node_modules\libsignal\src\queue_job.js:20:29)
+Closing open session in favor of incoming prekey bundle
+Closing session: SessionEntry {
+  _chains: {
+    BSTiLxPIqkxx9n2BaofJA9bdxXjXLlUBsQBS82bXNAEH: { chainKey: [Object], chainType: 2, messageKeys: {} },
+    'BZmOSlR1O2xaBJw/zib1UId9sBue2wWguevrl1KVqDFU': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2052356629,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 99 8e 4a 54 75 3b 6c 5a 04 9c 3f ce 26 f5 50 87 7d b0 1b 9e db 05 a0 b9 eb eb 97 52 95 a8 31 54>,
+      privKey: <Buffer 10 c6 cf e5 c1 f4 00 5a 38 69 14 d8 4d 1f 17 dd 1e 7a 31 03 fc c1 1c 24 7b ad d9 c8 8d 48 1a 56>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 24 e2 2f 13 c8 aa 4c 71 f6 7d 81 6a 87 c9 03 d6 dd c5 78 d7 2e 55 01 b1 00 52 f3 66 d7 34 01 07>,
+    previousCounter: 0,
+    rootKey: <Buffer 8d b9 5b 95 18 02 8b 0b 37 40 3b 03 8d b3 e2 39 b4 4d e1 17 18 86 a0 70 28 30 ad 4f 1c 3a df 9a>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 fa 97 ef e9 cf 09 2e 34 65 ed 86 45 62 76 0a 50 88 73 a0 41 43 56 ff 5b 76 c3 e6 ca b0 7a d5 27>,
+    baseKeyType: 2,
+    closed: -1,
+    used: 1771623704599,
+    created: 1771623704599,
+    remoteIdentityKey: <Buffer 05 fb 03 bd ac b0 49 39 12 d7 80 8c ae a1 67 07 14 4b 3f ea 79 ae 29 03 46 e4 2a 71 bb 92 8d 34 0b>
+  }
+}
+Closing open session in favor of incoming prekey bundle
+Closing session: SessionEntry {
+  _chains: {
+    'BblkLW26TxxFswJQikLiKsFo907uHO/MnOq1hnl+Pp1f': { chainKey: [Object], chainType: 2, messageKeys: {} },
+    BVyHtJ4cfrPUwlEuFbKLnhiHQLldSudz1CUzTr6UBW94: { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2052356629,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 5c 87 b4 9e 1c 7e b3 d4 c2 51 2e 15 b2 8b 9e 18 87 40 b9 5d 4a e7 73 d4 25 33 4e be 94 05 6f 78>,
+      privKey: <Buffer 58 ff 69 12 f3 95 89 42 fc 77 c5 ca c9 68 0e 5e 8b da af 4b b8 47 75 bb 31 29 bc 2b 54 ef 0a 6c>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 b9 64 2d 6d ba 4f 1c 45 b3 02 50 8a 42 e2 2a c1 68 f7 4e ee 1c ef cc 9c ea b5 86 79 7e 3e 9d 5f>,
+    previousCounter: 0,
+    rootKey: <Buffer 5b c3 ba 52 d0 96 4f b4 16 e4 cd d6 ce 6a c4 51 cf 4c d2 04 a5 d4 81 c3 ee a8 c4 22 ae 8e 9a d5>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 42 0c b7 d4 80 de 5c 94 91 eb 29 ff 03 d4 23 9b ec 56 9b 52 6b ca f5 62 65 eb a6 4c b0 4c d9 5d>,
+    baseKeyType: 2,
+    closed: -1,
+    used: 1771631232024,
+    created: 1771631232024,
+    remoteIdentityKey: <Buffer 05 fb 03 bd ac b0 49 39 12 d7 80 8c ae a1 67 07 14 4b 3f ea 79 ae 29 03 46 e4 2a 71 bb 92 8d 34 0b>
+  }
+}
+Closing open session in favor of incoming prekey bundle
+Closing session: SessionEntry {
+  _chains: {
+    'BaRI6AsfrsJl/NuuH9dRTicXYUGi+Q4HzaMphjUW0tgb': { chainKey: [Object], chainType: 2, messageKeys: {} },
+    'BTxCLQi/TYFo2YxsiwyLnG5Fv6sPBk+9FdR95ubDQ7d+': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 2052356629,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 3c 42 2d 08 bf 4d 81 68 d9 8c 6c 8b 0c 8b 9c 6e 45 bf ab 0f 06 4f bd 15 d4 7d e6 e6 c3 43 b7 7e>,
+      privKey: <Buffer 50 73 87 3b 83 b9 ca ba df d9 fe bb f6 9b 91 bf 5a 9e 4a 62 c4 f7 1e 7f 36 e9 9d 6b 8c ef 87 5b>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 a4 48 e8 0b 1f ae c2 65 fc db ae 1f d7 51 4e 27 17 61 41 a2 f9 0e 07 cd a3 29 86 35 16 d2 d8 1b>,
+    previousCounter: 0,
+    rootKey: <Buffer 0a c5 76 23 4d 4a e2 de ef a7 40 d1 65 66 75 d1 2d 40 67 54 08 19 87 45 91 ee de 42 0f 8b c7 f3>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 0a 23 1f 90 34 46 c3 8c 5e b1 2c 9f 0c 48 c0 40 76 4a 11 89 d3 ae ab df 30 a2 33 d8 73 96 20 7f>,
+    baseKeyType: 2,
+    closed: -1,
+    used: 1771631232248,
+    created: 1771631232248,
+    remoteIdentityKey: <Buffer 05 fb 03 bd ac b0 49 39 12 d7 80 8c ae a1 67 07 14 4b 3f ea 79 ae 29 03 46 e4 2a 71 bb 92 8d 34 0b>
+  }
+}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771640483639,"pid":15272,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771640484393,"pid":15272,"hostname":"DESKTOP-BV1E0F4","statusCode":401,"shouldReconnect":false,"msg":"Conexion WhatsApp cerrada"}
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771643565823,"pid":9844,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+{"level":40,"time":1771643728353,"pid":9844,"hostname":"DESKTOP-BV1E0F4","statusCode":408,"shouldReconnect":true,"msg":"Conexion WhatsApp cerrada"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
+
+> kenia-call-bridge-skeleton@0.1.0 start:whatsapp
+> npm --prefix whatsapp-backend run start
+
+
+> kenia-whatsapp-backend@0.1.0 start
+> node src/server.js
+
+{"level":30,"time":1771643767660,"pid":9492,"hostname":"DESKTOP-BV1E0F4","msg":"WhatsApp backend escuchando en http://0.0.0.0:3010"}
+⚠️ The printQRInTerminal option has been deprecated. You will no longer receive QR codes in the terminal automatically. Please listen to the connection.update event yourself and handle the QR your way. You can remove this message by removing this opttion. This message will be removed in a future version.
