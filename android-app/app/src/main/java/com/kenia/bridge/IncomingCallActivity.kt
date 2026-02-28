@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,7 @@ class IncomingCallActivity : AppCompatActivity() {
     private lateinit var callTimer: TextView
     private lateinit var micBtn: MaterialButton
     private lateinit var speakerBtn: MaterialButton
+    private lateinit var answerBtn: MaterialButton
     private lateinit var hangupBtn: MaterialButton
 
     private var imageUrl: String = ""
@@ -70,8 +72,10 @@ class IncomingCallActivity : AppCompatActivity() {
         callTimer = findViewById(R.id.callTimerText)
         micBtn = findViewById(R.id.micButton)
         speakerBtn = findViewById(R.id.speakerButton)
+        answerBtn = findViewById(R.id.answerButton)
         hangupBtn = findViewById(R.id.hangupButton)
 
+        answerBtn.setOnClickListener { sendServiceAction(BridgeService.ACTION_UI_ANSWER) }
         micBtn.setOnClickListener { sendServiceAction(BridgeService.ACTION_UI_TOGGLE_MUTE) }
         speakerBtn.setOnClickListener { sendServiceAction(BridgeService.ACTION_UI_TOGGLE_SPEAKER) }
         hangupBtn.setOnClickListener { sendServiceAction(BridgeService.ACTION_UI_HANGUP) }
@@ -139,6 +143,7 @@ class IncomingCallActivity : AppCompatActivity() {
             "idle" -> "ESPERA"
             else -> "LLAMANDO..."
         }
+        answerBtn.visibility = if (state == "ringing") View.VISIBLE else View.GONE
 
         if (state == "in_call") {
             if (callStartedAt == null) callStartedAt = System.currentTimeMillis()

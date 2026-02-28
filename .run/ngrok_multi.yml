@@ -1,5 +1,0 @@
-version: "2"
-tunnels:
-  kenia:
-    proto: http
-    addr: 3000

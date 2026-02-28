@@ -99,7 +99,13 @@
 
       <!-- CONTACTS SECTION -->
       <section id="contactsSection" style="display:none">
-        <p class="section-title">📋 Contactos</p>
+        <div class="contacts-topbar">
+          <p class="section-title contacts-title">📋 Contactos</p>
+          <div class="called-counter">
+            <span>Contactos llamados</span>
+            <strong id="calledContactsValue">0</strong>
+          </div>
+        </div>
         <div class="row" style="margin-top:0;">
           <button id="exportWordBtn" class="secondary">📄 Exportar Word</button>
           <button id="openQuotationBtn">🧾 Nueva Cotización</button>
@@ -197,6 +203,7 @@
   </main>
 
   <button id="floatingAddContactBtn" class="floating-add-btn" style="display:none" type="button">＋</button>
+  <div id="reminderFloatContainer" class="reminder-float-container" style="display:none" aria-live="polite"></div>
 
   <!-- ADD CONTACT MODAL -->
   <div id="addContactModal" class="edit-modal" style="display:none">
@@ -360,6 +367,11 @@
 
   <datalist id="noteOptions">
     <option value="No contestó"></option>
+    <option value="Llamar mañana"></option>
+    <option value="Llamar el lunes"></option>
+    <option value="Llamar en 2 horas"></option>
+    <option value="Llamar 25/02/2026"></option>
+    <option value="Llamar 2026-02-25 15:30"></option>
   </datalist>
   <datalist id="quotationServicesDatalist"></datalist>
 

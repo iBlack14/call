@@ -11,6 +11,7 @@ call :kill_from_pid_file ".run\server_calls.pid"
 call :kill_from_pid_file ".run\server_whatsapp.pid"
 call :kill_from_pid_file ".run\ngrok_multi.pid"
 
+
 :: 2. Limpieza forzada por puertos (por si fallaron los PID)
 :: Puerto 3000 (Llamadas) y 3010 (WhatsApp)
 call :kill_by_port 3000
@@ -22,6 +23,7 @@ taskkill /IM ngrok.exe /F >nul 2>&1
 :: Limpiar archivos temporales
 del ".run\ngrok_calls_url.txt" >nul 2>&1
 del ".run\ngrok_whatsapp_url.txt" >nul 2>&1
+del ".run\ngrok_url.txt" >nul 2>&1
 del ".run\ngrok_multi.yml" >nul 2>&1
 
 if %STOPPED%==0 (

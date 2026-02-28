@@ -95,7 +95,7 @@ function emitState(code) {
   if (!session) return;
 
   io.to(code).emit("state:changed", {
-    code,
+    
     connected: {
       dashboard: Boolean(session.dashboardSocketId),
       phone: Boolean(session.phoneSocketId)
@@ -199,7 +199,7 @@ io.on("connection", (socket) => {
     emitState(code);
   });
 
-  socket.on("phone:status", ({ callState }) => {
+  socket.on("phone:status", ({ callState, phoneNumber, contactName, companyName }) => {
     const code = socket.data.code;
     const role = socket.data.role;
     if (!code || role !== "phone") return;
@@ -208,6 +208,15 @@ io.on("connection", (socket) => {
     if (!session) return;
 
     session.callState = callState || session.callState;
+    if (typeof phoneNumber === "string" && phoneNumber.trim()) {
+      session.lastNumber = phoneNumber.trim();
+    }
+    if (typeof contactName === "string" && contactName.trim()) {
+      session.lastContactName = contactName.trim();
+    }
+    if (typeof companyName === "string" && companyName.trim()) {
+      session.lastCompanyName = companyName.trim();
+    }
     session.updatedAt = Date.now();
     emitState(code);
   });

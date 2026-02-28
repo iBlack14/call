@@ -1,6 +1,7 @@
 package com.kenia.bridge
 
 import android.Manifest
+import android.app.AlertDialog
 import android.app.role.RoleManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity() {
         // Buttons
         findViewById<MaterialButton>(R.id.scanQrBtn)?.setOnClickListener { openQrScanner() }
         findViewById<MaterialButton>(R.id.pairBtn)?.setOnClickListener   { pairDevice() }
+        findViewById<MaterialButton>(R.id.logoutBtn)?.setOnClickListener { confirmLogoutAndStop() }
 
         // Hide buttons that no longer exist in the simple layout (graceful no-op)
         tryHide(R.id.enableHangupBtn)
@@ -327,5 +329,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun tryHide(id: Int) {
         try { findViewById<android.view.View>(id)?.visibility = android.view.View.GONE } catch (_: Exception) {}
+    }
+
+    private fun confirmLogoutAndStop() {
+        AlertDialog.Builder(this)
+            .setTitle("Cerrar sesión")
+            .setMessage("Se detendrá el APK y se borrará la sesión guardada. ¿Continuar?")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Cerrar") { _, _ ->
+                val i = Intent(this, BridgeService::class.java).apply {
+                    action = BridgeService.ACTION_LOGOUT
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(i)
+                } else {
+                    startService(i)
+                }
+                setStatus("Cerrando sesión y deteniendo APK...")
+            }
+            .show()
     }
 }

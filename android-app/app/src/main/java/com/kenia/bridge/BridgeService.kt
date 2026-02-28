@@ -45,7 +45,9 @@ class BridgeService : Service() {
         // Intent actions
         const val ACTION_START  = "com.kenia.bridge.START"
         const val ACTION_STOP   = "com.kenia.bridge.STOP"
+        const val ACTION_LOGOUT = "com.kenia.bridge.LOGOUT"
         const val ACTION_UI_HANGUP = "com.kenia.bridge.UI_HANGUP"
+        const val ACTION_UI_ANSWER = "com.kenia.bridge.UI_ANSWER"
         const val ACTION_UI_TOGGLE_MUTE = "com.kenia.bridge.UI_TOGGLE_MUTE"
         const val ACTION_UI_TOGGLE_SPEAKER = "com.kenia.bridge.UI_TOGGLE_SPEAKER"
         const val ACTION_UI_SYNC = "com.kenia.bridge.UI_SYNC"
@@ -111,8 +113,18 @@ class BridgeService : Service() {
             if (intent?.action != ACTION_TELECOM_CALL_STATE) return
             val st = intent.getStringExtra(EXTRA_CALL_STATE)?.trim().orEmpty()
             if (st.isBlank()) return
+            val incomingNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER).orEmpty().trim()
+            val incomingName = intent.getStringExtra(EXTRA_CONTACT_NAME).orEmpty().trim()
+
+            if (incomingNumber.isNotBlank()) {
+                currentPhoneNumber = incomingNumber
+            }
+            if (incomingName.isNotBlank()) {
+                currentContactName = incomingName
+                if (currentCompanyName.isBlank()) currentCompanyName = incomingName
+            }
             lastCallState = st
-            socket?.emit("phone:status", JSONObject().put("callState", st))
+            emitPhoneStatus(st)
             emitCallUiState()
             if (st == "in_call" || st == "dialing" || st == "ringing") {
                 launchCallUi()
@@ -154,7 +166,9 @@ class BridgeService : Service() {
                 tryConnect(url, code, token, devId, devName)
             }
             ACTION_STOP -> stopSelf()
+            ACTION_LOGOUT -> logoutAndStop()
             ACTION_UI_HANGUP -> hangup()
+            ACTION_UI_ANSWER -> answerIncomingCall()
             ACTION_UI_TOGGLE_MUTE -> setMicMute(!isMicMuted)
             ACTION_UI_TOGGLE_SPEAKER -> setSpeakerOn(!isSpeakerOn)
             ACTION_UI_SYNC -> emitCallUiState()
@@ -254,10 +268,13 @@ class BridgeService : Service() {
                 "hangup" -> {
                     // Close call UI immediately on remote hangup command.
                     lastCallState = "ended"
-                    socket?.emit("phone:status", JSONObject().put("callState", "ended"))
+                    emitPhoneStatus("ended")
                     emitCallUiState()
                     closeCallUi()
                     emitCommandAck(commandId, "hangup", hangup(), "Corte procesado")
+                }
+                "answer" -> {
+                    emitCommandAck(commandId, "answer", answerIncomingCall(), "Respuesta procesada")
                 }
                 "mute"   -> emitCommandAck(commandId, "mute", setMicMute(true), "Micrófono procesado")
                 "unmute" -> emitCommandAck(commandId, "unmute", setMicMute(false), "Micrófono procesado")
@@ -317,7 +334,7 @@ class BridgeService : Service() {
             showDialNotification(number)
             lastCallState = "idle"
             emitCallUiState()
-            socket?.emit("phone:status", JSONObject().put("callState", "idle"))
+            emitPhoneStatus("idle")
             return
         }
 
@@ -325,7 +342,7 @@ class BridgeService : Service() {
             val tm = getSystemService(TELECOM_SERVICE) as? TelecomManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && tm != null) {
                 tm.placeCall(Uri.parse("tel:$number"), Bundle())
-                socket?.emit("phone:status", JSONObject().put("callState", "dialing"))
+                emitPhoneStatus("dialing")
                 setStatus("📞 Intentando llamada a $number")
 
                 // Some devices silently block background dial attempts.
@@ -338,13 +355,13 @@ class BridgeService : Service() {
                             mainHandler.postDelayed({
                                 if (thisAttempt != dialAttemptToken) return@postDelayed
                                 if (!isActuallyInCall()) {
-                                    socket?.emit("phone:status", JSONObject().put("callState", "idle"))
+                                    emitPhoneStatus("idle")
                                     setStatus("⚠️ Android exige confirmación. Mostrando llamada en pantalla.")
                                     showDialNotification(number, autoLaunch = true)
                                 }
                             }, 1800)
                         } else {
-                            socket?.emit("phone:status", JSONObject().put("callState", "idle"))
+                            emitPhoneStatus("idle")
                             setStatus("⚠️ Android bloqueó llamada automática. Mostrando fallback.")
                             showDialNotification(number, autoLaunch = true)
                         }
@@ -364,7 +381,7 @@ class BridgeService : Service() {
 
         try {
             startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:$number")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            socket?.emit("phone:status", JSONObject().put("callState", "dialing"))
+            emitPhoneStatus("dialing")
             setStatus("📞 Llamando $number")
         } catch (e: Exception) {
             setStatus("❌ No se pudo llamar: ${e.message}")
@@ -459,17 +476,56 @@ class BridgeService : Service() {
                 return false
             }
             am.mode = AudioManager.MODE_IN_COMMUNICATION
+            var ok = true
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (enabled) {
+                    val speaker = am.availableCommunicationDevices
+                        .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                    ok = if (speaker != null) am.setCommunicationDevice(speaker) else false
+                } else {
+                    val earpiece = am.availableCommunicationDevices
+                        .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE }
+                    ok = if (earpiece != null) am.setCommunicationDevice(earpiece) else {
+                        am.clearCommunicationDevice()
+                        true
+                    }
+                }
+            }
+
             @Suppress("DEPRECATION")
             am.isSpeakerphoneOn = enabled
-            isSpeakerOn = enabled
+            isSpeakerOn = enabled && ok
             emitCallUiState()
             launchCallUi()
-            setStatus(if (enabled) "🔊 Altavoz activado" else "🔈 Altavoz desactivado")
-            return true
+            if (!ok) {
+                setStatus("⚠️ No se pudo cambiar ruta de audio en este dispositivo")
+                return false
+            }
+            setStatus(if (isSpeakerOn) "🔊 Altavoz activado" else "🔈 Altavoz desactivado")
+            return isSpeakerOn == enabled
         } catch (e: Exception) {
             setStatus("⚠️ No se pudo cambiar altavoz: ${e.message}")
             return false
         }
+    }
+
+    private fun answerIncomingCall(): Boolean {
+        if (!hasPermission(Manifest.permission.ANSWER_PHONE_CALLS)) {
+            setStatus("⚠️ Falta permiso ANSWER_PHONE_CALLS")
+            return false
+        }
+        val ok = KeniaInCallService.answerRingingCall()
+        if (!ok) {
+            setStatus("⚠️ No hay llamada entrante para contestar")
+            return false
+        }
+        lastCallState = "in_call"
+        emitPhoneStatus("in_call")
+        emitCallUiState()
+        launchCallUi()
+        setStatus("✅ Llamada contestada")
+        return true
     }
 
 
@@ -482,7 +538,7 @@ class BridgeService : Service() {
         try {
             val tm = getSystemService(TELECOM_SERVICE) as? TelecomManager
             if (tm?.endCall() == true) {
-                socket?.emit("phone:status", JSONObject().put("callState", "ended"))
+                emitPhoneStatus("ended")
                 setStatus("📵 Llamada colgada")
                 stopAudio()
                 lastCallState = "ended"
@@ -525,7 +581,8 @@ class BridgeService : Service() {
                 if (callState == lastCallState) return
                 lastCallState = callState
 
-                socket?.emit("phone:status", JSONObject().put("callState", callState))
+                if (!phoneNumber.isNullOrBlank()) currentPhoneNumber = phoneNumber
+                emitPhoneStatus(callState)
                 emitCallUiState()
 
                 when (callState) {
@@ -537,7 +594,7 @@ class BridgeService : Service() {
                         if (isActuallyInCall()) {
                             setStatus("🔊 En llamada")
                         } else {
-                            socket?.emit("phone:status", JSONObject().put("callState", "idle"))
+                            emitPhoneStatus("idle")
                             setStatus("⚠️ Intento de llamada sin conexión real")
                         }
                     }
@@ -700,6 +757,42 @@ class BridgeService : Service() {
                 .put("action", action)
                 .put("ok", ok)
                 .put("message", message)
+        )
+    }
+
+    private fun logoutAndStop() {
+        try {
+            dialAttemptToken += 1
+            stopAudio()
+            closeCallUi()
+            socket?.disconnect()
+            socket?.off()
+            socket = null
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
+            lastCallState = "idle"
+            currentPhoneNumber = ""
+            currentCompanyName = ""
+            currentContactName = ""
+            currentImageUrl = ""
+            isMicMuted = false
+            isSpeakerOn = false
+            setStatus("🔒 Sesión cerrada. APK detenida.")
+        } catch (e: Exception) {
+            setStatus("⚠️ Error al cerrar sesión: ${e.message}")
+        } finally {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
+    }
+
+    private fun emitPhoneStatus(state: String) {
+        socket?.emit(
+            "phone:status",
+            JSONObject()
+                .put("callState", state)
+                .put("phoneNumber", currentPhoneNumber)
+                .put("contactName", currentContactName)
+                .put("companyName", currentCompanyName)
         )
     }
 

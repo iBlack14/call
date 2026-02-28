@@ -3207,6 +3207,7 @@ id allStates
 id always
 id animateToEnd
 id animateToStart
+id answerButton
 id antiClockwise
 id anticipate
 id arc
@@ -3383,6 +3384,7 @@ id line3
 id linear
 id listMode
 id list_item
+id logoutBtn
 id m3_side_sheet
 id marquee
 id masked

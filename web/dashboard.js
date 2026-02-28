@@ -26,6 +26,7 @@ const contactsPaginationEl = document.getElementById("contactsPagination");
 const prevPageBtn = document.getElementById("prevPageBtn");
 const nextPageBtn = document.getElementById("nextPageBtn");
 const pageInfoEl = document.getElementById("pageInfo");
+const calledContactsValueEl = document.getElementById("calledContactsValue");
 
 const callModalEl = document.getElementById("callModal");
 const callRingEl = document.getElementById("callRing");
@@ -65,6 +66,7 @@ const previewBody = document.getElementById("previewBody");
 const importConfirm = document.getElementById("importConfirmBtn");
 const importCancel = document.getElementById("importCancelBtn");
 const floatingAddContactBtn = document.getElementById("floatingAddContactBtn");
+const reminderFloatContainer = document.getElementById("reminderFloatContainer");
 const addContactModalEl = document.getElementById("addContactModal");
 const addCloseBtn = document.getElementById("addCloseBtn");
 const addSaveBtn = document.getElementById("addSaveBtn");
@@ -154,6 +156,7 @@ const WA_LOGOUT_PATHS = ["/api/whatsapp/logout"];
 const WA_SEND_PATHS = ["/api/whatsapp/send-message", "/api/whatsapp/send"];
 const NGROK_SKIP_WARNING_HEADERS = { "ngrok-skip-browser-warning": "1" };
 const WHATSAPP_PRESETS_KEY = "kenia.whatsappPresetMessages";
+const NOTE_REMINDERS_DISMISSED_KEY = "kenia.noteRemindersDismissed";
 const DEFAULT_WHATSAPP_PRESET_MESSAGES = [
   "Hola, te escribo de VCMAS. Quedo atento a tu respuesta.",
   "Buenas, te contacto para coordinar una llamada.",
@@ -162,6 +165,8 @@ const DEFAULT_WHATSAPP_PRESET_MESSAGES = [
 let whatsappPresetMessages = [...DEFAULT_WHATSAPP_PRESET_MESSAGES];
 let quotationItems = [];
 let quotationMessageBridgeBound = false;
+let reminderTickTimer = null;
+let dismissedReminderIds = {};
 const QUOTATION_SERVICE_OPTIONS = [
   "WEB INFORMATIVA",
   "WEB E-COMMERCE",
@@ -215,6 +220,230 @@ function loadCalledCounts() {
 
 function saveCalledCounts() {
   localStorage.setItem(CALLED_COUNTS_KEY, JSON.stringify(calledCounts));
+}
+
+function loadDismissedReminders() {
+  try { dismissedReminderIds = JSON.parse(localStorage.getItem(NOTE_REMINDERS_DISMISSED_KEY) || "{}"); }
+  catch { dismissedReminderIds = {}; }
+}
+
+function saveDismissedReminders() {
+  localStorage.setItem(NOTE_REMINDERS_DISMISSED_KEY, JSON.stringify(dismissedReminderIds));
+}
+
+function toReminderDate(year, month, day, hours = 9, minutes = 0) {
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
+
+function normalizeSpanishToken(text) {
+  return String(text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function nextWeekdayDate(targetWeekday, now, hours, minutes) {
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+  const diff = (targetWeekday - now.getDay() + 7) % 7;
+  base.setDate(base.getDate() + diff);
+  if (diff === 0 && base.getTime() <= now.getTime()) {
+    base.setDate(base.getDate() + 7);
+  }
+  return base;
+}
+
+function parseReminderFromNote(noteText) {
+  const note = String(noteText || "").trim();
+  if (!note) return null;
+  const lower = note.toLowerCase();
+  if (!/\bllamar\b/.test(lower)) return null;
+
+  let hours = 9;
+  let minutes = 0;
+  const hhmm = lower.match(/\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/);
+  if (hhmm) {
+    hours = Number(hhmm[1]);
+    minutes = Number(hhmm[2]);
+  }
+
+  const now = new Date();
+
+  const relativeMatch = lower.match(/\ben\s+(\d{1,3})\s*(min|mins|minuto|minutos|h|hr|hrs|hora|horas|dia|dias|d[ií]a|d[ií]as)\b/);
+  if (relativeMatch) {
+    const amount = Number(relativeMatch[1]);
+    const unitRaw = normalizeSpanishToken(relativeMatch[2]);
+    let deltaMs = 0;
+    if (["min", "mins", "minuto", "minutos"].includes(unitRaw)) deltaMs = amount * 60 * 1000;
+    if (["h", "hr", "hrs", "hora", "horas"].includes(unitRaw)) deltaMs = amount * 60 * 60 * 1000;
+    if (["dia", "dias"].includes(unitRaw)) deltaMs = amount * 24 * 60 * 60 * 1000;
+    if (deltaMs > 0) {
+      return { atMs: now.getTime() + deltaMs, source: relativeMatch[0] };
+    }
+  }
+
+  const weekdayMatch = lower.match(/\b(?:el\s+)?(?:pr[óo]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[áa]bado|domingo)\b/);
+  if (weekdayMatch) {
+    const weekdayToken = normalizeSpanishToken(weekdayMatch[1]);
+    const weekdayMap = {
+      domingo: 0,
+      lunes: 1,
+      martes: 2,
+      miercoles: 3,
+      jueves: 4,
+      viernes: 5,
+      sabado: 6
+    };
+    const target = weekdayMap[weekdayToken];
+    if (Number.isInteger(target)) {
+      const d = nextWeekdayDate(target, now, hours, minutes);
+      return { atMs: d.getTime(), source: weekdayMatch[0] };
+    }
+  }
+
+  if (/\bpasado\s+ma[ñn]ana\b/.test(lower)) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, hours, minutes, 0, 0);
+    return { atMs: d.getTime(), source: "pasado mañana" };
+  }
+  if (/\bma[ñn]ana\b/.test(lower)) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hours, minutes, 0, 0);
+    return { atMs: d.getTime(), source: "mañana" };
+  }
+  if (/\bhoy\b/.test(lower)) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+    return { atMs: d.getTime(), source: "hoy" };
+  }
+
+  const isoMatch = lower.match(/\b(20\d{2})-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])\b/);
+  if (isoMatch) {
+    const d = toReminderDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]), hours, minutes);
+    if (!Number.isNaN(d.getTime())) return { atMs: d.getTime(), source: isoMatch[0] };
+  }
+
+  const shortMatch = lower.match(/\b(0?[1-9]|[12]\d|3[01])[\/-](0?[1-9]|1[0-2])(?:[\/-](20\d{2}))?\b/);
+  if (shortMatch) {
+    const day = Number(shortMatch[1]);
+    const month = Number(shortMatch[2]);
+    let year = shortMatch[3] ? Number(shortMatch[3]) : now.getFullYear();
+    let d = toReminderDate(year, month, day, hours, minutes);
+    if (!shortMatch[3] && d.getTime() < now.getTime()) {
+      year += 1;
+      d = toReminderDate(year, month, day, hours, minutes);
+    }
+    if (!Number.isNaN(d.getTime())) return { atMs: d.getTime(), source: shortMatch[0] };
+  }
+
+  return null;
+}
+
+function fmtReminderDate(ms) {
+  const d = new Date(ms);
+  return d.toLocaleString("es-PE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function reminderHintFromNote(note) {
+  const parsed = parseReminderFromNote(note);
+  if (!parsed) return "";
+  return ` Recordatorio: ${fmtReminderDate(parsed.atMs)}.`;
+}
+
+function getNoteReminders() {
+  const items = [];
+  for (const c of contacts) {
+    const parsed = parseReminderFromNote(c.note || "");
+    if (!parsed) continue;
+    const dayKey = new Date(parsed.atMs).toISOString().slice(0, 10);
+    items.push({
+      id: `note:${c.id}:${dayKey}`,
+      contactId: c.id,
+      name: c.name || "Contacto",
+      phone: c.phone || "",
+      note: c.note || "",
+      atMs: parsed.atMs,
+      source: parsed.source
+    });
+  }
+  items.sort((a, b) => a.atMs - b.atMs);
+  return items;
+}
+
+function startDialForContact(c) {
+  if (!c?.id || !c.phone) return;
+  if (["dialing", "ringing", "in_call"].includes(currentState)) {
+    setStatus("Ya hay una llamada en curso.", true);
+    return;
+  }
+  currentCallingContactId = c.id;
+  calledCounts[c.id] = Number(calledCounts[c.id] || 0) + 1;
+  saveCalledCounts();
+  renderContacts();
+  openCallWindow(c.phone, {
+    contactName: c.name,
+    companyName: c.name,
+    note: c.note,
+    imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
+  });
+  emitCallActionWithAck("dial", {
+    phoneNumber: c.phone,
+    contactName: c.name,
+    companyName: c.name,
+    imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
+  });
+}
+
+function renderReminderFloat() {
+  if (!reminderFloatContainer) return;
+  const reminders = getNoteReminders();
+  const now = Date.now();
+
+  // Limpia descartados de recordatorios que ya no existen.
+  const validIds = new Set(reminders.map((r) => r.id));
+  let dismissedChanged = false;
+  for (const id of Object.keys(dismissedReminderIds)) {
+    if (!validIds.has(id)) {
+      delete dismissedReminderIds[id];
+      dismissedChanged = true;
+    }
+  }
+  if (dismissedChanged) saveDismissedReminders();
+
+  const visible = reminders
+    .filter((r) => !dismissedReminderIds[r.id])
+    .filter((r) => r.atMs > now - 12 * 60 * 60 * 1000)
+    .slice(0, 3);
+
+  if (!visible.length) {
+    reminderFloatContainer.style.display = "none";
+    reminderFloatContainer.innerHTML = "";
+    return;
+  }
+
+  reminderFloatContainer.style.display = "grid";
+  reminderFloatContainer.innerHTML = visible.map((r) => {
+    const due = r.atMs <= now;
+    const etaMin = Math.round((r.atMs - now) / 60000);
+    const eta = due
+      ? "Recordatorio vencido"
+      : etaMin < 60
+        ? `En ${Math.max(1, etaMin)} min`
+        : `En ${Math.round(etaMin / 60)} h`;
+    return `
+      <div class="reminder-float-card ${due ? "is-due" : ""}">
+        <div class="reminder-float-title">🔔 Llamar a ${escHtml(r.name)}</div>
+        <div class="reminder-float-meta">${escHtml(fmtReminderDate(r.atMs))} · ${escHtml(eta)}</div>
+        <div class="reminder-float-actions">
+          <button type="button" data-reminder-action="dial" data-reminder-id="${r.id}">📞 Llamar</button>
+          <button type="button" class="secondary" data-reminder-action="dismiss" data-reminder-id="${r.id}">Cerrar</button>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function loadWhatsAppPresetMessages() {
@@ -308,7 +537,16 @@ function escHtml(str) {
   );
 }
 
+function updateCalledContactsCounter() {
+  if (!calledContactsValueEl) return;
+  const calledContacts = contacts.reduce((count, contact) => {
+    return count + (Number(calledCounts[contact.id] || 0) > 0 ? 1 : 0);
+  }, 0);
+  calledContactsValueEl.textContent = String(calledContacts);
+}
+
 function renderContacts() {
+  updateCalledContactsCounter();
   cBodyEl.innerHTML = "";
   const totalPages = Math.max(1, Math.ceil(contacts.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -316,6 +554,7 @@ function renderContacts() {
   if (!contacts.length) {
     cBodyEl.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:18px;">Sin contactos. Agrega el primero.</td></tr>`;
     contactsPaginationEl.style.display = "none";
+    renderReminderFloat();
     return;
   }
 
@@ -346,6 +585,7 @@ function renderContacts() {
   pageInfoEl.textContent = `Página ${currentPage} de ${totalPages}`;
   prevPageBtn.disabled = currentPage <= 1;
   nextPageBtn.disabled = currentPage >= totalPages;
+  renderReminderFloat();
 }
 
 // ── STATUS ─────────────────────────────────────────────────────────────
@@ -505,12 +745,16 @@ function toggleSpeaker() {
   }
 }
 
-function applyState(state, lastNum) {
+function applyState(state, lastNum, meta = {}) {
 
   currentState = state;
-  if (!callCtx && lastNum) openCallWindow(lastNum);
+  if (!callCtx && lastNum) openCallWindow(lastNum, meta);
   if (!callCtx) return;
-  if (lastNum && callCtx.phone !== lastNum) openCallWindow(lastNum);
+  if (lastNum && callCtx.phone !== lastNum) openCallWindow(lastNum, meta);
+  if (meta?.contactName && (callCtx.name === "Número desconocido" || !callCtx.name)) {
+    callCtx.name = meta.contactName;
+    callNameEl.textContent = meta.contactName;
+  }
   setBadge(state);
   if (state === "in_call") {
     callKickerEl.textContent = "Llamada activa";
@@ -1341,7 +1585,7 @@ addSaveBtn.addEventListener("click", () => {
   currentPage = 1;
   saveContacts();
   renderContacts();
-  setStatus("Contacto agregado.", true);
+  setStatus(`Contacto agregado.${reminderHintFromNote(note)}`, true);
   closeAddModal();
 });
 
@@ -1374,28 +1618,35 @@ cBodyEl.addEventListener("click", e => {
     return;
   }
   if (action === "dial") {
-    if (["dialing", "ringing", "in_call"].includes(currentState)) {
-      setStatus("Ya hay una llamada en curso.", true); return;
-    }
-    currentCallingContactId = c.id;
-    calledCounts[c.id] = Number(calledCounts[c.id] || 0) + 1;
-    saveCalledCounts();
-    renderContacts();
-    openCallWindow(c.phone, {
-      contactName: c.name,
-      companyName: c.name,
-      note: c.note,
-      imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
-    });
-    emitCallActionWithAck("dial", {
-      phoneNumber: c.phone,
-      contactName: c.name,
-      companyName: c.name,
-      imageUrl: `${window.location.origin}/logotipo-VCMAS.ico`
-    });
+    startDialForContact(c);
     return;
   }
 });
+
+if (reminderFloatContainer) {
+  reminderFloatContainer.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-reminder-action]");
+    if (!btn) return;
+    const action = btn.getAttribute("data-reminder-action");
+    const reminderId = btn.getAttribute("data-reminder-id");
+    if (!action || !reminderId) return;
+
+    if (action === "dismiss") {
+      dismissedReminderIds[reminderId] = Date.now();
+      saveDismissedReminders();
+      renderReminderFloat();
+      return;
+    }
+
+    if (action === "dial") {
+      const reminder = getNoteReminders().find((r) => r.id === reminderId);
+      if (!reminder) return;
+      const c = contacts.find((x) => x.id === reminder.contactId);
+      if (!c) return;
+      startDialForContact(c);
+    }
+  });
+}
 
 function closeEditModal() {
   editModalEl.style.display = "none";
@@ -1452,7 +1703,7 @@ editSaveBtn.addEventListener("click", () => {
   contact.note = note;
   saveContacts();
   renderContacts();
-  setStatus("Contacto editado.", true);
+  setStatus(`Contacto editado.${reminderHintFromNote(note)}`, true);
   closeEditModal();
 });
 
@@ -1514,11 +1765,14 @@ socket.on("session:joined", ({ code, role }) => {
 socket.on("state:changed", st => {
   const c = st.connected;
   setStatus(
-    `Dashboard: ${c.dashboard ? "✅" : "❌"} | Celular: ${c.phone ? "✅" : "❌"} | Estado: ${st.callState} | Nro: ${st.lastNumber || "—"}`,
+    `Dashboard: ${c.dashboard ? "✅" : "❌"} | Celular: ${c.phone ? "✅" : "❌"} | Estado: ${st.callState} | Nro: ${st.lastNumber || "—"} | Contacto: ${st.lastContactName || "—"}`,
     c.dashboard && c.phone
   );
   setLinkedUi(Boolean(c.phone), st.phoneDevice?.name);
-  applyState(st.callState, st.lastNumber);
+  applyState(st.callState, st.lastNumber, {
+    contactName: st.lastContactName || "",
+    companyName: st.lastCompanyName || ""
+  });
 });
 
 socket.on("connect", () => setStatus("Conectado al servidor. Crea una sesión."));
@@ -2269,8 +2523,12 @@ function bindQuotationEvents() {
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadContacts();
 loadCalledCounts();
+loadDismissedReminders();
 loadWhatsAppPresetMessages();
 renderContacts();
 loadApkInfo();
 bindQuotationEvents();
 resetQuotationForm();
+renderReminderFloat();
+if (reminderTickTimer) clearInterval(reminderTickTimer);
+reminderTickTimer = setInterval(renderReminderFloat, 30000);

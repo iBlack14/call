@@ -420,6 +420,54 @@ tbody tr.contact-row-called td {
   box-shadow: 0 10px 30px rgba(192, 38, 211, 0.45);
 }
 
+.reminder-float-container {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  width: min(360px, calc(100vw - 24px));
+  display: grid;
+  gap: 10px;
+  z-index: 1290;
+}
+
+.reminder-float-card {
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  background: rgba(48, 20, 5, 0.92);
+  color: #fde68a;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+}
+
+.reminder-float-card.is-due {
+  border-color: rgba(251, 113, 133, 0.65);
+  background: rgba(62, 9, 24, 0.95);
+  color: #fecdd3;
+}
+
+.reminder-float-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.reminder-float-meta {
+  font-size: 12px;
+  color: #f9a8d4;
+  margin-bottom: 8px;
+}
+
+.reminder-float-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.reminder-float-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 /* ── EDIT MODAL ─────────────────────────────────────── */
 .edit-modal {
   position: fixed;
@@ -1026,6 +1074,37 @@ tbody tr.contact-row-called td {
   background: var(--border);
 }
 
+.contacts-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.contacts-title {
+  flex: 1;
+  margin: 0;
+}
+
+.called-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.14);
+  color: #fef3c7;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.called-counter strong {
+  font-size: 14px;
+}
+
 /* ── MUTED TEXT ─────────────────────────────────────── */
 .muted {
   color: var(--muted);
@@ -1162,6 +1241,11 @@ tbody tr.contact-row-called td {
   }
 
   .apk-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .contacts-topbar {
     flex-direction: column;
     align-items: flex-start;
   }

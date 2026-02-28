@@ -168,3 +168,694 @@ Call bridge skeleton running on http://localhost:3000
 > node server/server.js
 
 Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send -> http://127.0.0.1:3010/send
+Proxy Error (POST /send-message): DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15845:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async proxyToWhatsApp (file:///C:/Users/via/Downloads/KENIA/server/server.js:40:18)
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send -> http://127.0.0.1:3010/send
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] POST /send -> http://127.0.0.1:3010/send
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+Proxy Error (GET /qr): TypeError: fetch failed
+    at node:internal/deps/undici/undici:15845:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async proxyToWhatsApp (file:///C:/Users/via/Downloads/KENIA/server/server.js:38:18) {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:3010
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 3010
+  }
+}
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+Proxy Error (GET /status): TypeError: fetch failed
+    at node:internal/deps/undici/undici:15845:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async proxyToWhatsApp (file:///C:/Users/via/Downloads/KENIA/server/server.js:38:18) {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:3010
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 3010
+  }
+}
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /qr -> http://127.0.0.1:3010/qr
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] GET /status -> http://127.0.0.1:3010/status
+[PROXY] POST /send-message -> http://127.0.0.1:3010/send-message
+
+> kenia-call-bridge-skeleton@0.1.0 start:calls
+> node server/server.js
+
+Call bridge skeleton running on http://localhost:3000 

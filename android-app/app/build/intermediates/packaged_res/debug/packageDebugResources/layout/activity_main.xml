@@ -121,13 +121,24 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/logoutBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Cerrar sesión y detener APK"
+            app:backgroundTint="#7F1D1D"
+            app:layout_constraintTop_toBottomOf="@id/pairBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/enableHangupBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="Activar colgar remoto"
             app:backgroundTint="#14532D"
-            app:layout_constraintTop_toBottomOf="@id/pairBtn"
+            app:layout_constraintTop_toBottomOf="@id/logoutBtn"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

@@ -52,6 +52,18 @@ let currentQrDataUrl = "";
 let linkedPhoneJid = "";
 let linkedName = "";
 
+function clearSessionDir() {
+  if (fs.existsSync(SESSION_DIR)) {
+    fs.rmSync(SESSION_DIR, { recursive: true, force: true });
+  }
+  fs.mkdirSync(SESSION_DIR, { recursive: true });
+}
+
+function getDisconnectStatusCode(lastDisconnect) {
+  const err = lastDisconnect?.error;
+  return err?.output?.statusCode ?? err?.data?.statusCode ?? err?.statusCode ?? null;
+}
+
 function normalizePhone(input) {
   const raw = String(input || "").trim();
   let digits = raw.replace(/\D/g, "");
@@ -211,7 +223,6 @@ async function startWhatsApp() {
     sock = makeWASocket({
       version,
       auth: state,
-      printQRInTerminal: true,
       logger
     });
 
@@ -267,15 +278,18 @@ async function startWhatsApp() {
 
       if (connection === "close") {
         linked = false;
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        const statusCode = getDisconnectStatusCode(lastDisconnect);
+        const loggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
+        const shouldReconnect = !loggedOut;
         log.warn({ statusCode, shouldReconnect }, "Conexion WhatsApp cerrada");
 
-        if (statusCode === DisconnectReason.loggedOut) {
+        if (loggedOut) {
           linkedPhoneJid = "";
           linkedName = "";
           currentQrText = "";
           currentQrDataUrl = "";
+          clearSessionDir();
+          log.info("Sesion eliminada por logout remoto. Se pedira nuevo QR.");
         }
 
         connecting = false;
@@ -287,6 +301,12 @@ async function startWhatsApp() {
               log.error({ err }, "Error reconectando WhatsApp");
             });
           }, 1500);
+        } else {
+          setTimeout(() => {
+            startWhatsApp().catch((err) => {
+              log.error({ err }, "Error reiniciando WhatsApp tras logout");
+            });
+          }, 800);
         }
       }
     });
@@ -500,10 +520,7 @@ app.post("/logout", async (_, res) => {
     currentQrText = "";
     currentQrDataUrl = "";
     connecting = false;
-    if (fs.existsSync(SESSION_DIR)) {
-      fs.rmSync(SESSION_DIR, { recursive: true, force: true });
-      fs.mkdirSync(SESSION_DIR, { recursive: true });
-    }
+    clearSessionDir();
     startWhatsApp().catch((err) => log.error({ err }, "Error reiniciando tras logout"));
     return res.json({ ok: true });
   } catch (err) {

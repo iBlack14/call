@@ -10,6 +10,9 @@ echo ===========================================
 
 set "CALLS_PORT=3000"
 set "WA_PORT=3010"
+set "NGROK_AUTH_TOKEN="
+set "NGROK_EXTRA_ARGS="
+set "NGROK_AUTH_TOKEN_DEFAULT=39TqF9Dp4S5PArBdUTbEMruG3Kt_7NMtcAWPLSovrLk4f98Lm"
 
 :: 1. Asegurar que no haya nada corriendo antes
 echo [1/5] Limpiando procesos previos...
@@ -18,12 +21,19 @@ timeout /t 2 /nobreak >nul
 
 :: Crear carpeta temporal si no existe
 if not exist ".run" mkdir ".run"
+del ".run\ngrok_url.txt" >nul 2>&1
 
-:: 2. Verificaciones básicas (Node, npm, ngrok)
+:: 2. Verificaciones b?sicas (Node, npm, ngrok)
 echo [2/5] Verificando dependencias...
 where /q node || (echo [ERROR] Instala Node.js primero && exit /b 1)
 where /q npm || (echo [ERROR] Instala npm primero && exit /b 1)
 where /q ngrok || (echo [ERROR] Instala ngrok primero && exit /b 1)
+
+:: Cargar token de ngrok (prioridad: variable de entorno -> archivo local)
+if defined NGROK_AUTHTOKEN set "NGROK_AUTH_TOKEN=%NGROK_AUTHTOKEN%"
+if not defined NGROK_AUTH_TOKEN if exist ".run\ngrok_authtoken.txt" set /p NGROK_AUTH_TOKEN=<".run\ngrok_authtoken.txt"
+if not defined NGROK_AUTH_TOKEN set "NGROK_AUTH_TOKEN=%NGROK_AUTH_TOKEN_DEFAULT%"
+if defined NGROK_AUTH_TOKEN set "NGROK_EXTRA_ARGS=--authtoken %NGROK_AUTH_TOKEN%"
 
 if not exist "whatsapp-backend\package.json" (
   echo [ERROR] No existe la carpeta whatsapp-backend o falta package.json
@@ -35,16 +45,18 @@ echo [3/5] Iniciando servidores (Llamadas: %CALLS_PORT%, WhatsApp: %WA_PORT%)...
 
 :: Servidor de LLAMADAS
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','set PORT=%CALLS_PORT% && npm run start:calls >> .run\server_calls.log 2>>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
+  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','set PORT=%CALLS_PORT% && npm run start:calls >> .run\server_calls.log 2>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
   "$proc.Id | Out-File -FilePath '.run\server_calls.pid' -Encoding ascii"
 
 :: Servidor de WHATSAPP
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','set PORT=%WA_PORT% && npm run start:whatsapp >> .run\server_whatsapp.log 2>>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
+  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','set PORT=%WA_PORT% && npm run start:whatsapp >> .run\server_whatsapp.log 2>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
   "$proc.Id | Out-File -FilePath '.run\server_whatsapp.pid' -Encoding ascii"
 
+
+
 :: 4. Configurar e Iniciar NGROK (Solo un tunel para evitar conflictos)
-echo [4/5] Configurando túnel de Ngrok...
+echo [4/5] Configurando t?nel de Ngrok...
 (
   echo version: "2"
   echo tunnels:
@@ -55,10 +67,9 @@ echo [4/5] Configurando túnel de Ngrok...
 
 :: Iniciar Ngrok
 set "NGROK_CFG=.run\ngrok_multi.yml"
-if exist ".run\ngrok_auth.yml" set "NGROK_CFG=.run\ngrok_auth.yml,.run\ngrok_multi.yml"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','ngrok start kenia --config %NGROK_CFG% --log=stdout > .run\ngrok_multi.log 2>>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
+  "$proc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','ngrok start kenia --config %NGROK_CFG% !NGROK_EXTRA_ARGS! --log=stdout > .run\ngrok_multi.log 2>&1' -WorkingDirectory '%CD%' -WindowStyle Hidden -PassThru; " ^
   "$proc.Id | Out-File -FilePath '.run\ngrok_multi.pid' -Encoding ascii"
 
 :: 5. Esperar y Mostrar URL
@@ -78,8 +89,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "if ($url) { $url | Out-File -FilePath '.run\ngrok_url.txt' -Encoding ascii }"
 
 :: Leer la URL guardada
-set "URL_FINAL=Faltante"
+set "URL_FINAL="
 if exist ".run\ngrok_url.txt" set /p URL_FINAL=<".run\ngrok_url.txt"
+if "%URL_FINAL%"=="" set "URL_FINAL=Faltante"
 
 echo.
 echo ===========================================
@@ -88,7 +100,25 @@ echo ===========================================
 echo URL LOCAL:  http://localhost:%CALLS_PORT%
 echo URL PUBLIC: %URL_FINAL%
 echo ===========================================
-echo (WhatsApp se accede via %URL_FINAL%/api/whatsapp)
+if not "%URL_FINAL%"=="Faltante" (
+  echo (WhatsApp se accede via %URL_FINAL%/api/whatsapp)
+) else (
+  echo [ERROR] Ngrok no pudo exponer URL publica.
+  if not defined NGROK_AUTH_TOKEN (
+    echo [ERROR] No se encontro token para ngrok.
+    echo [AYUDA] Define variable: setx NGROK_AUTHTOKEN TU_TOKEN
+    echo [AYUDA] o guarda token en: .run\ngrok_authtoken.txt
+  )
+  if exist ".run\ngrok_multi.log" (
+    findstr /C:"ERR_NGROK_4018" ".run\ngrok_multi.log" >nul
+    if not errorlevel 1 (
+      echo [ERROR] Ngrok requiere cuenta verificada y authtoken.
+      echo [AYUDA] Ejecuta: ngrok config add-authtoken TU_TOKEN
+      echo [AYUDA] Token: https://dashboard.ngrok.com/get-started/your-authtoken
+    )
+  )
+  echo [AYUDA] Revisa log: .run\ngrok_multi.log
+)
 echo ===========================================
 echo.
 echo Abriendo monitoreo de logs...
