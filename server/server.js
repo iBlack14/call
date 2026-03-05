@@ -325,7 +325,8 @@ app.get("/api/pairing/:code", (req, res) => {
 
   const session = getOrCreateSession(code);
   const webBase = getWebBaseUrl(req);
-  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
+  const apiBase = getBaseUrl(req);
+  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}&apiBase=${encodeURIComponent(apiBase)}`;
 
   return res.json({
     ok: true,
@@ -341,7 +342,8 @@ app.get("/api/pairing-qr/:code.svg", async (req, res) => {
 
   const session = getOrCreateSession(code);
   const webBase = getWebBaseUrl(req);
-  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
+  const apiBase = getBaseUrl(req);
+  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}&apiBase=${encodeURIComponent(apiBase)}`;
 
   try {
     const svg = await QRCode.toString(link, {

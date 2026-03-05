@@ -35,7 +35,7 @@ import java.io.IOException
  */
 class MainActivity : AppCompatActivity() {
 
-    private val defaultBaseUrl = "https://crooked-fanny-principally.ngrok-free.dev"
+    private val defaultBaseUrl = "https://lm.viacomunicativa.com"
 
     private lateinit var statusText : TextView
     private lateinit var baseUrlIn  : TextInputEditText
@@ -225,12 +225,19 @@ class MainActivity : AppCompatActivity() {
         try {
             val uri    = Uri.parse(content)
             val origin = "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
+            val apiBase = uri.getQueryParameter("apiBase")?.trim()?.trimEnd('/') ?: ""
             val code   = uri.getQueryParameter("code")  ?: ""
             val token  = uri.getQueryParameter("token") ?: ""
-            if (code.isBlank() || token.isBlank() || uri.host.isNullOrBlank()) {
+            val resolvedBase = when {
+                apiBase.isNotBlank() -> apiBase
+                uri.host.isNullOrBlank() -> ""
+                else -> origin
+            }
+
+            if (code.isBlank() || token.isBlank() || resolvedBase.isBlank()) {
                 setStatus("QR inválido"); return
             }
-            baseUrlIn.setText(origin)
+            baseUrlIn.setText(resolvedBase)
             codeIn.setText(code)
             tokenIn.setText(token)
             setStatus("QR cargado — vinculando automáticamente…")
