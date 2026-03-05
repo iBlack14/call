@@ -1,4 +1,6 @@
-const socket = io();
+const apiBaseFromQuery = new URLSearchParams(window.location.search).get("apiBase");
+const API_BASE = String(window.KENIA_API_BASE || apiBaseFromQuery || window.location.origin).replace(/\/+$/, "");
+const socket = io(API_BASE, { transports: ["websocket", "polling"] });
 
 // ── DOM REFS ────────────────────────────────────────────────────────────
 const statusDot = document.getElementById("statusDot");
@@ -148,8 +150,11 @@ let whatsappQrPollTimer = null;
 const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const CALLED_COUNTS_KEY = "kenia.calledCounts";
+const CONTACT_ROW_STATUS_KEY = "kenia.contactRowStatus";
 let calledCounts = {};
-const WHATSAPP_API_BASE = window.location.origin;
+let contactRowStatus = {};
+let lastRowStatusBadgeClick = null;
+const WHATSAPP_API_BASE = API_BASE;
 const WA_STATUS_PATHS = ["/api/whatsapp/status"];
 const WA_QR_PATHS = ["/api/whatsapp/qr"];
 const WA_LOGOUT_PATHS = ["/api/whatsapp/logout"];
@@ -220,6 +225,15 @@ function loadCalledCounts() {
 
 function saveCalledCounts() {
   localStorage.setItem(CALLED_COUNTS_KEY, JSON.stringify(calledCounts));
+}
+
+function loadContactRowStatus() {
+  try { contactRowStatus = JSON.parse(localStorage.getItem(CONTACT_ROW_STATUS_KEY) || "{}"); }
+  catch { contactRowStatus = {}; }
+}
+
+function saveContactRowStatus() {
+  localStorage.setItem(CONTACT_ROW_STATUS_KEY, JSON.stringify(contactRowStatus));
 }
 
 function loadDismissedReminders() {
@@ -564,7 +578,11 @@ function renderContacts() {
   for (const c of pageRows) {
     const tr = document.createElement("tr");
     const callCount = Number(calledCounts[c.id] || 0);
+    const rowStatus = String(contactRowStatus[c.id] || "").toLowerCase();
     if (callCount > 0) tr.classList.add("contact-row-called");
+    if (rowStatus === "r" || rowStatus === "lc" || rowStatus === "sc") {
+      tr.classList.add(`contact-row-status-${rowStatus}`);
+    }
     tr.innerHTML = `
       <td>${escHtml(c.name)}</td>
       <td style="font-family:monospace;font-size:13px;">${escHtml(c.phone)}</td>
@@ -577,6 +595,11 @@ function renderContacts() {
         <button data-action="whatsapp" data-id="${c.id}" class="wa-action-btn" title="WhatsApp">🟢 WhatsApp</button>
         <button data-action="dial"   data-id="${c.id}">📞 Llamar</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
+        <span class="contact-action-badges" aria-label="Estados R LC SC">
+          <span class="contact-action-badge badge-r ${rowStatus === "r" ? "is-active" : ""}" data-row-color="r" data-id="${c.id}" title="R = Reestructuración">R</span>
+          <span class="contact-action-badge badge-lc ${rowStatus === "lc" ? "is-active" : ""}" data-row-color="lc" data-id="${c.id}" title="LC = Libro de Reclamaciones">LC</span>
+          <span class="contact-action-badge badge-sc ${rowStatus === "sc" ? "is-active" : ""}" data-row-color="sc" data-id="${c.id}" title="SC = Servicio Completo">SC</span>
+        </span>
       </td>`;
     cBodyEl.appendChild(tr);
   }
@@ -1257,14 +1280,14 @@ function saveNewWhatsAppPresetMessage() {
 // ── PAIRING ────────────────────────────────────────────────────────────
 async function loadPairingData(code) {
   try {
-    const res = await fetch(`/api/pairing/${encodeURIComponent(code)}`);
+    const res = await fetch(`${API_BASE}/api/pairing/${encodeURIComponent(code)}`);
     if (!res.ok) throw new Error();
     const data = await res.json();
     pairLink = data.link;
     pairLinkEl.value = pairLink;
     qrHintEl.textContent = "Cargando QR...";
     pairQrEl.style.display = "none";
-    pairQrEl.src = `/api/pairing-qr/${encodeURIComponent(code)}.svg?ts=${Date.now()}`;
+    pairQrEl.src = `${API_BASE}/api/pairing-qr/${encodeURIComponent(code)}.svg?ts=${Date.now()}`;
   } catch {
     qrHintEl.textContent = "No se pudo generar QR.";
   }
@@ -1287,14 +1310,14 @@ function paintApkMeta(name, sizeKb, modified, downloadHref) {
     })
     : "fecha desconocida";
   apkMetaEl.textContent = `${sizeKb || 0} KB · ${updatedAt}`;
-  apkDlBtn.href = downloadHref || "/api/apk/download";
+  apkDlBtn.href = downloadHref || `${API_BASE}/api/apk/download`;
   apkDlBtn.style.opacity = "1";
   apkDlBtn.style.pointerEvents = "auto";
 }
 
 async function loadApkInfo() {
   try {
-    const res = await fetch("/api/apk/versions");
+    const res = await fetch(`${API_BASE}/api/apk/versions`);
     if (!res.ok) throw new Error("versions endpoint unavailable");
     const data = await res.json();
     if (data.ok && data.versions?.length) {
@@ -1317,19 +1340,19 @@ async function loadApkInfo() {
 
       const selected = data.versions.find(v => v.id === data.latestId) || data.versions[0];
       apkVersionSelectEl.value = selected.id;
-      paintApkMeta(selected.name, selected.sizeKb, selected.modified, `/api/apk/download/${encodeURIComponent(selected.id)}`);
+      paintApkMeta(selected.name, selected.sizeKb, selected.modified, `${API_BASE}/api/apk/download/${encodeURIComponent(selected.id)}`);
       return;
     }
     throw new Error("no versions");
   } catch {
     try {
-      const infoRes = await fetch("/api/apk/info");
+      const infoRes = await fetch(`${API_BASE}/api/apk/info`);
       const info = await infoRes.json();
       if (info?.ok) {
         apkVersionsCache = [];
         apkVersionSelectEl.style.display = "none";
         apkVersionSelectEl.innerHTML = "";
-        paintApkMeta(info.name || "Phone-VC Android", info.sizeKb, info.modified, "/api/apk/download");
+        paintApkMeta(info.name || "Phone-VC Android", info.sizeKb, info.modified, `${API_BASE}/api/apk/download`);
         return;
       }
     } catch {
@@ -1348,7 +1371,7 @@ apkVersionSelectEl.addEventListener("change", async () => {
   if (!selectedId) return;
   const v = apkVersionsCache.find(x => x.id === selectedId);
   if (!v) return;
-  paintApkMeta(v.name, v.sizeKb, v.modified, `/api/apk/download/${encodeURIComponent(v.id)}`);
+  paintApkMeta(v.name, v.sizeKb, v.modified, `${API_BASE}/api/apk/download/${encodeURIComponent(v.id)}`);
 });
 
 apkHelpBtn.addEventListener("click", () => {
@@ -1502,7 +1525,7 @@ async function importFromUrl() {
   importUrlBtn.textContent = "⏳ Cargando...";
   setStatus("Obteniendo página...");
   try {
-    const res = await fetch(`/api/fetch-url?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${API_BASE}/api/fetch-url?url=${encodeURIComponent(url)}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Error al obtener URL");
     const rows = parseHtmlTable(data.html);
@@ -1590,6 +1613,32 @@ addSaveBtn.addEventListener("click", () => {
 });
 
 cBodyEl.addEventListener("click", e => {
+  const colorBadge = e.target.closest(".contact-action-badge[data-row-color][data-id]");
+  if (colorBadge) {
+    const color = String(colorBadge.dataset.rowColor || "").toLowerCase();
+    const id = colorBadge.dataset.id;
+    if (!id) return;
+    if (color === "r" || color === "lc" || color === "sc") {
+      const now = Date.now();
+      const isSameBadge = (
+        lastRowStatusBadgeClick &&
+        lastRowStatusBadgeClick.id === id &&
+        lastRowStatusBadgeClick.color === color &&
+        (now - lastRowStatusBadgeClick.ts) <= 380
+      );
+      if (isSameBadge && contactRowStatus[id] === color) {
+        delete contactRowStatus[id];
+        lastRowStatusBadgeClick = null;
+      } else {
+        contactRowStatus[id] = color;
+        lastRowStatusBadgeClick = { id, color, ts: now };
+      }
+      saveContactRowStatus();
+      renderContacts();
+    }
+    return;
+  }
+
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
   const { action, id } = btn.dataset;
@@ -1597,7 +1646,9 @@ cBodyEl.addEventListener("click", e => {
   if (action === "delete") {
     if (id === currentCallingContactId) currentCallingContactId = null;
     delete calledCounts[id];
+    delete contactRowStatus[id];
     saveCalledCounts();
+    saveContactRowStatus();
     contacts = contacts.filter(c => c.id !== id);
     saveContacts(); renderContacts(); return;
   }
@@ -2523,6 +2574,7 @@ function bindQuotationEvents() {
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadContacts();
 loadCalledCounts();
+loadContactRowStatus();
 loadDismissedReminders();
 loadWhatsAppPresetMessages();
 renderContacts();

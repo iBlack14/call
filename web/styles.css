@@ -368,6 +368,33 @@ tbody tr.contact-row-called td {
   border-bottom-color: rgba(245, 158, 11, 0.35);
 }
 
+tbody tr.contact-row-status-r,
+tbody tr.contact-row-status-r:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+tbody tr.contact-row-status-r td {
+  border-bottom-color: rgba(220, 38, 38, 0.38);
+}
+
+tbody tr.contact-row-status-lc,
+tbody tr.contact-row-status-lc:hover {
+  background: rgba(245, 158, 11, 0.22);
+}
+
+tbody tr.contact-row-status-lc td {
+  border-bottom-color: rgba(245, 158, 11, 0.45);
+}
+
+tbody tr.contact-row-status-sc,
+tbody tr.contact-row-status-sc:hover {
+  background: rgba(22, 163, 74, 0.2);
+}
+
+tbody tr.contact-row-status-sc td {
+  border-bottom-color: rgba(22, 163, 74, 0.36);
+}
+
 .call-count-chip {
   display: inline-flex;
   align-items: center;
@@ -385,6 +412,7 @@ tbody tr.contact-row-called td {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .actions-cell button {
@@ -399,6 +427,98 @@ tbody tr.contact-row-called td {
   border: 1px solid rgba(37, 211, 102, 0.55);
   color: #ffffff;
   box-shadow: 0 2px 12px rgba(37, 211, 102, 0.3);
+}
+
+.contact-action-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+}
+
+.contact-action-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.contact-action-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+}
+
+.contact-action-badge.is-active {
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.contact-action-badge.badge-r {
+  color: #ef4444;
+}
+
+.contact-action-badge.badge-r.is-active {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.contact-action-badge.badge-lc {
+  color: #f59e0b;
+}
+
+.contact-action-badge.badge-lc.is-active {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.contact-action-badge.badge-sc {
+  color: #22c55e;
+}
+
+.contact-action-badge.badge-sc.is-active {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.contact-status-legend {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.contact-status-legend-title {
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.contact-status-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 12px;
 }
 
 #contactInlineRow {

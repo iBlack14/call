@@ -12,9 +12,32 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const io = new Server(server, {
+  cors: {
+    origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean),
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: false
+  }
+});
 
 const WHATSAPP_LOCAL_BASE = process.env.WHATSAPP_LOCAL_BASE || "http://127.0.0.1:3010";
+
+app.use((req, res, next) => {
+  const allowedOrigin = CORS_ORIGIN;
+  if (allowedOrigin === "*") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  } else {
+    const allowed = allowedOrigin.split(",").map(s => s.trim()).filter(Boolean);
+    const origin = req.headers.origin || "";
+    if (allowed.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
 // ── WhatsApp proxy (Mover ANTES de body-parser para relay de streams de archivos) ──
 async function proxyToWhatsApp(req, res, pathSuffix) {
@@ -112,6 +135,10 @@ function emitState(code) {
 
 function getBaseUrl(req) {
   return process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+}
+
+function getWebBaseUrl(req) {
+  return process.env.PUBLIC_WEB_BASE_URL || getBaseUrl(req);
 }
 
 io.on("connection", (socket) => {
@@ -297,8 +324,8 @@ app.get("/api/pairing/:code", (req, res) => {
   if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
 
   const session = getOrCreateSession(code);
-  const baseUrl = getBaseUrl(req);
-  const link = `${baseUrl}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
+  const webBase = getWebBaseUrl(req);
+  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
 
   return res.json({
     ok: true,
@@ -313,8 +340,8 @@ app.get("/api/pairing-qr/:code.svg", async (req, res) => {
   if (!code) return res.status(400).send("Code requerido");
 
   const session = getOrCreateSession(code);
-  const baseUrl = getBaseUrl(req);
-  const link = `${baseUrl}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
+  const webBase = getWebBaseUrl(req);
+  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}`;
 
   try {
     const svg = await QRCode.toString(link, {

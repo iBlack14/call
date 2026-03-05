@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: kenia-call-bridge
+    runtime: node
+    plan: free
+    autoDeploy: true
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: WHATSAPP_LOCAL_BASE
+        value: http://127.0.0.1:3010

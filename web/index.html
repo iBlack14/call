@@ -179,6 +179,21 @@
         </div>
 
         <!-- CONTACTS TABLE -->
+        <div class="contact-status-legend" aria-label="Leyenda de estados">
+          <span class="contact-status-legend-title">Estados:</span>
+          <span class="contact-status-legend-item">
+            <span class="contact-action-badge badge-r">R</span>
+            <span>Reestructuración</span>
+          </span>
+          <span class="contact-status-legend-item">
+            <span class="contact-action-badge badge-lc">LC</span>
+            <span>Libro de Reclamaciones</span>
+          </span>
+          <span class="contact-status-legend-item">
+            <span class="contact-action-badge badge-sc">SC</span>
+            <span>Servicio Completo</span>
+          </span>
+        </div>
         <div class="table-wrap" style="margin-top:16px;">
           <table>
             <thead>
@@ -408,7 +423,7 @@
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
   <script type="module" src="/dashboard.js"></script>
 </body>
 

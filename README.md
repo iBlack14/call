@@ -97,3 +97,36 @@ Para llamadas reales desde Android/iOS, reemplaza la simulacion de `web/phone.js
 - proveedor de telefonia (SIP/Twilio/operador)
 
 Este skeleton esta listo para evolucionar hacia ese bridge real.
+
+## Despliegue rapido en la nube (Web + Server)
+
+Para tener funcionando **dashboard + server** en una URL publica (por ahora):
+
+1. Sube este repo a GitHub.
+2. En Render, crea un **Web Service** desde ese repo.
+3. Render detecta `render.yaml` automaticamente (Blueprint) o usa:
+   - Build Command: `npm install`
+   - Start Command: `npm run start`
+4. Configura variables:
+   - `PUBLIC_BASE_URL=https://TU-APP.onrender.com`
+   - (Opcional por ahora) `WHATSAPP_LOCAL_BASE` si luego separas el backend de WhatsApp.
+5. Espera deploy y prueba:
+   - `https://TU-APP.onrender.com/` (dashboard)
+   - `https://TU-APP.onrender.com/phone` (phone bridge)
+   - `https://TU-APP.onrender.com/health`
+
+Nota: en este repo, `web` se sirve desde el mismo `server`, asi que no necesitas desplegar frontend por separado para esta etapa.
+
+## Web y Server en dominios distintos
+
+Si separas frontend y backend (ejemplo: `https://app.tudominio.com` y `https://api.tudominio.com`):
+
+1. En el backend configura:
+   - `PUBLIC_BASE_URL=https://api.tudominio.com`
+   - `PUBLIC_WEB_BASE_URL=https://app.tudominio.com`
+   - `CORS_ORIGIN=https://app.tudominio.com,https://api.tudominio.com`
+2. En el frontend agrega `apiBase` en la URL:
+   - Dashboard: `https://app.tudominio.com/?apiBase=https://api.tudominio.com`
+   - Phone: `https://app.tudominio.com/phone?apiBase=https://api.tudominio.com`
+
+El frontend ya esta preparado para usar ese `apiBase` y conectarse por Socket.IO al dominio del backend.
