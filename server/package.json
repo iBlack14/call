@@ -1,5 +1,5 @@
 {
-  "name": "kenia-call-bridge-server",
+  "name": "voip-vc-call-bridge-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",

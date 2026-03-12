@@ -10,7 +10,11 @@ import QRCode from "qrcode";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import { SessionPersistence } from "./persistence.js";
+const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
+
 const app = express();
+app.set("trust proxy", true);
 const server = http.createServer(app);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const io = new Server(server, {
@@ -86,7 +90,12 @@ app.post("/api/whatsapp/logout", (req, res) => proxyToWhatsApp(req, res, "/logou
 
 app.use(express.json());
 
-const sessions = new Map();
+let sessions = await persistence.load();
+console.log(`[PERSISTENCE] Loaded ${sessions.size} sessions.`);
+
+function saveSoon() {
+  persistence.save(sessions);
+}
 
 function getOrCreateSession(code) {
   if (!sessions.has(code)) {
@@ -102,6 +111,7 @@ function getOrCreateSession(code) {
       phoneDevice: null,
       updatedAt: Date.now()
     });
+    saveSoon();
   }
 
   return sessions.get(code);
@@ -133,12 +143,40 @@ function emitState(code) {
   });
 }
 
+function parseEnvUrlCandidates(rawValue) {
+  const raw = String(rawValue || "").trim().replace(/^=+/, "");
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map(s => s.trim().replace(/\/+$/, ""))
+    .filter(Boolean)
+    .filter((v) => /^https?:\/\//i.test(v));
+}
+
 function getBaseUrl(req) {
-  return process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  const forwardedHost = String(req.headers["x-forwarded-host"] || "").split(",")[0].trim();
+  const proto = forwardedProto || req.protocol || "http";
+  const host = forwardedHost || req.get("host") || "";
+  const reqBase = `${proto}://${host}`.replace(/\/+$/, "");
+  const reqHost = String(req.get("host") || "").toLowerCase();
+  const candidates = parseEnvUrlCandidates(process.env.PUBLIC_BASE_URL);
+  if (!candidates.length) return reqBase;
+
+  const byHost = candidates.find((candidate) => {
+    try {
+      return new URL(candidate).host.toLowerCase() === reqHost;
+    } catch {
+      return false;
+    }
+  });
+
+  return byHost || candidates[0] || reqBase;
 }
 
 function getWebBaseUrl(req) {
-  return process.env.PUBLIC_WEB_BASE_URL || getBaseUrl(req);
+  const candidates = parseEnvUrlCandidates(process.env.PUBLIC_WEB_BASE_URL);
+  return candidates[0] || getBaseUrl(req);
 }
 
 io.on("connection", (socket) => {
@@ -181,6 +219,7 @@ io.on("connection", (socket) => {
         name: deviceName || "Android bridge",
         linkedAt: new Date().toISOString()
       };
+      saveSoon();
     }
 
     session.updatedAt = Date.now();
@@ -202,10 +241,12 @@ io.on("connection", (socket) => {
       session.lastCompanyName = companyName || "";
       session.lastContactName = contactName || "";
       session.lastImageUrl = imageUrl || "";
+      saveSoon();
     }
 
     if (action === "hangup") {
       session.callState = "ended";
+      saveSoon();
     }
 
     session.updatedAt = Date.now();
@@ -245,6 +286,7 @@ io.on("connection", (socket) => {
       session.lastCompanyName = companyName.trim();
     }
     session.updatedAt = Date.now();
+    saveSoon();
     emitState(code);
   });
 
@@ -312,6 +354,7 @@ io.on("connection", (socket) => {
 
     if (!session.dashboardSocketId && !session.phoneSocketId) {
       sessions.delete(code);
+      saveSoon();
       return;
     }
 
@@ -380,6 +423,7 @@ app.post("/api/android/pair", (req, res) => {
     linkedAt: new Date().toISOString()
   };
   session.updatedAt = Date.now();
+  saveSoon();
   emitState(code);
 
   const baseUrl = getBaseUrl(req);
@@ -538,7 +582,7 @@ app.get("/api/fetch-url", async (req, res) => {
     const { default: fetch } = await import("node-fetch").catch(() => ({ default: globalThis.fetch }));
     const fetchFn = fetch || globalThis.fetch;
     const r = await fetchFn(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; KENIA/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; VOIP VC/1.0)" },
       signal: AbortSignal.timeout(10000)
     });
     if (!r.ok) return res.status(502).json({ ok: false, error: `HTTP ${r.status} al obtener la URL` });

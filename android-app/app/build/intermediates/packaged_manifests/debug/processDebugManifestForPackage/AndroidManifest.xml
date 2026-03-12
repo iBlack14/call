@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.kenia.bridge"
+    package="com.voipvc.bridge"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -33,10 +33,10 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <permission
-        android:name="com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:name="com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+    <uses-permission android:name="com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -67,10 +67,10 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.KeniaBridge"
+        android:theme="@style/Theme.VoipVcBridge"
         android:usesCleartextTraffic="true" >
         <activity
-            android:name="com.kenia.bridge.MainActivity"
+            android:name="com.voipvc.bridge.MainActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -91,7 +91,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.kenia.bridge.IncomingCallActivity"
+            android:name="com.voipvc.bridge.IncomingCallActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"
@@ -100,7 +100,7 @@
 
         <!-- InCallService: required to be the default dialer (hang up without root) -->
         <service
-            android:name="com.kenia.bridge.KeniaInCallService"
+            android:name="com.voipvc.bridge.VoipVcInCallService"
             android:exported="true"
             android:permission="android.permission.BIND_INCALL_SERVICE" >
             <meta-data
@@ -117,14 +117,14 @@
 
         <!-- Always-on bridge: phoneCall + microphone foreground types -->
         <service
-            android:name="com.kenia.bridge.BridgeService"
+            android:name="com.voipvc.bridge.BridgeService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="phoneCall" />
 
         <!-- Auto-start on reboot -->
         <receiver
-            android:name="com.kenia.bridge.BootReceiver"
+            android:name="com.voipvc.bridge.BootReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
@@ -135,7 +135,7 @@
 
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.kenia.bridge.androidx-startup"
+            android:authorities="com.voipvc.bridge.androidx-startup"
             android:exported="false" >
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"

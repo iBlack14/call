@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kenia.bridge"
+    namespace = "com.voipvc.bridge"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.kenia.bridge"
+        applicationId = "com.voipvc.bridge"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -32,7 +32,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
+    kotlinOptions { 
         jvmTarget = "17"
     }
 }
@@ -46,11 +46,14 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+
     implementation("io.socket:socket.io-client:2.1.1") {
         exclude(group = "org.json", module = "json")
     }
 }
 
 base {
-    archivesName.set("Phone-VC")
+    archivesName.set("VOIP-VC")
 }

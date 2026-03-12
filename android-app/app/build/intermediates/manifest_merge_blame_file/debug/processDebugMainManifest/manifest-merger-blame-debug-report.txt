@@ -1,6 +1,6 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.kenia.bridge"
+3    package="com.voipvc.bridge"
 4    android:versionCode="1"
 5    android:versionName="1.0" >
 6
@@ -62,12 +62,12 @@
 34
 35    <permission
 35-->[androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
-36        android:name="com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+36        android:name="com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 36-->[androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
 37        android:protectionLevel="signature" />
 37-->[androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 38
-39    <uses-permission android:name="com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+39    <uses-permission android:name="com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
 39-->[androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 39-->[androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 40    <uses-feature
@@ -126,13 +126,13 @@
 68-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:31:9-54
 69        android:supportsRtl="true"
 69-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:32:9-35
-70        android:theme="@style/Theme.KeniaBridge"
-70-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-49
+70        android:theme="@style/Theme.VoipVcBridge"
+70-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-50
 71        android:usesCleartextTraffic="true" >
 71-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:34:9-44
 72        <activity
 72-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:37:9-53:20
-73            android:name="com.kenia.bridge.MainActivity"
+73            android:name="com.voipvc.bridge.MainActivity"
 73-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:38:13-41
 74            android:exported="true" >
 74-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:13-36
@@ -173,7 +173,7 @@
 92        </activity>
 93        <activity
 93-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:55:9-61:43
-94            android:name="com.kenia.bridge.IncomingCallActivity"
+94            android:name="com.voipvc.bridge.IncomingCallActivity"
 94-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:56:13-49
 95            android:excludeFromRecents="true"
 95-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:57:13-46
@@ -189,8 +189,8 @@
 101        <!-- InCallService: required to be the default dialer (hang up without root) -->
 102        <service
 102-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:9-77:19
-103            android:name="com.kenia.bridge.KeniaInCallService"
-103-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-47
+103            android:name="com.voipvc.bridge.VoipVcInCallService"
+103-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-48
 104            android:exported="true"
 104-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:67:13-36
 105            android:permission="android.permission.BIND_INCALL_SERVICE" >
@@ -219,7 +219,7 @@
 118        <!-- Always-on bridge: phoneCall + microphone foreground types -->
 119        <service
 119-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:80:9-84:57
-120            android:name="com.kenia.bridge.BridgeService"
+120            android:name="com.voipvc.bridge.BridgeService"
 120-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:13-42
 121            android:enabled="true"
 121-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:13-35
@@ -231,7 +231,7 @@
 125        <!-- Auto-start on reboot -->
 126        <receiver
 126-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:87:9-95:20
-127            android:name="com.kenia.bridge.BootReceiver"
+127            android:name="com.voipvc.bridge.BootReceiver"
 127-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:88:13-41
 128            android:enabled="true"
 128-->C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:89:13-35
@@ -252,7 +252,7 @@
 136-->[androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 137            android:name="androidx.startup.InitializationProvider"
 137-->[androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-138            android:authorities="com.kenia.bridge.androidx-startup"
+138            android:authorities="com.voipvc.bridge.androidx-startup"
 138-->[androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
 139            android:exported="false" >
 139-->[androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37

@@ -148,12 +148,12 @@ MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\
 	android:allowBackup
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:28:9-35
 	android:theme
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-49
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-50
 	android:networkSecurityConfig
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:35:9-69
 	android:usesCleartextTraffic
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:34:9-44
-activity#com.kenia.bridge.MainActivity
+activity#com.voipvc.bridge.MainActivity
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:37:9-53:20
 	android:exported
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:13-36
@@ -185,7 +185,7 @@ data
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:17-46
 	android:scheme
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:23-43
-activity#com.kenia.bridge.IncomingCallActivity
+activity#com.voipvc.bridge.IncomingCallActivity
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:55:9-61:43
 	android:turnScreenOn
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:61:13-40
@@ -199,14 +199,14 @@ ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:58:13-37
 	android:name
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:56:13-49
-service#com.kenia.bridge.KeniaInCallService
+service#com.voipvc.bridge.VoipVcInCallService
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:9-77:19
 	android:exported
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:67:13-36
 	android:permission
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:66:13-72
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-47
+		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-48
 meta-data#android.telecom.IN_CALL_SERVICE_UI
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:68:13-70:40
 	android:value
@@ -225,7 +225,7 @@ action#android.telecom.InCallService
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:17-72
 	android:name
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:25-69
-service#com.kenia.bridge.BridgeService
+service#com.voipvc.bridge.BridgeService
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:80:9-84:57
 	android:enabled
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:13-35
@@ -235,7 +235,7 @@ ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:84:13-54
 	android:name
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:13-42
-receiver#com.kenia.bridge.BootReceiver
+receiver#com.voipvc.bridge.BootReceiver
 ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:87:9-95:20
 	android:enabled
 		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:89:13-35
@@ -373,7 +373,7 @@ ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
-permission#com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
@@ -383,7 +383,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
-uses-permission#com.kenia.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.voipvc.bridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:26:22-94

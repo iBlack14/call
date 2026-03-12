@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.kenia.bridge",
+  "applicationId": "com.voipvc.bridge",
   "variantName": "debug",
   "elements": [
     {
@@ -13,7 +13,7 @@
       "attributes": [],
       "versionCode": 1,
       "versionName": "1.0",
-      "outputFile": "Phone-VC-debug.apk"
+      "outputFile": "VOIP-VC-debug.apk"
     }
   ],
   "elementType": "File",

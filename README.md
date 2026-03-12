@@ -1,4 +1,4 @@
-# Kenia - Skeleton de Vinculacion Celular <-> Web
+# VOIP VC - Skeleton de Vinculacion Celular <-> Web
 
 Este proyecto crea un **esqueleto funcional** para conectar un dashboard web con un cliente movil usando tiempo real (Socket.IO).
 

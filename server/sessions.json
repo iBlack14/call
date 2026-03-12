@@ -1,0 +1,12 @@
+{
+  "123456": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "7N5sObMf7WSNqGlkDc6t",
+    "phoneDevice": null,
+    "updatedAt": 1773325572350
+  }
+}

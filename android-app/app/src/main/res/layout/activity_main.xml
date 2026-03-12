@@ -15,7 +15,7 @@
             android:id="@+id/titleText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Kenia Android Bridge"
+            android:text="VOIP VC Android Bridge"
             android:textColor="#E5E7EB"
             android:textSize="24sp"
             android:textStyle="bold"

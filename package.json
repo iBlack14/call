@@ -1,5 +1,5 @@
 {
-  "name": "kenia-call-bridge-skeleton",
+  "name": "voip-vc-call-bridge-skeleton",
   "version": "0.1.0",
   "private": true,
   "type": "module",

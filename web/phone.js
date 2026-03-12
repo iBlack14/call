@@ -1,5 +1,5 @@
 const apiBaseFromQuery = new URLSearchParams(window.location.search).get("apiBase");
-const API_BASE = String(window.KENIA_API_BASE || apiBaseFromQuery || window.location.origin).replace(/\/+$/, "");
+const API_BASE = String(window.VOIP_VC_API_BASE || apiBaseFromQuery || window.location.origin).replace(/\/+$/, "");
 const socket = io(API_BASE, { transports: ["websocket", "polling"] });
 
 // ── DOM ─────────────────────────────────────────────────────────────────

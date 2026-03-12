@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "KeniaBridge"
+rootProject.name = "VOIP-VC-Bridge"
 include(":app")

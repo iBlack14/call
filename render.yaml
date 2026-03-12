@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kenia-call-bridge
+    name: voip-vc-call-bridge
     runtime: node
     plan: free
     autoDeploy: true

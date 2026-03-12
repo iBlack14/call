@@ -42,7 +42,7 @@ Ejemplo:
 ```bash
 curl -X POST http://localhost:3010/send-message \
   -F "to=51999999999" \
-  -F "message=Hola desde KENIA" \
+  -F "message=Hola desde VOIP VC" \
   -F "file=@C:/ruta/archivo.pdf"
 ```
 

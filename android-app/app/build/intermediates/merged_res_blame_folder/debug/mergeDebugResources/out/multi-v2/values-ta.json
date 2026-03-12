@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.kenia.bridge.app-mergeDebugResources-30:/values-ta/values-ta.xml",
+            "outputFile": "com.voipvc.bridge.app-mergeDebugResources-30:/values-ta/values-ta.xml",
             "map": [
                 {
                     "source": "C:\\Users\\via\\.gradle\\caches\\9.0-milestone-1\\transforms\\9c95af8a3d8e23b4851e56a1d877f495\\transformed\\core-1.13.1\\res\\values-ta\\values-ta.xml",
