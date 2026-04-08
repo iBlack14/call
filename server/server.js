@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import path from "path";
 import fs from "fs";
+import dns from "dns/promises";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import { nanoid } from "nanoid";
@@ -177,6 +178,59 @@ function getBaseUrl(req) {
 function getWebBaseUrl(req) {
   const candidates = parseEnvUrlCandidates(process.env.PUBLIC_WEB_BASE_URL);
   return candidates[0] || getBaseUrl(req);
+}
+
+function isPrivateOrLocalAddress(hostValue) {
+  const host = String(hostValue || "").trim().toLowerCase();
+  if (!host) return true;
+  if (["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"].includes(host)) return true;
+  if (host.endsWith(".local") || host.endsWith(".internal")) return true;
+
+  if (/^10\./.test(host)) return true;
+  if (/^127\./.test(host)) return true;
+  if (/^169\.254\./.test(host)) return true;
+  if (/^192\.168\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+  if (host === "::" || host.startsWith("fe80:") || host.startsWith("fc") || host.startsWith("fd")) return true;
+
+  return false;
+}
+
+async function validateExternalFetchUrl(rawUrl) {
+  const normalized = String(rawUrl || "").trim();
+  if (!normalized) return { ok: false, error: "url requerida" };
+
+  let parsed;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    return { ok: false, error: "URL invalida" };
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    return { ok: false, error: "Solo se permiten URLs HTTP/HTTPS" };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { ok: false, error: "URL con credenciales no permitida" };
+  }
+
+  const hostname = String(parsed.hostname || "").toLowerCase();
+  if (isPrivateOrLocalAddress(hostname)) {
+    return { ok: false, error: "Host privado/local no permitido" };
+  }
+
+  try {
+    const addresses = await dns.lookup(hostname, { all: true });
+    if (!addresses.length) return { ok: false, error: "No se pudo resolver el host" };
+    if (addresses.some((entry) => isPrivateOrLocalAddress(entry.address))) {
+      return { ok: false, error: "Destino resuelto a IP privada/local no permitido" };
+    }
+  } catch {
+    return { ok: false, error: "No se pudo resolver el host" };
+  }
+
+  return { ok: true, url: parsed.toString() };
 }
 
 io.on("connection", (socket) => {
@@ -576,12 +630,13 @@ app.get("/api/apk/download/:id", (req, res) => {
 
 // ── URL proxy for contact import ─────────────────────────────────────────
 app.get("/api/fetch-url", async (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).json({ ok: false, error: "url requerida" });
+  const rawUrl = req.query.url;
+  const validation = await validateExternalFetchUrl(rawUrl);
+  if (!validation.ok) return res.status(400).json({ ok: false, error: validation.error });
   try {
     const { default: fetch } = await import("node-fetch").catch(() => ({ default: globalThis.fetch }));
     const fetchFn = fetch || globalThis.fetch;
-    const r = await fetchFn(url, {
+    const r = await fetchFn(validation.url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; VOIP VC/1.0)" },
       signal: AbortSignal.timeout(10000)
     });
@@ -594,7 +649,10 @@ app.get("/api/fetch-url", async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "../web")));
-app.get("/phone", (_, res) => res.sendFile(path.join(__dirname, "../web/phone.html")));
+app.get("/phone", (req, res) => {
+  const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  return res.redirect(`/${query}`);
+});
 app.get("/health", (_, res) => res.json({ ok: true }));
 
 const port = process.env.PORT || 3000;
