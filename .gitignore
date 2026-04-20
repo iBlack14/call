@@ -1,3 +1,7 @@
 node_modules/
 .env
 npm-debug.log*
+server/*.tmp
+android-app/.gradle/
+android-app/build/
+android-app/app/build/

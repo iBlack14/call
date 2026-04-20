@@ -111,7 +111,6 @@
         <div class="row" style="margin-top:0;">
           <button id="exportWordBtn" class="secondary">📄 Exportar Word</button>
           <button id="openQuotationBtn">🧾 Nueva Cotización</button>
-          <button id="connectWhatsAppBtn" class="secondary">🟢 Conectar WhatsApp</button>
         </div>
 
         <!-- ADD MANUALLY -->
@@ -260,52 +259,7 @@
     </div>
   </div>
 
-  <!-- WHATSAPP MODAL -->
-  <div id="whatsappModal" class="edit-modal" style="display:none">
-    <div class="edit-card whatsapp-card">
-      <button id="whatsappCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
-      <h3 id="whatsappTitle">WhatsApp</h3>
-      <p id="whatsappPhone" class="muted whatsapp-phone">-</p>
 
-      <div id="whatsappQrPanel" class="whatsapp-panel" style="display:none">
-        <p id="whatsappQrLead" class="muted" style="font-size:13px;">Escanea este QR para vincular WhatsApp.</p>
-        <div id="whatsappConnectOk" class="wa-connect-ok" style="display:none;">
-          <strong>Cuenta conectada</strong>
-          <small id="whatsappLinkedNumber">-</small>
-        </div>
-        <img id="whatsappQrImg" alt="QR WhatsApp" style="display:none" />
-        <small id="whatsappQrHint" class="muted">Cargando estado de WhatsApp...</small>
-        <div class="row" style="margin-top:10px;justify-content:flex-start;">
-          <button id="whatsappLogoutBtn" type="button" class="secondary" style="display:none;">Cerrar sesión</button>
-        </div>
-      </div>
-
-      <div id="whatsappFormPanel" class="whatsapp-panel" style="display:none">
-        <label>Mensajes predeterminados</label>
-        <div class="whatsapp-template-create-row">
-          <input id="whatsappTemplateInput" type="text" placeholder="Escribe un mensaje predeterminado..." />
-          <button id="whatsappTemplateSaveBtn" type="button" class="secondary">💾 Guardar</button>
-        </div>
-        <div id="whatsappTemplates" class="whatsapp-templates"></div>
-
-        <label for="whatsappMessageInput">Mensaje</label>
-        <textarea id="whatsappMessageInput" rows="4" placeholder="Escribe tu mensaje..."></textarea>
-
-        <label>Archivo (opcional)</label>
-        <div id="whatsappDropZone" class="whatsapp-drop-zone">
-          <div class="drop-zone-content">
-            <span class="drop-icon">📁</span>
-            <span id="whatsappFileName" class="drop-text">Arrastra un archivo aquí o haz clic</span>
-          </div>
-          <input id="whatsappFileInput" type="file"
-            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
-            hidden />
-        </div>
-
-        <button id="whatsappSendBtn" type="button">Enviar por WhatsApp</button>
-      </div>
-    </div>
-  </div>
 
   <!-- QUOTATION MODAL -->
   <div id="quotationModal" class="edit-modal" style="display:none">

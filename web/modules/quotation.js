@@ -1,5 +1,4 @@
 import { refs, setStatus } from './dom.js';
-import { normalizePhoneForWa, fetchWhatsAppJson, isWaLinked, WA_SEND_PATHS, NGROK_SKIP_WARNING_HEADERS, WHATSAPP_API_BASE } from './whatsapp.js';
 
 const QUOTATION_SERVICE_OPTIONS = [
   "WEB INFORMATIVA", "WEB E-COMMERCE", "WEB AULA VIRTUAL", "POSICIONAMIENTO SEO",
@@ -124,13 +123,8 @@ export async function downloadQuotationPdf() {
   doc.save(`cotizacion.pdf`);
 }
 
-export async function sendQuotationPdfViaWhatsApp() {
-  const to = normalizePhoneForWa(refs.qPhoneEl?.value || "");
-  if (!to) { alert("Falta teléfono"); return; }
-  setStatus(`Enviando cotizacion a ${to}...`, true);
-  // (Simplified for module extraction phase)
-  alert(`Funcionalidad de envio de PDF via WA movida a modulo.`);
-}
+
+
 
 export function bindQuotationEvents() {
   if (refs.quotationServicesDatalistEl) {

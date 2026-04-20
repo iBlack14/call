@@ -15,87 +15,116 @@ import { SessionPersistence } from "./persistence.js";
 const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
 
 const app = express();
-app.set("trust proxy", true);
+app.disable("x-powered-by");
+app.set("trust proxy", process.env.TRUST_PROXY || true);
 const server = http.createServer(app);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || "0.0.0.0";
+const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 24 * 30);
+const DISCONNECTED_SESSION_TTL_MS = Number(process.env.DISCONNECTED_SESSION_TTL_MS || 1000 * 60 * 60 * 24);
+const MAX_JSON_SIZE = process.env.MAX_JSON_SIZE || "256kb";
+const FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || 10000);
+const ALLOWED_ORIGINS = CORS_ORIGIN === "*"
+  ? null
+  : CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean);
+const requestBuckets = new Map();
 const io = new Server(server, {
   cors: {
-    origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean),
+    origin: ALLOWED_ORIGINS || true,
     methods: ["GET", "POST", "OPTIONS"],
     credentials: false
-  }
+  },
+  maxHttpBufferSize: Number(process.env.SOCKET_MAX_HTTP_BUFFER_SIZE || 1024 * 1024),
+  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
+  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 20000)
 });
 
-const WHATSAPP_LOCAL_BASE = process.env.WHATSAPP_LOCAL_BASE || "http://127.0.0.1:3010";
+server.keepAliveTimeout = Number(process.env.KEEP_ALIVE_TIMEOUT_MS || 65000);
+server.headersTimeout = Number(process.env.HEADERS_TIMEOUT_MS || 66000);
+server.requestTimeout = Number(process.env.REQUEST_TIMEOUT_MS || 30000);
 
 app.use((req, res, next) => {
-  const allowedOrigin = CORS_ORIGIN;
-  if (allowedOrigin === "*") {
+  if (!ALLOWED_ORIGINS) {
     res.setHeader("Access-Control-Allow-Origin", "*");
   } else {
-    const allowed = allowedOrigin.split(",").map(s => s.trim()).filter(Boolean);
     const origin = req.headers.origin || "";
-    if (allowed.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
+    if (ALLOWED_ORIGINS.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  if (req.secure || String(req.headers["x-forwarded-proto"] || "").includes("https")) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
-// ── WhatsApp proxy (Mover ANTES de body-parser para relay de streams de archivos) ──
-async function proxyToWhatsApp(req, res, pathSuffix) {
-  const targetUrl = `${WHATSAPP_LOCAL_BASE}${pathSuffix}`;
-  const method = req.method || "GET";
-  console.log(`[PROXY] ${method} ${pathSuffix} -> ${targetUrl}`);
-
-  const headers = {};
-  if (req.headers["content-type"]) headers["content-type"] = req.headers["content-type"];
-  headers["ngrok-skip-browser-warning"] = "1";
-
-  try {
-    let upstream;
-    const fetchOptions = {
-      method,
-      headers,
-      signal: AbortSignal.timeout(60000) // 60s para archivos pesados
-    };
-
-    if (method === "GET" || method === "HEAD") {
-      upstream = await fetch(targetUrl, fetchOptions);
-    } else {
-      upstream = await fetch(targetUrl, {
-        ...fetchOptions,
-        body: req,
-        duplex: "half"
-      });
-    }
-
-    const contentType = upstream.headers.get("content-type") || "";
-    const text = await upstream.text();
-    res.status(upstream.status);
-    if (contentType) res.setHeader("Content-Type", contentType);
-    return res.send(text);
-  } catch (e) {
-    console.error(`Proxy Error (${method} ${pathSuffix}):`, e);
-    return res.status(502).json({ ok: false, error: "Error en el puente de WhatsApp.", details: e.message });
-  }
-}
-
-app.get("/api/whatsapp/status", (req, res) => proxyToWhatsApp(req, res, "/status"));
-app.get("/api/whatsapp/qr", (req, res) => proxyToWhatsApp(req, res, "/qr"));
-app.post("/api/whatsapp/send", (req, res) => proxyToWhatsApp(req, res, "/send"));
-app.post("/api/whatsapp/send-message", (req, res) => proxyToWhatsApp(req, res, "/send-message"));
-app.post("/api/whatsapp/logout", (req, res) => proxyToWhatsApp(req, res, "/logout"));
-
-app.use(express.json());
+app.use(express.json({ limit: MAX_JSON_SIZE }));
+app.use(express.urlencoded({ extended: false, limit: MAX_JSON_SIZE }));
 
 let sessions = await persistence.load();
 console.log(`[PERSISTENCE] Loaded ${sessions.size} sessions.`);
 
 function saveSoon() {
   persistence.save(sessions);
+}
+
+function getClientIp(reqOrSocket) {
+  const forwardedFor = reqOrSocket?.headers?.["x-forwarded-for"];
+  const remoteAddress = reqOrSocket?.ip || reqOrSocket?.handshake?.address || reqOrSocket?.socket?.remoteAddress;
+  const firstForwarded = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "";
+  return firstForwarded || remoteAddress || "unknown";
+}
+
+function rateLimit({ key, windowMs, limit }) {
+  const now = Date.now();
+  const bucket = requestBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    requestBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true, remaining: limit - 1 };
+  }
+
+  if (bucket.count >= limit) {
+    return { ok: false, retryAfterMs: Math.max(bucket.resetAt - now, 1000) };
+  }
+
+  bucket.count += 1;
+  return { ok: true, remaining: limit - bucket.count };
+}
+
+function enforceHttpRateLimit(req, res, options) {
+  const ip = getClientIp(req);
+  const result = rateLimit({ key: `${options.name}:${ip}`, windowMs: options.windowMs, limit: options.limit });
+  if (result.ok) return true;
+  res.setHeader("Retry-After", String(Math.ceil(result.retryAfterMs / 1000)));
+  res.status(429).json({ ok: false, error: "Demasiadas solicitudes. Intenta de nuevo en unos segundos." });
+  return false;
+}
+
+function enforceSocketRateLimit(socket, name, windowMs, limit) {
+  const ip = getClientIp(socket.handshake);
+  const result = rateLimit({ key: `socket:${name}:${ip}`, windowMs, limit });
+  if (result.ok) return true;
+  socket.emit("session:error", { message: "Demasiados intentos. Espera unos segundos." });
+  return false;
+}
+
+function sanitizeText(value, maxLen = 200) {
+  return String(value || "").trim().slice(0, maxLen);
+}
+
+function createSessionCode() {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const code = nanoid(6).toUpperCase();
+    if (!sessions.has(code)) return code;
+  }
+  throw new Error("No se pudo generar un codigo de sesion unico");
 }
 
 function getOrCreateSession(code) {
@@ -129,7 +158,6 @@ function emitState(code) {
   if (!session) return;
 
   io.to(code).emit("state:changed", {
-    
     connected: {
       dashboard: Boolean(session.dashboardSocketId),
       phone: Boolean(session.phoneSocketId)
@@ -233,9 +261,37 @@ async function validateExternalFetchUrl(rawUrl) {
   return { ok: true, url: parsed.toString() };
 }
 
+function pruneExpiredSessions() {
+  const now = Date.now();
+  let removed = 0;
+  for (const [code, session] of sessions.entries()) {
+    const age = now - Number(session.updatedAt || 0);
+    const ttl = session.dashboardSocketId || session.phoneSocketId
+      ? SESSION_TTL_MS
+      : DISCONNECTED_SESSION_TTL_MS;
+    if (age > ttl) {
+      sessions.delete(code);
+      removed += 1;
+    }
+  }
+  if (removed > 0) {
+    console.log(`[SESSIONS] Removed ${removed} expired sessions.`);
+    saveSoon();
+  }
+}
+
+setInterval(() => {
+  pruneExpiredSessions();
+  const now = Date.now();
+  for (const [key, bucket] of requestBuckets.entries()) {
+    if (bucket.resetAt <= now) requestBuckets.delete(key);
+  }
+}, 60_000).unref();
+
 io.on("connection", (socket) => {
   socket.on("session:create", () => {
-    const code = nanoid(6).toUpperCase();
+    if (!enforceSocketRateLimit(socket, "session:create", 60_000, 12)) return;
+    const code = createSessionCode();
     const session = getOrCreateSession(code);
     session.updatedAt = Date.now();
 
@@ -250,6 +306,7 @@ io.on("connection", (socket) => {
 
 
   socket.on("session:join", ({ code, role, token, deviceName, deviceId }) => {
+    if (!enforceSocketRateLimit(socket, "session:join", 60_000, 30)) return;
     if (!code || !role) return;
 
     const normalizedCode = String(code).toUpperCase().trim();
@@ -269,8 +326,8 @@ io.on("connection", (socket) => {
     if (role === "phone") {
       session.phoneSocketId = socket.id;
       session.phoneDevice = {
-        id: deviceId || "web-phone",
-        name: deviceName || "Android bridge",
+        id: sanitizeText(deviceId || "web-phone", 120),
+        name: sanitizeText(deviceName || "Android bridge", 120),
         linkedAt: new Date().toISOString()
       };
       saveSoon();
@@ -291,10 +348,10 @@ io.on("connection", (socket) => {
 
     if (action === "dial") {
       session.callState = "dialing";
-      session.lastNumber = phoneNumber || "";
-      session.lastCompanyName = companyName || "";
-      session.lastContactName = contactName || "";
-      session.lastImageUrl = imageUrl || "";
+      session.lastNumber = sanitizeText(phoneNumber, 40);
+      session.lastCompanyName = sanitizeText(companyName);
+      session.lastContactName = sanitizeText(contactName);
+      session.lastImageUrl = sanitizeText(imageUrl, 500);
       saveSoon();
     }
 
@@ -309,11 +366,11 @@ io.on("connection", (socket) => {
     if (peerId) {
       io.to(peerId).emit("call:action", {
         action,
-        phoneNumber,
-        companyName,
-        contactName,
-        imageUrl,
-        commandId,
+        phoneNumber: sanitizeText(phoneNumber, 40),
+        companyName: sanitizeText(companyName),
+        contactName: sanitizeText(contactName),
+        imageUrl: sanitizeText(imageUrl, 500),
+        commandId: sanitizeText(commandId, 80),
         from: "dashboard"
       });
     }
@@ -329,15 +386,15 @@ io.on("connection", (socket) => {
     const session = sessions.get(code);
     if (!session) return;
 
-    session.callState = callState || session.callState;
+    session.callState = sanitizeText(callState, 40) || session.callState;
     if (typeof phoneNumber === "string" && phoneNumber.trim()) {
-      session.lastNumber = phoneNumber.trim();
+      session.lastNumber = sanitizeText(phoneNumber, 40);
     }
     if (typeof contactName === "string" && contactName.trim()) {
-      session.lastContactName = contactName.trim();
+      session.lastContactName = sanitizeText(contactName);
     }
     if (typeof companyName === "string" && companyName.trim()) {
-      session.lastCompanyName = companyName.trim();
+      session.lastCompanyName = sanitizeText(companyName);
     }
     session.updatedAt = Date.now();
     saveSoon();
@@ -356,10 +413,10 @@ io.on("connection", (socket) => {
     if (!peerId) return;
 
     io.to(peerId).emit("phone:command_ack", {
-      commandId: commandId || "",
-      action: action || "",
+      commandId: sanitizeText(commandId, 80),
+      action: sanitizeText(action, 80),
       ok: Boolean(ok),
-      message: message || "",
+      message: sanitizeText(message, 240),
       at: new Date().toISOString()
     });
   });
@@ -417,6 +474,7 @@ io.on("connection", (socket) => {
 });
 
 app.get("/api/pairing/:code", (req, res) => {
+  if (!enforceHttpRateLimit(req, res, { name: "api:pairing", windowMs: 60_000, limit: 60 })) return;
   const code = String(req.params.code || "").toUpperCase().trim();
   if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
 
@@ -434,6 +492,7 @@ app.get("/api/pairing/:code", (req, res) => {
 });
 
 app.get("/api/pairing-qr/:code.svg", async (req, res) => {
+  if (!enforceHttpRateLimit(req, res, { name: "api:pairing-qr", windowMs: 60_000, limit: 30 })) return;
   const code = String(req.params.code || "").toUpperCase().trim();
   if (!code) return res.status(400).send("Code requerido");
 
@@ -458,10 +517,11 @@ app.get("/api/pairing-qr/:code.svg", async (req, res) => {
 });
 
 app.post("/api/android/pair", (req, res) => {
-  const code = String(req.body?.code || "").toUpperCase().trim();
-  const token = String(req.body?.token || "").trim();
-  const deviceId = String(req.body?.deviceId || "").trim();
-  const deviceName = String(req.body?.deviceName || "").trim() || "Android bridge";
+  if (!enforceHttpRateLimit(req, res, { name: "api:android-pair", windowMs: 60_000, limit: 40 })) return;
+  const code = sanitizeText(req.body?.code, 20).toUpperCase();
+  const token = sanitizeText(req.body?.token, 120);
+  const deviceId = sanitizeText(req.body?.deviceId, 120);
+  const deviceName = sanitizeText(req.body?.deviceName, 120) || "Android bridge";
 
   if (!code || !token || !deviceId) {
     return res.status(400).json({ ok: false, error: "code, token y deviceId son requeridos" });
@@ -630,6 +690,7 @@ app.get("/api/apk/download/:id", (req, res) => {
 
 // ── URL proxy for contact import ─────────────────────────────────────────
 app.get("/api/fetch-url", async (req, res) => {
+  if (!enforceHttpRateLimit(req, res, { name: "api:fetch-url", windowMs: 60_000, limit: 20 })) return;
   const rawUrl = req.query.url;
   const validation = await validateExternalFetchUrl(rawUrl);
   if (!validation.ok) return res.status(400).json({ ok: false, error: validation.error });
@@ -638,7 +699,7 @@ app.get("/api/fetch-url", async (req, res) => {
     const fetchFn = fetch || globalThis.fetch;
     const r = await fetchFn(validation.url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; VOIP VC/1.0)" },
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     });
     if (!r.ok) return res.status(502).json({ ok: false, error: `HTTP ${r.status} al obtener la URL` });
     const html = await r.text();
@@ -653,9 +714,47 @@ app.get("/phone", (req, res) => {
   const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
   return res.redirect(`/${query}`);
 });
-app.get("/health", (_, res) => res.json({ ok: true }));
+app.get("/health", (_, res) => res.json({
+  ok: true,
+  uptimeSeconds: Math.round(process.uptime()),
+  sessions: sessions.size,
+  timestamp: new Date().toISOString()
+}));
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`Call bridge skeleton running on http://localhost:${port}`);
+app.use((error, _req, res, _next) => {
+  if (error?.type === "entity.too.large") {
+    return res.status(413).json({ ok: false, error: "Payload demasiado grande" });
+  }
+  console.error("[HTTP] Unhandled error:", error);
+  return res.status(500).json({ ok: false, error: "Error interno del servidor" });
+});
+
+let shuttingDown = false;
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[SERVER] Received ${signal}. Closing gracefully...`);
+
+  io.close();
+  server.close(async (error) => {
+    if (error) {
+      console.error("[SERVER] Error while closing HTTP server:", error);
+      process.exitCode = 1;
+    }
+    await persistence.flush();
+    process.exit();
+  });
+
+  setTimeout(async () => {
+    console.error("[SERVER] Forced shutdown after timeout.");
+    await persistence.flush();
+    process.exit(1);
+  }, 10_000).unref();
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+server.listen(PORT, HOST, () => {
+  console.log(`Call bridge skeleton running on http://${HOST}:${PORT}`);
 });

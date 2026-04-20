@@ -23,6 +23,13 @@ Abrir:
 - Dashboard: `http://localhost:3000/`
 - Cliente movil: `http://localhost:3000/phone`
 
+Variables opcionales en `.env`:
+
+- `PUBLIC_BASE_URL`: URL publica del backend/API
+- `PUBLIC_WEB_BASE_URL`: URL publica del frontend si lo separas del API
+- `CORS_ORIGIN`: dominios permitidos, separados por coma
+- `HOST`: por defecto `0.0.0.0` para VPS
+
 ## Flujo de prueba
 
 1. En dashboard, click en **Crear Sesion**.
@@ -88,6 +95,83 @@ Respuesta:
 }
 ```
 
+## Produccion en VPS
+
+Este repo ya queda preparado para subir **solo el server** al VPS y que el APK se conecte por internet.
+
+### Recomendado
+
+- Ubuntu 22.04+
+- Node.js 20 LTS
+- Nginx como reverse proxy
+- HTTPS con Let's Encrypt
+- `systemd` o `pm2` para mantener el proceso vivo
+
+### Variables de entorno base
+
+Usa `.env.example` como plantilla:
+
+```bash
+cp .env.example .env
+```
+
+Configura al menos:
+
+```env
+PORT=3000
+HOST=0.0.0.0
+PUBLIC_BASE_URL=https://api.tudominio.com
+PUBLIC_WEB_BASE_URL=https://api.tudominio.com
+CORS_ORIGIN=https://api.tudominio.com
+TRUST_PROXY=1
+```
+
+### Archivos listos para deploy
+
+- `infrastructure/vps/voip-vc.service`: servicio `systemd`
+- `infrastructure/vps/ecosystem.config.cjs`: opcion `pm2`
+- `infrastructure/vps/nginx.voip-vc.conf`: reverse proxy base para Nginx
+
+### Flujo sugerido en el VPS
+
+```bash
+sudo mkdir -p /opt/voip-vc
+sudo chown -R $USER:$USER /opt/voip-vc
+cd /opt/voip-vc
+npm ci --omit=dev
+cp .env.example .env
+node server/server.js
+```
+
+Luego:
+
+1. Ajusta `.env` con tu dominio real.
+2. Instala el servicio `systemd` o usa `pm2`.
+3. Configura Nginx apuntando a `127.0.0.1:3000`.
+4. Activa HTTPS.
+5. Verifica `https://api.tudominio.com/health`.
+
+### Estabilidad que ya queda aplicada
+
+- guardado atomico de sesiones
+- cierre graceful con `SIGTERM` y `SIGINT`
+- timeouts HTTP configurados
+- limpieza automatica de sesiones viejas
+- limites de payload JSON
+- rate limiting basico para endpoints sensibles
+- `Socket.IO` con `ping` y buffer definidos
+- headers HTTP de endurecimiento basicos
+
+## APK para produccion
+
+- La APK usa `BuildConfig.DEFAULT_BASE_URL` como base por defecto.
+- `release` ahora queda con `cleartext` desactivado.
+- Solo `debug` permite HTTP plano para `localhost`, `127.0.0.1` y `10.0.2.2`.
+
+Para publicar con otro dominio por defecto, cambia este valor en:
+
+- `android-app/app/build.gradle.kts`
+
 ## Siguiente integracion real
 
 Para llamadas reales desde Android/iOS, reemplaza la simulacion de `web/phone.js` por:
@@ -109,7 +193,6 @@ Para tener funcionando **dashboard + server** en una URL publica (por ahora):
    - Start Command: `npm run start`
 4. Configura variables:
    - `PUBLIC_BASE_URL=https://TU-APP.onrender.com`
-   - (Opcional por ahora) `WHATSAPP_LOCAL_BASE` si luego separas el backend de WhatsApp.
 5. Espera deploy y prueba:
    - `https://TU-APP.onrender.com/` (dashboard)
    - `https://TU-APP.onrender.com/phone` (phone bridge)

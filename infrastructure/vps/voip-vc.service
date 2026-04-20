@@ -1,0 +1,20 @@
+[Unit]
+Description=VOIP VC Call Bridge
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/voip-vc
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/voip-vc/.env
+ExecStart=/usr/bin/node /opt/voip-vc/server/server.js
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=append:/var/log/voip-vc.log
+StandardError=append:/var/log/voip-vc-error.log
+
+[Install]
+WantedBy=multi-user.target

@@ -8,6 +8,11 @@ import path from 'path';
 export class SessionPersistence {
   constructor(filePath) {
     this.filePath = filePath;
+    this.dirPath = path.dirname(filePath);
+    this.tmpPath = `${filePath}.tmp`;
+    this.pendingWrite = null;
+    this.flushTimer = null;
+    this.lastSnapshot = null;
   }
 
   async load() {
@@ -34,15 +39,45 @@ export class SessionPersistence {
   }
 
   async save(sessionsMap) {
+    this.lastSnapshot = sessionsMap;
+    if (this.flushTimer) clearTimeout(this.flushTimer);
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null;
+      this.pendingWrite = this.#writeSnapshot(this.lastSnapshot).catch((error) => {
+        console.error('[PERSISTENCE] Error saving sessions:', error);
+      });
+    }, 250);
+    return this.pendingWrite;
+  }
+
+  async flush() {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+      this.pendingWrite = this.#writeSnapshot(this.lastSnapshot).catch((error) => {
+        console.error('[PERSISTENCE] Error saving sessions:', error);
+      });
+    }
+
+    if (this.pendingWrite) {
+      await this.pendingWrite;
+      this.pendingWrite = null;
+    }
+  }
+
+  async #writeSnapshot(sessionsMap) {
+    if (!sessionsMap) return;
     try {
+      await fs.mkdir(this.dirPath, { recursive: true });
       const plainObject = {};
       for (const [code, session] of sessionsMap.entries()) {
         const { dashboardSocketId, phoneSocketId, ...persistentData } = session;
         plainObject[code] = persistentData;
       }
-      await fs.writeFile(this.filePath, JSON.stringify(plainObject, null, 2), 'utf8');
-    } catch (error) {
-      console.error('[PERSISTENCE] Error saving sessions:', error);
+      await fs.writeFile(this.tmpPath, JSON.stringify(plainObject, null, 2), 'utf8');
+      await fs.rename(this.tmpPath, this.filePath);
+    } finally {
+      this.pendingWrite = null;
     }
   }
 }

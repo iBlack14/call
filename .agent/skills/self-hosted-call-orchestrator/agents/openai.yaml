@@ -1,0 +1,4 @@
+interface:
+  display_name: "Self-Hosted Call Orchestrator"
+  short_description: "Self-hosted outbound calling workflows"
+  default_prompt: "Use $self-hosted-call-orchestrator to design or extend a self-hosted outbound calling architecture with Android workers and human callback derivation."

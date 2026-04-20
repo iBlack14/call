@@ -4,16 +4,14 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node --env-file=.env server/server.js",
     "dev": "node --env-file=.env --watch server/server.js",
     "start:web": "node --env-file=.env server/server.js",
     "dev:web": "node --env-file=.env --watch server/server.js",
-    "start:calls": "node --env-file=.env server/server.js",
-    "start:whatsapp": "npm --prefix whatsapp-backend run start",
-    "dev:whatsapp": "npm --prefix whatsapp-backend run dev"
+    "start:calls": "node --env-file=.env server/server.js"
   },
   "dependencies": {
     "express": "^4.21.2",

@@ -37,7 +37,7 @@ import androidx.lifecycle.lifecycleScope
  */
 class MainActivity : AppCompatActivity() {
 
-    private val defaultBaseUrl = "https://lm.viacomunicativa.com"
+    private val defaultBaseUrl = BuildConfig.DEFAULT_BASE_URL
 
     private lateinit var statusText : TextView
     private lateinit var baseUrlIn  : TextInputEditText

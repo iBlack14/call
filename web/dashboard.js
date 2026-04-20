@@ -2,7 +2,6 @@ import { socket, API_BASE } from './modules/socket.js';
 import { refs, setStatus, setBadge, setAckBadge } from './modules/dom.js';
 import * as Contacts from './modules/contacts.js';
 import * as AudioBridge from './modules/audio-bridge.js';
-import * as WhatsApp from './modules/whatsapp.js';
 import * as Quotation from './modules/quotation.js';
 
 // ── STATE ──────────────────────────────────────────────────────────────
@@ -27,7 +26,6 @@ async function init() {
   Contacts.loadCalledCounts();
   Contacts.loadContactRowStatus();
   Contacts.loadDismissedReminders();
-  WhatsApp.loadWhatsAppPresetMessages();
   
   renderContacts();
   loadApkInfo();
@@ -77,7 +75,6 @@ function renderContacts() {
       </td>
       <td class="actions-cell">
         <button data-action="edit" data-id="${c.id}" class="secondary">✏️</button>
-        <button data-action="whatsapp" data-id="${c.id}" class="wa-action-btn">🟢 WA</button>
         <button data-action="dial" data-id="${c.id}">📞 Llamar</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
       </td>`;
@@ -122,7 +119,6 @@ function bindEvents() {
     if (!contact) return;
     
     if (action === "dial") startDialForContact(contact);
-    if (action === "whatsapp") WhatsApp.openWhatsAppModal(contact);
     if (action === "delete") {
       if (confirm(`¿Eliminar a ${contact.name}?`)) {
         Contacts.deleteContact(id);
