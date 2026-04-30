@@ -16,7 +16,15 @@ const persistence = new SessionPersistence(path.join(__dirname, "sessions.json")
 
 const app = express();
 app.disable("x-powered-by");
-app.set("trust proxy", process.env.TRUST_PROXY || true);
+const trustProxyRaw = process.env.TRUST_PROXY;
+const trustProxy = trustProxyRaw == null
+  ? true
+  : /^(false|0|off|no)$/i.test(String(trustProxyRaw).trim())
+    ? false
+    : /^\d+$/.test(String(trustProxyRaw).trim())
+      ? Number(trustProxyRaw)
+      : String(trustProxyRaw).trim();
+app.set("trust proxy", trustProxy);
 const server = http.createServer(app);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const PORT = Number(process.env.PORT || 3000);
@@ -464,7 +472,6 @@ io.on("connection", (socket) => {
     session.updatedAt = Date.now();
 
     if (!session.dashboardSocketId && !session.phoneSocketId) {
-      sessions.delete(code);
       saveSoon();
       return;
     }

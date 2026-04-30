@@ -134,8 +134,12 @@ class BridgeService : Service() {
             when (st) {
                 "dialing" -> setStatus("📞 Llamando...")
                 "ringing" -> setStatus("📲 Llamada entrante")
-                "in_call" -> setStatus("🔊 En llamada")
+                "in_call" -> {
+                    startAudio()
+                    setStatus("🔊 En llamada")
+                }
                 "ended", "idle" -> {
+                    stopAudio()
                     setStatus("✅ Activo — esperando llamadas")
                     closeCallUi()
                 }
@@ -180,7 +184,7 @@ class BridgeService : Service() {
 
     /** Schedules a self-restart 1.5s after the user swipes the app away */
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val restart = Intent(this, BridgeService::class.java).apply { action = ACTION_START }
+        val restart = buildRestartIntentFromPrefs() ?: return
         val pi = PendingIntent.getService(
             this, 1, restart,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
@@ -252,7 +256,11 @@ class BridgeService : Service() {
                 if (st == "in_call" || st == "dialing" || st == "ringing") {
                     launchCallUi()
                 }
-                if (st == "idle" || st == "ended") closeCallUi()
+                if (st == "in_call") startAudio()
+                if (st == "idle" || st == "ended") {
+                    stopAudio()
+                    closeCallUi()
+                }
             }
         }
 
@@ -524,6 +532,7 @@ class BridgeService : Service() {
             return false
         }
         lastCallState = "in_call"
+        startAudio()
         emitPhoneStatus("in_call")
         emitCallUiState()
         launchCallUi()
@@ -594,6 +603,7 @@ class BridgeService : Service() {
                         launchCallUi()
                     }
                     "in_call" -> {
+                        startAudio()
                         if (isActuallyInCall()) {
                             setStatus("🔊 En llamada")
                         } else {
@@ -603,6 +613,7 @@ class BridgeService : Service() {
                     }
                     "idle" -> {
                         dialAttemptToken += 1
+                        stopAudio()
                         currentPhoneNumber = ""
                         setStatus("✅ Activo — esperando llamadas")
                         closeCallUi()
@@ -708,6 +719,26 @@ class BridgeService : Service() {
         try { audioTrack?.stop(); audioTrack?.release()  } catch (_: Exception) {}
         audioRecord = null
         audioTrack  = null
+    }
+
+    private fun buildRestartIntentFromPrefs(): Intent? {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val url = prefs.getString(PREF_SOCKET_URL, "") ?: ""
+        val code = prefs.getString(PREF_CODE, "") ?: ""
+        val token = prefs.getString(PREF_TOKEN, "") ?: ""
+        val devId = prefs.getString(PREF_DEVICE_ID, "") ?: ""
+        val devName = prefs.getString(PREF_DEVICE_NAME, "") ?: ""
+
+        if (url.isBlank() || code.isBlank() || token.isBlank()) return null
+
+        return Intent(this, BridgeService::class.java).apply {
+            action = ACTION_START
+            putExtra(EXTRA_SOCKET_URL, url)
+            putExtra(EXTRA_CODE, code)
+            putExtra(EXTRA_TOKEN, token)
+            putExtra(EXTRA_DEVICE_ID, devId)
+            putExtra(EXTRA_DEVICE_NAME, devName)
+        }
     }
 
     private fun playAudio(bytes: ByteArray) {

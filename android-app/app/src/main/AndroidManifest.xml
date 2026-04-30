@@ -81,7 +81,7 @@
             android:name=".BridgeService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="phoneCall" />
+            android:foregroundServiceType="phoneCall|microphone" />
 
         <!-- Auto-start on reboot -->
         <receiver
