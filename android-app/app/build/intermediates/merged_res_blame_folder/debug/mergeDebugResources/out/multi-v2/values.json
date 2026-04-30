@@ -23,23 +23,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\via\\Downloads\\KENIA\\android-app\\app\\src\\main\\res\\values\\colors.xml",
-                    "from": {
-                        "startLines": "1,2",
-                        "startColumns": "4,4",
-                        "startOffsets": "16,56",
-                        "endColumns": "39,39",
-                        "endOffsets": "51,91"
-                    },
-                    "to": {
-                        "startLines": "643,962",
-                        "startColumns": "4,4",
-                        "startOffsets": "32937,56611",
-                        "endColumns": "39,39",
-                        "endOffsets": "32972,56646"
-                    }
-                },
-                {
                     "source": "C:\\Users\\via\\.gradle\\caches\\9.0-milestone-1\\transforms\\36f350ffd92d57b0f6d44b8b455024f7\\transformed\\lifecycle-runtime-2.6.2\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -54,6 +37,23 @@
                         "startOffsets": "124667",
                         "endColumns": "42",
                         "endOffsets": "124705"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\via\\Desktop\\DATOS\\SISTEMA DE LLAMDAS\\android-app\\app\\src\\main\\res\\values\\colors.xml",
+                    "from": {
+                        "startLines": "1,2",
+                        "startColumns": "4,4",
+                        "startOffsets": "16,56",
+                        "endColumns": "39,39",
+                        "endOffsets": "51,91"
+                    },
+                    "to": {
+                        "startLines": "643,962",
+                        "startColumns": "4,4",
+                        "startOffsets": "32937,56611",
+                        "endColumns": "39,39",
+                        "endOffsets": "32972,56646"
                     }
                 },
                 {
@@ -148,25 +148,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\via\\Downloads\\KENIA\\android-app\\app\\src\\main\\res\\values\\themes.xml",
-                    "from": {
-                        "startLines": "1",
-                        "startColumns": "4",
-                        "startOffsets": "63",
-                        "endLines": "7",
-                        "endColumns": "12",
-                        "endOffsets": "442"
-                    },
-                    "to": {
-                        "startLines": "6574",
-                        "startColumns": "4",
-                        "startOffsets": "461867",
-                        "endLines": "6580",
-                        "endColumns": "12",
-                        "endOffsets": "462246"
-                    }
-                },
-                {
                     "source": "C:\\Users\\via\\.gradle\\caches\\9.0-milestone-1\\transforms\\9c23310ed0dd6d4c01fe27f931526ae9\\transformed\\coordinatorlayout-1.1.0\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2,3,6,16",
@@ -200,6 +181,23 @@
                         "startOffsets": "132089",
                         "endColumns": "82",
                         "endOffsets": "132167"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\via\\Desktop\\DATOS\\SISTEMA DE LLAMDAS\\android-app\\app\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "16",
+                        "endColumns": "44",
+                        "endOffsets": "56"
+                    },
+                    "to": {
+                        "startLines": "2000",
+                        "startColumns": "4",
+                        "startOffsets": "132172",
+                        "endColumns": "44",
+                        "endOffsets": "132212"
                     }
                 },
                 {
@@ -253,6 +251,25 @@
                         "startOffsets": "124824",
                         "endColumns": "49",
                         "endOffsets": "124869"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\via\\Desktop\\DATOS\\SISTEMA DE LLAMDAS\\android-app\\app\\src\\main\\res\\values\\themes.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "63",
+                        "endLines": "7",
+                        "endColumns": "12",
+                        "endOffsets": "442"
+                    },
+                    "to": {
+                        "startLines": "6574",
+                        "startColumns": "4",
+                        "startOffsets": "461867",
+                        "endLines": "6580",
+                        "endColumns": "12",
+                        "endOffsets": "462246"
                     }
                 },
                 {
@@ -329,23 +346,6 @@
                         "endLines": "1817,1850,1890,11521,11525",
                         "endColumns": "56,64,63,24,24",
                         "endOffsets": "121171,122866,124933,727445,727594"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\via\\Downloads\\KENIA\\android-app\\app\\src\\main\\res\\values\\strings.xml",
-                    "from": {
-                        "startLines": "1",
-                        "startColumns": "4",
-                        "startOffsets": "16",
-                        "endColumns": "44",
-                        "endOffsets": "56"
-                    },
-                    "to": {
-                        "startLines": "2000",
-                        "startColumns": "4",
-                        "startOffsets": "132172",
-                        "endColumns": "44",
-                        "endOffsets": "132212"
                     }
                 },
                 {

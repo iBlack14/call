@@ -1,9 +1,51 @@
 -- Merging decision tree log ---
+application
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:27:5-104:19
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:27:5-104:19
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:7:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:7:5-20
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\a46dcffeb17d4b664be99c9350810fcb\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\a46dcffeb17d4b664be99c9350810fcb\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\76487f7fe2976e44897385f7ced5b6ff\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\76487f7fe2976e44897385f7ced5b6ff\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\6d74351e67c137267c192830fd386822\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\6d74351e67c137267c192830fd386822\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\894c21c52da33fa9d858ed52031955b0\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\894c21c52da33fa9d858ed52031955b0\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:46:5-54:19
+MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:46:5-54:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:32:9-35
+	android:label
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:30:9-41
+	android:roundIcon
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:31:9-54
+	android:icon
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:29:9-43
+	android:allowBackup
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:28:9-35
+	android:theme
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:33:9-50
+	android:networkSecurityConfig
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:35:9-69
+	android:usesCleartextTraffic
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:34:9-59
 manifest
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:1-99:12
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:1:1-106:12
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:1:1-106:12
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:1:1-106:12
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:1:1-106:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:2:1-9:12
 MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\2513e894d292adb3f06ac91373929ba4\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:2:1-7:12
@@ -47,216 +89,187 @@ MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\User
 MERGED from [androidx.print:print:1.0.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\f16af951ec7466ed0f4e52e1e66da37c\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:17:1-56:12
 	package
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 	android:versionName
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 	android:versionCode
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 	xmlns:android
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:1:11-69
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:1:11-69
 uses-permission#android.permission.INTERNET
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:4:5-67
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:4:5-67
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:4:22-64
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:4:22-64
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:5:5-79
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:5:5-79
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:5:22-76
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:5:22-76
 uses-permission#android.permission.CAMERA
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:8:5-65
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:8:5-65
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:22:5-65
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:22:5-65
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:8:22-62
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:8:22-62
 uses-permission#android.permission.CALL_PHONE
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:11:5-69
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:11:5-69
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:11:22-66
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:11:22-66
 uses-permission#android.permission.ANSWER_PHONE_CALLS
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:12:5-77
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:12:5-77
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:12:22-74
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:12:22-74
 uses-permission#android.permission.READ_PHONE_STATE
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:13:5-75
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:13:5-75
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:13:22-72
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:13:22-72
 uses-permission#android.permission.RECORD_AUDIO
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:16:5-71
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:16:5-71
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:16:22-68
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:16:22-68
 uses-permission#android.permission.MODIFY_AUDIO_SETTINGS
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:17:5-80
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:17:5-80
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:17:22-77
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:17:22-77
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:20:5-77
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:20:5-77
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:20:22-74
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:20:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_PHONE_CALL
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:21:5-88
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:21:5-88
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:21:22-85
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:21:22-85
 uses-permission#android.permission.FOREGROUND_SERVICE_MICROPHONE
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:22:5-88
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:22:5-88
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:22:22-85
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:22:22-85
 uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:23:5-81
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:23:5-81
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:23:22-78
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:23:22-78
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:24:5-77
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:24:5-77
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:24:22-74
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:24:22-74
 uses-permission#android.permission.USE_FULL_SCREEN_INTENT
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:25:5-81
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:25:5-81
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:25:22-78
-application
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:27:5-97:19
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:27:5-97:19
-MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
-MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
-MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:7:5-20
-MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:7:5-20
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
-MERGED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\a46dcffeb17d4b664be99c9350810fcb\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\a46dcffeb17d4b664be99c9350810fcb\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\76487f7fe2976e44897385f7ced5b6ff\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\76487f7fe2976e44897385f7ced5b6ff\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\6d74351e67c137267c192830fd386822\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\6d74351e67c137267c192830fd386822\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\894c21c52da33fa9d858ed52031955b0\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\894c21c52da33fa9d858ed52031955b0\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:46:5-54:19
-MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:46:5-54:19
-	android:extractNativeLibs
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
-	android:appComponentFactory
-		ADDED from [androidx.core:core:1.13.1] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\9c95af8a3d8e23b4851e56a1d877f495\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
-	android:supportsRtl
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:32:9-35
-	android:label
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:30:9-41
-	android:roundIcon
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:31:9-54
-	android:icon
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:29:9-43
-	android:allowBackup
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:28:9-35
-	android:theme
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:33:9-50
-	android:networkSecurityConfig
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:35:9-69
-	android:usesCleartextTraffic
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:34:9-44
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:25:22-78
 activity#com.voipvc.bridge.MainActivity
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:37:9-53:20
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:37:9-53:20
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:39:13-36
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:39:13-36
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:38:13-41
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:38:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:40:13-43:29
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:40:13-43:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:41:17-69
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:41:17-69
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:41:25-66
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:41:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:17-77
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:42:17-77
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:42:27-74
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:42:27-74
 intent-filter#action:name:android.intent.action.DIAL+category:name:android.intent.category.DEFAULT
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:44:13-47:29
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:44:13-47:29
 action#android.intent.action.DIAL
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:45:17-69
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:45:17-69
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:45:25-66
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:45:25-66
 category#android.intent.category.DEFAULT
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:46:17-76
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:46:17-76
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:46:27-73
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:46:27-73
 intent-filter#action:name:android.intent.action.DIAL+category:name:android.intent.category.DEFAULT+data:scheme:tel
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:48:13-52:29
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:48:13-52:29
 data
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:17-46
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:51:17-46
 	android:scheme
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:51:23-43
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:51:23-43
+activity#com.voipvc.bridge.QrCaptureActivity
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:55:9-60:57
+	android:screenOrientation
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:58:13-49
+	android:stateNotNeeded
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:59:13-42
+	android:exported
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:57:13-37
+	android:theme
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:60:13-54
+	android:name
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:56:13-46
 activity#com.voipvc.bridge.IncomingCallActivity
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:55:9-61:43
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:62:9-68:43
 	android:turnScreenOn
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:61:13-40
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:68:13-40
 	android:excludeFromRecents
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:57:13-46
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:64:13-46
 	android:showWhenLocked
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:60:13-42
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:67:13-42
 	android:launchMode
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:59:13-43
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:66:13-43
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:58:13-37
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:65:13-37
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:56:13-49
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:63:13-49
 service#com.voipvc.bridge.VoipVcInCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:64:9-77:19
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:71:9-84:19
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:67:13-36
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:74:13-36
 	android:permission
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:66:13-72
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:73:13-72
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:65:13-48
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:72:13-48
 meta-data#android.telecom.IN_CALL_SERVICE_UI
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:68:13-70:40
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:75:13-77:40
 	android:value
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:70:17-37
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:77:17-37
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:69:17-66
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:76:17-66
 meta-data#android.telecom.IN_CALL_SERVICE_CAR_MODE_UI
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:71:13-73:41
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:78:13-80:41
 	android:value
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:73:17-38
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:80:17-38
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:72:17-75
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:79:17-75
 intent-filter#action:name:android.telecom.InCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:74:13-76:29
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:81:13-83:29
 action#android.telecom.InCallService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:17-72
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:82:17-72
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:75:25-69
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:82:25-69
 service#com.voipvc.bridge.BridgeService
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:80:9-84:57
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:87:9-91:68
 	android:enabled
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:82:13-35
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:89:13-35
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:83:13-37
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:90:13-37
 	android:foregroundServiceType
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:84:13-54
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:91:13-65
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:81:13-42
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:88:13-42
 receiver#com.voipvc.bridge.BootReceiver
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:87:9-95:20
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:94:9-102:20
 	android:enabled
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:89:13-35
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:96:13-35
 	android:exported
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:90:13-36
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:97:13-36
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:88:13-41
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:95:13-41
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.QUICKBOOT_POWERON
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:91:13-94:29
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:98:13-101:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:92:17-79
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:99:17-79
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:92:25-76
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:99:25-76
 action#android.intent.action.QUICKBOOT_POWERON
-ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:93:17-82
+ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:100:17-82
 	android:name
-		ADDED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml:93:25-79
+		ADDED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml:100:25-79
 uses-sdk
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
-INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:20:5-44
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\7f97d264f13aac2ced4fd6a3f60e52ba\transformed\material-1.12.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.constraintlayout:constraintlayout:2.2.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\03ab6e5a6a01e15aa7b2bffa746611a1\transformed\constraintlayout-2.2.0\AndroidManifest.xml:5:5-44
@@ -342,9 +355,9 @@ MERGED from [androidx.print:print:1.0.0] C:\Users\via\.gradle\caches\9.0-milesto
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:20:5-44
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\4f242fe768f4fae18e2f2d98d79a37d1\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:20:5-44
 	android:targetSdkVersion
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from C:\Users\via\Downloads\KENIA\android-app\app\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\via\Desktop\DATOS\SISTEMA DE LLAMDAS\android-app\app\src\main\AndroidManifest.xml
 provider#androidx.startup.InitializationProvider
 ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\ebd423f1d880bd449ad65cf82e576d03\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\via\.gradle\caches\9.0-milestone-1\transforms\a46dcffeb17d4b664be99c9350810fcb\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20

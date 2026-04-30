@@ -1,2 +1,1 @@
-import "./server/server.js";
-tmr
+import "./server/server.js";

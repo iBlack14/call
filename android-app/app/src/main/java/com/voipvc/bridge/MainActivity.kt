@@ -212,6 +212,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun launchScanner() {
         qrLauncher.launch(ScanOptions().apply {
+            setCaptureActivity(QrCaptureActivity::class.java)
             setPrompt("📷 Apunta al QR del dashboard\n(mantén a 15–25 cm de distancia)")
             setBeepEnabled(true)             // beep cuando lo lea
             setOrientationLocked(true)       // vertical / portrait
