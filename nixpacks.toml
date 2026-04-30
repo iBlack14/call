@@ -1,2 +1,2 @@
-[providers.node]
-node_version = "20"
+[variables]
+NIXPACKS_NODE_VERSION = "20"
