@@ -13,8 +13,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["cleartextTraffic"] = "true"
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"http://a4wlf4bqfz1x19b9iwfzgtiz.158.220.120.241.sslip.io\"")
+        manifestPlaceholders["cleartextTraffic"] = "false"
+        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://llamada.viacomunicactiva.com\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -25,7 +25,7 @@ android {
         }
         release {
             isMinifyEnabled = false
-            manifestPlaceholders["cleartextTraffic"] = "true"
+            manifestPlaceholders["cleartextTraffic"] = "false"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
