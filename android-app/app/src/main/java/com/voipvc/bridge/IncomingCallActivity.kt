@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +13,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import java.net.HttpURLConnection
 import java.net.URL
@@ -143,6 +143,7 @@ class IncomingCallActivity : AppCompatActivity() {
             "idle" -> "ESPERA"
             else -> "LLAMANDO..."
         }
+        applyStateChipStyle(state)
         answerBtn.visibility = if (state == "ringing") View.VISIBLE else View.GONE
 
         if (state == "in_call") {
@@ -168,17 +169,38 @@ class IncomingCallActivity : AppCompatActivity() {
     }
 
     private fun applyToggleStyles(micMuted: Boolean, speakerOn: Boolean) {
-        // Mic: rojo cuando está muteado, verde cuando está activo.
-        micBtn.backgroundTintList = ColorStateList.valueOf(
-            if (micMuted) 0xFFBE123C.toInt() else 0xFF166534.toInt()
+        micBtn.background = ContextCompat.getDrawable(
+            this,
+            if (micMuted) R.drawable.bg_danger_button else R.drawable.bg_secondary_button
         )
-        micBtn.setTextColor(0xFFFFFFFF.toInt())
+        micBtn.setTextColor(
+            ContextCompat.getColor(this, if (micMuted) R.color.vc_text_inverse else R.color.vc_text_primary)
+        )
 
-        // Speaker: verde cuando ON, gris oscuro cuando OFF.
-        speakerBtn.backgroundTintList = ColorStateList.valueOf(
-            if (speakerOn) 0xFF15803D.toInt() else 0xFF1E293B.toInt()
+        speakerBtn.background = ContextCompat.getDrawable(
+            this,
+            if (speakerOn) R.drawable.bg_success_button else R.drawable.bg_secondary_button
         )
-        speakerBtn.setTextColor(0xFFFFFFFF.toInt())
+        speakerBtn.setTextColor(
+            ContextCompat.getColor(this, if (speakerOn) R.color.vc_text_inverse else R.color.vc_text_primary)
+        )
+    }
+
+    private fun applyStateChipStyle(state: String) {
+        val bgRes = when (state) {
+            "in_call" -> R.drawable.bg_status_success
+            "ringing", "dialing" -> R.drawable.bg_status_warning
+            "ended" -> R.drawable.bg_status_error
+            else -> R.drawable.bg_state_chip
+        }
+        val colorRes = when (state) {
+            "in_call" -> R.color.vc_success
+            "ringing", "dialing" -> R.color.vc_warning
+            "ended" -> R.color.vc_error
+            else -> R.color.vc_text_secondary
+        }
+        callState.background = ContextCompat.getDrawable(this, bgRes)
+        callState.setTextColor(ContextCompat.getColor(this, colorRes))
     }
 
     private fun loadImage(url: String) {
