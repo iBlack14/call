@@ -1174,9 +1174,7 @@ function applyState(state, lastNum, opts = {}) {
     const newMicEnabled = !opts.micMuted;
     if (newMicEnabled !== micEnabled) {
       micEnabled = newMicEnabled;
-      if (micEnabled) {
-        AudioBridge.startMic().then(() => { if (state === "in_call") AudioBridge.startWebMicStreaming(); });
-      } else {
+      if (!micEnabled) {
         AudioBridge.stopMic();
       }
     }
