@@ -11,6 +11,18 @@ import QRCode from "qrcode";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Fallback for .env loading if --env-file is not supported or fails
+const envPath = path.join(__dirname, "..", ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  envContent.split("\n").forEach(line => {
+    const [key, ...value] = line.split("=");
+    if (key && value.length > 0 && !process.env[key.trim()]) {
+      process.env[key.trim()] = value.join("=").trim().replace(/^["'](.*)["']$/, '$1');
+    }
+  });
+}
+
 import { SessionPersistence } from "./persistence.js";
 const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
 

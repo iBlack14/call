@@ -7,11 +7,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node --env-file=.env server/server.js",
-    "dev": "node --env-file=.env --watch server/server.js",
-    "start:web": "node --env-file=.env server/server.js",
-    "dev:web": "node --env-file=.env --watch server/server.js",
-    "start:calls": "node --env-file=.env server/server.js"
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "start:web": "node server/server.js",
+    "dev:web": "node --watch server/server.js",
+    "start:calls": "node server/server.js"
   },
   "dependencies": {
     "express": "^4.21.2",
