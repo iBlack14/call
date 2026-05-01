@@ -50,7 +50,7 @@
                 android:id="@+id/baseUrlInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="https://crooked-fanny-principally.ngrok-free.dev"
+                android:hint="https://llamada.viacomunicativa.com"
                 android:inputType="textUri"
                 android:textColor="#E5E7EB"
                 android:textColorHint="#64748B" />

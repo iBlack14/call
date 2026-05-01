@@ -4,12 +4,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VOIP VC | Dashboard</title>
+  <meta name="description"
+    content="VOIP VC Dashboard - Control remoto de llamadas y gestión de campañas de voz directa desde tu navegador." />
+  <title>GESTION DE LLAMADAS</title>
   <link rel="icon" type="image/x-icon" href="/logotipo-VCMAS.ico" />
+
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/styles.css" />
-  <!-- mammoth.js for Word (.docx) parsing -->
+
+  <!-- Libraries (Loaded dynamically at bottom for multi-domain support) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <!-- SheetJS for Excel (.xlsx/.xls) parsing -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -21,10 +29,16 @@
 
       <!-- HEADER -->
       <div class="app-header">
-        <div class="app-logo">📡</div>
+        <div class="app-logo" aria-hidden="true">
+          <span>VC</span>
+        </div>
         <div class="app-title">
-          <h1>VOIP VC Dashboard</h1>
+          <h1> GESTION DE LLAMADAS VC </h1>
           <p>Control remoto de llamadas desde el navegador</p>
+        </div>
+        <div class="app-header-meta">
+          <span class="header-chip">Dashboard remoto</span>
+          <span class="header-chip header-chip-accent">Voice control</span>
         </div>
       </div>
 
@@ -78,17 +92,31 @@
 
       <!-- LINKED BANNER -->
       <div id="linkedBanner" class="linked-banner" style="display:none">
-        <div>
-          <strong>📱 Celular vinculado</strong>
-          <span id="linkedDevice" style="display:block;font-size:13px;margin-top:3px;">Dispositivo conectado</span>
+        <div class="linked-banner-copy">
+          <p class="linked-banner-label">Celular vinculado</p>
+          <strong>Marcador listo para operar</strong>
+          <span id="linkedDevice" class="linked-device-text">Dispositivo conectado</span>
         </div>
-        <span style="color:#a78bfa;font-size:22px;">✅</span>
+        <div class="linked-dialer-card" aria-hidden="true">
+          <div class="linked-dialer-top">
+            <span class="linked-dialer-dot"></span>
+            <span class="linked-dialer-title">Phone Bridge</span>
+          </div>
+          <div class="linked-dialer-number">+51 ••• ••• •••</div>
+          <div class="linked-dialer-actions">
+            <span class="dialer-action dialer-action-muted"></span>
+            <span class="dialer-action dialer-action-accent"></span>
+            <span class="dialer-action dialer-action-success"></span>
+          </div>
+        </div>
       </div>
 
       <!-- QR BLOCK -->
       <div class="qr-block" id="qrBlock">
-        <div>
-          <p class="muted" style="font-size:13px;margin-bottom:8px;">QR de vinculación (Android)</p>
+        <div class="qr-copy">
+          <p class="qr-eyebrow">Vinculación Android</p>
+          <h3 class="qr-title">Escanea y conecta el marcador</h3>
+          <p class="muted qr-description">Usa la app del teléfono para enlazar esta sesión y empezar a llamar.</p>
           <img id="pairQr" alt="QR de vinculacion" style="display:none" />
           <small id="qrHint" class="muted">Crea una sesión para ver el QR.</small>
         </div>
@@ -101,6 +129,44 @@
 
       <!-- CONTACTS SECTION -->
       <section id="contactsSection" style="display:none">
+        <section id="campaignSection" class="campaign-panel">
+          <div class="campaign-panel-head">
+            <div>
+              <p class="section-title" style="margin-top:0;">🎛️ Campaña</p>
+              <p id="campaignStatusLine" class="muted campaign-status-line">Sin campaña activa.</p>
+            </div>
+            <div class="campaign-actions">
+              <button id="campaignStartBtn">▶ Iniciar campaña</button>
+              <button id="campaignPauseBtn" class="secondary">⏸ Pausar</button>
+              <button id="campaignResumeBtn" class="secondary">⏯ Continuar</button>
+              <button id="campaignSkipBtn" class="secondary">⏭ Saltar</button>
+            </div>
+          </div>
+
+          <div class="campaign-grid">
+            <div class="campaign-card">
+              <h3>Android workers</h3>
+              <div id="workersSummary" class="campaign-metric">0 conectados</div>
+              <div id="workersList" class="campaign-list-empty">Sin workers conectados.</div>
+            </div>
+
+            <div class="campaign-card">
+              <h3>Resumen</h3>
+              <div id="campaignCounters" class="campaign-counters"></div>
+            </div>
+
+            <div class="campaign-card">
+              <h3>Agendados / Callbacks</h3>
+              <div id="callbacksSummary" class="campaign-metric">0 pendientes</div>
+              <div id="callbacksList" class="campaign-list-empty">Sin callbacks pendientes.</div>
+            </div>
+          </div>
+
+          <!-- VOICE BOT SECTION REMOVED -->
+        </section>
+
+        <div class="contacts-tabs" id="contactsTabs"></div>
+
         <div class="contacts-topbar">
           <p class="section-title contacts-title">📋 Contactos</p>
           <div class="called-counter">
@@ -108,9 +174,12 @@
             <strong id="calledContactsValue">0</strong>
           </div>
         </div>
-        <div class="row" style="margin-top:0;">
-          <button id="exportWordBtn" class="secondary">📄 Exportar Word</button>
-          <button id="openQuotationBtn">🧾 Nueva Cotización</button>
+        <div class="contact-actions">
+          <button id="importBtn" class="secondary">📥 Importar (Excel/Doc)</button>
+          <button id="addContactBtn">＋ Agregar</button>
+          <button id="openHistoryBtn" class="secondary">📜 Historial</button>
+          <button id="deleteAllContactsBtn" class="danger-soft">🗑️ Eliminar todo</button>
+          <input id="filterInput" placeholder="Filtrar por nombre o número..." style="flex:1" />
         </div>
 
         <!-- ADD MANUALLY -->
@@ -259,7 +328,52 @@
     </div>
   </div>
 
+  <!-- WHATSAPP MODAL -->
+  <div id="whatsappModal" class="edit-modal" style="display:none">
+    <div class="edit-card whatsapp-card">
+      <button id="whatsappCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3 id="whatsappTitle">WhatsApp</h3>
+      <p id="whatsappPhone" class="muted whatsapp-phone">-</p>
 
+      <div id="whatsappQrPanel" class="whatsapp-panel" style="display:none">
+        <p id="whatsappQrLead" class="muted" style="font-size:13px;">Escanea este QR para vincular WhatsApp.</p>
+        <div id="whatsappConnectOk" class="wa-connect-ok" style="display:none;">
+          <strong>Cuenta conectada</strong>
+          <small id="whatsappLinkedNumber">-</small>
+        </div>
+        <img id="whatsappQrImg" alt="QR WhatsApp" style="display:none" />
+        <small id="whatsappQrHint" class="muted">Cargando estado de WhatsApp...</small>
+        <div class="row" style="margin-top:10px;justify-content:flex-start;">
+          <button id="whatsappLogoutBtn" type="button" class="secondary" style="display:none;">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div id="whatsappFormPanel" class="whatsapp-panel" style="display:none">
+        <label>Mensajes predeterminados</label>
+        <div class="whatsapp-template-create-row">
+          <input id="whatsappTemplateInput" type="text" placeholder="Escribe un mensaje predeterminado..." />
+          <button id="whatsappTemplateSaveBtn" type="button" class="secondary">💾 Guardar</button>
+        </div>
+        <div id="whatsappTemplates" class="whatsapp-templates"></div>
+
+        <label for="whatsappMessageInput">Mensaje</label>
+        <textarea id="whatsappMessageInput" rows="4" placeholder="Escribe tu mensaje..."></textarea>
+
+        <label>Archivo (opcional)</label>
+        <div id="whatsappDropZone" class="whatsapp-drop-zone">
+          <div class="drop-zone-content">
+            <span class="drop-icon">📁</span>
+            <span id="whatsappFileName" class="drop-text">Arrastra un archivo aquí o haz clic</span>
+          </div>
+          <input id="whatsappFileInput" type="file"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
+            hidden />
+        </div>
+
+        <button id="whatsappSendBtn" type="button">Enviar por WhatsApp</button>
+      </div>
+    </div>
+  </div>
 
   <!-- QUOTATION MODAL -->
   <div id="quotationModal" class="edit-modal" style="display:none">
@@ -379,8 +493,61 @@
     </div>
   </div>
 
-  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
-  <script type="module" src="/dashboard.js"></script>
+
+  <!-- CALL HISTORY MODAL -->
+  <div id="callHistoryModal" class="edit-modal" style="display:none">
+    <div class="edit-card history-card">
+      <button id="historyCloseBtn" class="edit-close-btn" type="button">✕</button>
+      <div class="history-header">
+        <h3>📜 Historial Reciente</h3>
+        <button id="clearHistoryBtn" class="secondary" style="font-size:11px;">Limpiar</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <div class="muted" style="text-align:center;padding:40px;">Sin llamadas recientes.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function bootstrapDashboard() {
+      const params = new URLSearchParams(window.location.search);
+      function resolveApiBase() {
+        const fromQuery = String(params.get("apiBase") || "").trim();
+        if (fromQuery) return fromQuery.replace(/\/+$/, "");
+
+        const hostname = window.location.hostname;
+
+        // Local detection
+        if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
+          return window.location.origin;
+        }
+
+        // Production mapping
+        if (hostname === "llamada.viacomunicativa.com") {
+          return "https://llamada.viacomunicativa.com";
+        }
+
+        return window.location.origin;
+      }
+
+      const apiBase = resolveApiBase();
+      window.VOIP_VC_API_BASE = apiBase;
+
+      const socketScript = document.createElement("script");
+      socketScript.src = `${apiBase}/socket.io/socket.io.js`;
+      socketScript.onload = () => {
+        import("/dashboard.js");
+      };
+      socketScript.onerror = () => {
+        console.error("No se pudo cargar Socket.IO desde", socketScript.src);
+        const statusText = document.getElementById("statusText");
+        if (statusText) {
+          statusText.textContent = `No se pudo conectar al backend en ${apiBase}.`;
+        }
+      };
+      document.body.appendChild(socketScript);
+    })();
+  </script>
 </body>
 
 </html>

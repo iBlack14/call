@@ -1,4 +1,23 @@
 <resources>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+    <color name="vc_bg">#F4F4F6</color>
+    <color name="vc_surface">#FFFFFFFF</color>
+    <color name="vc_surface_alt">#FFF8F8FA</color>
+    <color name="vc_surface_dark">#FF17171B</color>
+    <color name="vc_border">#1A111111</color>
+    <color name="vc_border_strong">#2AD81B60</color>
+    <color name="vc_text_primary">#FF111111</color>
+    <color name="vc_text_secondary">#FF62626C</color>
+    <color name="vc_text_inverse">#FFFFFFFF</color>
+    <color name="vc_accent">#FFD81B60</color>
+    <color name="vc_accent_dark">#FF941748</color>
+    <color name="vc_success">#FF169B64</color>
+    <color name="vc_success_soft">#1A169B64</color>
+    <color name="vc_warning">#FFB45309</color>
+    <color name="vc_warning_soft">#1AB45309</color>
+    <color name="vc_error">#FFD92D20</color>
+    <color name="vc_error_soft">#1AD92D20</color>
+    <color name="vc_dark_button">#FF18181B</color>
+    <color name="vc_muted_chip">#FFF1F1F4</color>
 </resources>

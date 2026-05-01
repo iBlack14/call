@@ -1,9 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.VoipVcBridge" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">#0F172A</item>
-        <item name="android:navigationBarColor">#0F172A</item>
-        <item name="colorPrimary">#0B3B20</item>
-        <item name="colorPrimaryVariant">#166534</item>
-        <item name="colorSecondary">#16A34A</item>
+        <item name="android:statusBarColor">@color/vc_bg</item>
+        <item name="android:navigationBarColor">@color/vc_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="colorPrimary">@color/vc_accent</item>
+        <item name="colorPrimaryVariant">@color/vc_accent_dark</item>
+        <item name="colorSecondary">@color/vc_success</item>
+        <item name="colorSurface">@color/vc_surface</item>
+        <item name="android:colorBackground">@color/vc_bg</item>
+        <item name="colorOnPrimary">@color/vc_text_inverse</item>
+        <item name="colorOnSecondary">@color/vc_text_inverse</item>
+        <item name="colorOnSurface">@color/vc_text_primary</item>
     </style>
 </resources>

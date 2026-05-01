@@ -1,12 +1,12 @@
-import { API_BASE } from './socket.js';
-import { refs, setStatus } from './dom.js';
+import { API_BASE } from './socket.js?v=2';
+import { refs, setStatus } from './dom.js?v=2';
 
-const WHATSAPP_API_BASE = API_BASE;
-const WA_STATUS_PATHS = ["/api/whatsapp/status"];
-const WA_QR_PATHS = ["/api/whatsapp/qr"];
-const WA_LOGOUT_PATHS = ["/api/whatsapp/logout"];
-const WA_SEND_PATHS = ["/api/whatsapp/send-message", "/api/whatsapp/send"];
-const NGROK_SKIP_WARNING_HEADERS = { "ngrok-skip-browser-warning": "1" };
+export const WHATSAPP_API_BASE = API_BASE;
+export const WA_STATUS_PATHS = ["/api/whatsapp/status"];
+export const WA_QR_PATHS = ["/api/whatsapp/qr"];
+export const WA_LOGOUT_PATHS = ["/api/whatsapp/logout"];
+export const WA_SEND_PATHS = ["/api/whatsapp/send-message", "/api/whatsapp/send"];
+export const NGROK_SKIP_WARNING_HEADERS = { "ngrok-skip-browser-warning": "1" };
 const WHATSAPP_PRESETS_KEY = "voip vc.whatsappPresetMessages";
 
 const DEFAULT_WHATSAPP_PRESET_MESSAGES = [

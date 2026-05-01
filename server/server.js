@@ -1,8 +1,12 @@
 import express from "express";
+import cors from "cors";
 import http from "http";
 import path from "path";
 import fs from "fs";
-import dns from "dns/promises";
+import os from "os";
+import dgram from "dgram";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import { nanoid } from "nanoid";
@@ -10,165 +14,351 @@ import QRCode from "qrcode";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Fallback for .env loading if --env-file is not supported or fails
-const envPath = path.join(__dirname, "..", ".env");
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf-8");
-  envContent.split("\n").forEach(line => {
-    const [key, ...value] = line.split("=");
-    if (key && value.length > 0 && !process.env[key.trim()]) {
-      process.env[key.trim()] = value.join("=").trim().replace(/^["'](.*)["']$/, '$1');
-    }
-  });
-}
+import dotenv from "dotenv";
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 import { SessionPersistence } from "./persistence.js";
+import {
+  ensureCampaign,
+  getCampaignSnapshot,
+  startCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  assignNextContact,
+  updateActiveCallState,
+  markContactResult,
+  skipActiveContact,
+  getActiveContact
+} from "./campaign-manager.js";
 const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
 
 const app = express();
-app.disable("x-powered-by");
-const trustProxyRaw = process.env.TRUST_PROXY;
-const trustProxy = trustProxyRaw == null
-  ? true
-  : /^(false|0|off|no)$/i.test(String(trustProxyRaw).trim())
-    ? false
-    : /^\d+$/.test(String(trustProxyRaw).trim())
-      ? Number(trustProxyRaw)
-      : String(trustProxyRaw).trim();
-app.set("trust proxy", trustProxy);
+app.set("trust proxy", true);
 const server = http.createServer(app);
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
-const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || "0.0.0.0";
-const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 1000 * 60 * 60 * 24 * 30);
-const DISCONNECTED_SESSION_TTL_MS = Number(process.env.DISCONNECTED_SESSION_TTL_MS || 1000 * 60 * 60 * 24);
-const MAX_JSON_SIZE = process.env.MAX_JSON_SIZE || "256kb";
-const FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || 10000);
-const ALLOWED_ORIGINS = CORS_ORIGIN === "*"
-  ? null
-  : CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean);
-const requestBuckets = new Map();
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "https://llamada.viacomunicativa.com,https://lm.viacomunicativa.com,http://localhost:3000";
+const corsOptions = {
+  origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean),
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: false
+};
+app.use(cors(corsOptions));
+
 const io = new Server(server, {
-  cors: {
-    origin: ALLOWED_ORIGINS || true,
-    methods: ["GET", "POST", "OPTIONS"],
-    credentials: false
-  },
-  maxHttpBufferSize: Number(process.env.SOCKET_MAX_HTTP_BUFFER_SIZE || 1024 * 1024),
-  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
-  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 20000)
+  cors: corsOptions,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  connectTimeout: 45000
 });
 
-server.keepAliveTimeout = Number(process.env.KEEP_ALIVE_TIMEOUT_MS || 65000);
-server.headersTimeout = Number(process.env.HEADERS_TIMEOUT_MS || 66000);
-server.requestTimeout = Number(process.env.REQUEST_TIMEOUT_MS || 30000);
 
 app.use((req, res, next) => {
-  if (!ALLOWED_ORIGINS) {
+  const allowedOrigin = CORS_ORIGIN;
+  if (allowedOrigin === "*") {
     res.setHeader("Access-Control-Allow-Origin", "*");
   } else {
+    const allowed = allowedOrigin.split(",").map(s => s.trim()).filter(Boolean);
     const origin = req.headers.origin || "";
-    if (ALLOWED_ORIGINS.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
+    if (allowed.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "same-origin");
-  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  if (req.secure || String(req.headers["x-forwarded-proto"] || "").includes("https")) {
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-  }
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
-app.use(express.json({ limit: MAX_JSON_SIZE }));
-app.use(express.urlencoded({ extended: false, limit: MAX_JSON_SIZE }));
 
-let sessions = await persistence.load();
-console.log(`[PERSISTENCE] Loaded ${sessions.size} sessions.`);
+app.use(express.json());
+
+let sessions = new Map();
+
+async function bootstrap() {
+  sessions = await persistence.load();
+  // Post-load cleanup to avoid stuck campaigns
+  for (const session of sessions.values()) {
+    if (session.campaign) {
+        const active = getActiveContact(session);
+        if (active) {
+            session.campaign.activeContactId = active.id;
+        } else if (session.campaign.status === "running") {
+            session.campaign.activeContactId = null;
+        }
+    }
+  }
+  console.log(`[PERSISTENCE] Loaded ${sessions.size} sessions.`);
+
+  const port = process.env.PORT || 3000;
+  server.listen(port, () => {
+    console.log(`Call bridge running on http://localhost:${port}`);
+  });
+}
 
 function saveSoon() {
   persistence.save(sessions);
 }
 
-function getClientIp(reqOrSocket) {
-  const forwardedFor = reqOrSocket?.headers?.["x-forwarded-for"];
-  const remoteAddress = reqOrSocket?.ip || reqOrSocket?.handshake?.address || reqOrSocket?.socket?.remoteAddress;
-  const firstForwarded = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "";
-  return firstForwarded || remoteAddress || "unknown";
+function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Android bridge", linkedAt, connected = false, callState = "idle" } = {}) {
+  return {
+    socketId,
+    id: deviceId || "android-worker",
+    name: deviceName || "Android bridge",
+    linkedAt: linkedAt || new Date().toISOString(),
+    connected: Boolean(connected),
+    callState: callState || "idle"
+  };
 }
 
-function rateLimit({ key, windowMs, limit }) {
-  const now = Date.now();
-  const bucket = requestBuckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    requestBuckets.set(key, { count: 1, resetAt: now + windowMs });
-    return { ok: true, remaining: limit - 1 };
+function normalizeSessionShape(session = {}) {
+  const normalized = {
+    dashboardSocketId: null,
+    phoneSocketId: null,
+    activePhoneSocketId: null,
+    callState: "idle",
+    lastNumber: "",
+    lastCompanyName: "",
+    lastContactName: "",
+    lastImageUrl: "",
+    pairingToken: nanoid(20),
+    phoneDevice: null,
+    phoneWorkers: [],
+    micMuted: true,
+    isSpeakerOn: false,
+    pbx: {
+      activeChannelId: "",
+      activeBridgeId: "",
+      externalMediaChannelId: "",
+      externalMediaHost: "",
+      externalMediaPort: 0,
+      lastPlaybackId: "",
+      endpoint: "",
+      callerId: "",
+      appArgs: "",
+      lastTtsMedia: "",
+      updatedAt: 0
+    },
+    workerCursor: 0,
+    updatedAt: Date.now(),
+    ...session
+  };
+
+  if (!Array.isArray(normalized.phoneWorkers)) normalized.phoneWorkers = [];
+  normalized.phoneWorkers = normalized.phoneWorkers.map((worker) => createPhoneWorker(worker));
+
+  if (!normalized.phoneWorkers.length && normalized.phoneDevice) {
+    normalized.phoneWorkers.push(createPhoneWorker({
+      deviceId: normalized.phoneDevice.id,
+      deviceName: normalized.phoneDevice.name,
+      linkedAt: normalized.phoneDevice.linkedAt,
+      connected: Boolean(normalized.phoneSocketId),
+      socketId: normalized.phoneSocketId || null
+    }));
   }
 
-  if (bucket.count >= limit) {
-    return { ok: false, retryAfterMs: Math.max(bucket.resetAt - now, 1000) };
+  return normalized;
+}
+
+function getConnectedPhoneWorkers(session) {
+  return (session.phoneWorkers || []).filter((worker) => worker.connected && worker.socketId);
+}
+
+function getPhoneWorkerBySocketId(session, socketId) {
+  return (session.phoneWorkers || []).find((worker) => worker.socketId === socketId) || null;
+}
+
+function upsertPhoneWorker(session, { socketId, deviceId, deviceName }) {
+  const workers = session.phoneWorkers || (session.phoneWorkers = []);
+  // Primary match: deviceId. Secondary match: socketId.
+  const existingIndex = workers.findIndex((worker) => (deviceId && worker.id === deviceId) || (socketId && worker.socketId === socketId));
+  
+  if (existingIndex !== -1) {
+    const existing = workers[existingIndex];
+    existing.socketId = socketId;
+    existing.id = deviceId || existing.id;
+    existing.name = deviceName || existing.name;
+    existing.connected = Boolean(socketId);
+    existing.linkedAt = existing.linkedAt || new Date().toISOString();
+    existing.callState = existing.callState || "idle";
+    return existing;
   }
 
-  bucket.count += 1;
-  return { ok: true, remaining: limit - bucket.count };
+  const worker = createPhoneWorker({
+    socketId,
+    deviceId,
+    deviceName,
+    connected: Boolean(socketId)
+  });
+  workers.push(worker);
+  return worker;
 }
 
-function enforceHttpRateLimit(req, res, options) {
-  const ip = getClientIp(req);
-  const result = rateLimit({ key: `${options.name}:${ip}`, windowMs: options.windowMs, limit: options.limit });
-  if (result.ok) return true;
-  res.setHeader("Retry-After", String(Math.ceil(result.retryAfterMs / 1000)));
-  res.status(429).json({ ok: false, error: "Demasiadas solicitudes. Intenta de nuevo en unos segundos." });
-  return false;
+function removePhoneWorker(session, socketId) {
+  const workers = session.phoneWorkers || [];
+  const index = workers.findIndex((worker) => worker.socketId === socketId);
+  if (index === -1) return null;
+
+  const [worker] = workers.splice(index, 1);
+  return worker;
 }
 
-function enforceSocketRateLimit(socket, name, windowMs, limit) {
-  const ip = getClientIp(socket.handshake);
-  const result = rateLimit({ key: `socket:${name}:${ip}`, windowMs, limit });
-  if (result.ok) return true;
-  socket.emit("session:error", { message: "Demasiados intentos. Espera unos segundos." });
-  return false;
-}
+function selectPhoneWorker(session, preferredSocketId = "") {
+  const workers = getConnectedPhoneWorkers(session);
+  if (!workers.length) return null;
 
-function sanitizeText(value, maxLen = 200) {
-  return String(value || "").trim().slice(0, maxLen);
-}
-
-function createSessionCode() {
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const code = nanoid(6).toUpperCase();
-    if (!sessions.has(code)) return code;
+  if (preferredSocketId) {
+    const preferred = workers.find((worker) => worker.socketId === preferredSocketId);
+    if (preferred) return preferred;
   }
-  throw new Error("No se pudo generar un codigo de sesion unico");
+
+  const idleWorkers = workers.filter((worker) => (worker.callState || "idle") === "idle");
+  const candidates = idleWorkers.length ? idleWorkers : workers;
+  const start = Number(session.workerCursor || 0) % candidates.length;
+  const chosen = candidates[start] || candidates[0];
+  session.workerCursor = (start + 1) % candidates.length;
+  return chosen;
+}
+
+function getActivePhoneWorker(session) {
+  return selectPhoneWorker(session, session.activePhoneSocketId || session.phoneSocketId || "");
+}
+
+function syncSessionPhoneState(session) {
+  const activeWorker = getActivePhoneWorker(session);
+  const connectedWorkers = getConnectedPhoneWorkers(session);
+  session.phoneSocketId = activeWorker?.socketId || null;
+  session.activePhoneSocketId = activeWorker?.socketId || null;
+  session.phoneDevice = activeWorker
+    ? {
+        id: activeWorker.id,
+        name: activeWorker.name,
+        linkedAt: activeWorker.linkedAt
+      }
+    : connectedWorkers[0]
+      ? {
+          id: connectedWorkers[0].id,
+          name: connectedWorkers[0].name,
+          linkedAt: connectedWorkers[0].linkedAt
+        }
+    : null;
+}
+
+function emitCampaignState(code) {
+  const session = sessions.get(code);
+  if (!session) return;
+  io.to(code).emit("campaign:state", getCampaignSnapshot(session));
+}
+
+function detachSocketFromCurrentSession(socket) {
+  const previousCode = socket.data.code;
+  const previousRole = socket.data.role;
+  if (!previousCode || !previousRole) return;
+
+  const previousSession = sessions.get(previousCode);
+  if (!previousSession) {
+    socket.data.code = null;
+    socket.data.role = null;
+    return;
+  }
+
+  if (previousRole === "dashboard" && previousSession.dashboardSocketId === socket.id) {
+    previousSession.dashboardSocketId = null;
+  }
+
+  if (previousRole === "phone") {
+    const removed = removePhoneWorker(previousSession, socket.id);
+    if (previousSession.activePhoneSocketId === socket.id) {
+      previousSession.activePhoneSocketId = null;
+    }
+    syncSessionPhoneState(previousSession);
+
+    if (removed && previousSession.callState !== "idle" && !previousSession.phoneSocketId) {
+      previousSession.callState = "idle";
+    }
+  }
+
+  previousSession.updatedAt = Date.now();
+  socket.leave(previousCode);
+
+  if (!previousSession.dashboardSocketId && !getConnectedPhoneWorkers(previousSession).length) {
+    sessions.delete(previousCode);
+  } else {
+    emitState(previousCode);
+    emitCampaignState(previousCode);
+  }
+
+  saveSoon();
+  socket.data.code = null;
+  socket.data.role = null;
+}
+
+function dispatchNextCampaignCall(code) {
+  const session = sessions.get(code);
+  if (!session) return null;
+
+  const campaign = ensureCampaign(session);
+  if (campaign.status !== "running" || campaign.activeContactId) {
+    emitCampaignState(code);
+    return null;
+  }
+
+  // Seleccionar worker para saber si vamos directo o por PBX
+  const worker = getActivePhoneWorker(session);
+  const next = assignNextContact(session, worker || {});
+  session.updatedAt = Date.now();
+  saveSoon();
+
+  if (!next) {
+    emitCampaignState(code);
+    return null;
+  }
+
+  session.callState = "dialing";
+  session.lastNumber = next.phone;
+  session.lastContactName = next.name;
+  session.lastCompanyName = next.name;
+  
+  if (worker) {
+    console.log(`[CAMPAIGN] Marcado directo a ${next.phone} vía worker ${worker.name}`);
+    io.to(worker.socketId).emit("call:action", {
+      action: "dial",
+      phoneNumber: next.phone,
+      contactId: next.id,
+      companyName: next.name,
+      contactName: next.name,
+      commandId: nanoid()
+    });
+    saveSoon();
+    emitState(code);
+    emitCampaignState(code);
+  } else {
+    console.log(`[CAMPAIGN] Omitido ${next.phone} (No hay worker)`);
+    session.callState = "ended";
+    markContactResult(session, next.id, "failed", { callbackReason: "Sin celular vinculado" });
+    saveSoon();
+    emitState(code);
+    emitCampaignState(code);
+  }
+
+  emitState(code);
+  emitCampaignState(code);
+  return next;
 }
 
 function getOrCreateSession(code) {
   if (!sessions.has(code)) {
-    sessions.set(code, {
-      dashboardSocketId: null,
-      phoneSocketId: null,
-      callState: "idle",
-      lastNumber: "",
-      lastCompanyName: "",
-      lastContactName: "",
-      lastImageUrl: "",
-      pairingToken: nanoid(20),
-      phoneDevice: null,
-      updatedAt: Date.now()
-    });
+    sessions.set(code, normalizeSessionShape());
     saveSoon();
   }
 
-  return sessions.get(code);
+  const session = sessions.get(code);
+  const normalized = normalizeSessionShape(session);
+  ensureCampaign(normalized);
+  sessions.set(code, normalized);
+  return normalized;
 }
 
 function getPeer(session, role) {
-  if (role === "dashboard") return session.phoneSocketId;
+  syncSessionPhoneState(session);
+  if (role === "dashboard") return session.activePhoneSocketId || session.phoneSocketId;
   if (role === "phone") return session.dashboardSocketId;
   return null;
 }
@@ -176,21 +366,37 @@ function getPeer(session, role) {
 function emitState(code) {
   const session = sessions.get(code);
   if (!session) return;
+  syncSessionPhoneState(session);
+  const phoneWorkers = (session.phoneWorkers || []).map((worker) => ({
+    id: worker.id,
+    name: worker.name,
+    linkedAt: worker.linkedAt,
+    connected: Boolean(worker.connected && worker.socketId),
+    callState: worker.callState || "idle",
+    active: worker.socketId === session.activePhoneSocketId
+  }));
 
   io.to(code).emit("state:changed", {
     connected: {
       dashboard: Boolean(session.dashboardSocketId),
-      phone: Boolean(session.phoneSocketId)
+      phone: Boolean(session.phoneSocketId),
+      phoneCount: phoneWorkers.filter((worker) => worker.connected).length,
+      linking: Boolean(session.phoneDevice) && !session.phoneSocketId
     },
     phoneDevice: session.phoneDevice,
+    phoneWorkers,
     callState: session.callState,
     lastNumber: session.lastNumber,
     lastCompanyName: session.lastCompanyName,
     lastContactName: session.lastContactName,
     lastImageUrl: session.lastImageUrl,
+    micMuted: session.micMuted,
+    isSpeakerOn: session.isSpeakerOn,
     updatedAt: session.updatedAt
   });
 }
+
+
 
 function parseEnvUrlCandidates(rawValue) {
   const raw = String(rawValue || "").trim().replace(/^=+/, "");
@@ -202,15 +408,86 @@ function parseEnvUrlCandidates(rawValue) {
     .filter((v) => /^https?:\/\//i.test(v));
 }
 
-function getBaseUrl(req) {
+function getRequestBaseUrl(req) {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
   const forwardedHost = String(req.headers["x-forwarded-host"] || "").split(",")[0].trim();
   const proto = forwardedProto || req.protocol || "http";
   const host = forwardedHost || req.get("host") || "";
-  const reqBase = `${proto}://${host}`.replace(/\/+$/, "");
+  return `${proto}://${host}`.replace(/\/+$/, "");
+}
+
+function getHostName(urlValue) {
+  try {
+    return new URL(urlValue).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isLoopbackHost(host) {
+  const normalized = String(host || "").trim().toLowerCase();
+  return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1" || normalized === "[::1]";
+}
+
+function isLikelyVirtualInterface(name) {
+  const value = String(name || "").toLowerCase();
+  return ["vethernet", "virtual", "vmware", "hyper-v", "loopback", "docker", "wsl"].some((part) => value.includes(part));
+}
+
+function rankLanAddress(address, interfaceName) {
+  const ip = String(address || "").trim();
+  const iface = String(interfaceName || "").trim().toLowerCase();
+
+  let score = 0;
+  if (/^192\.168\./.test(ip)) score += 50;
+  else if (/^10\./.test(ip)) score += 40;
+  else if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)) score += 30;
+
+  if (iface.includes("wi-fi") || iface.includes("wifi") || iface.includes("wlan")) score += 15;
+  if (iface === "ethernet" || iface.includes("ethernet")) score += 12;
+  if (isLikelyVirtualInterface(iface)) score -= 100;
+
+  return score;
+}
+
+function getFirstLanAddress() {
+  const interfaces = os.networkInterfaces();
+  const candidates = [];
+
+  for (const [name, entries] of Object.entries(interfaces)) {
+    for (const entry of entries || []) {
+      if (!entry || entry.internal || entry.family !== "IPv4") continue;
+      candidates.push({
+        name,
+        address: entry.address,
+        score: rankLanAddress(entry.address, name)
+      });
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0]?.address || "";
+}
+
+function getLocalLanBaseUrl(req) {
+  const envCandidates = parseEnvUrlCandidates(process.env.LOCAL_LAN_BASE_URL);
+  if (envCandidates.length) return envCandidates[0];
+
+  const reqBase = getRequestBaseUrl(req);
+  const reqUrl = new URL(reqBase);
+  if (!isLoopbackHost(reqUrl.hostname)) return reqBase;
+
+  const lanAddress = getFirstLanAddress();
+  if (!lanAddress) return "";
+  const port = reqUrl.port ? `:${reqUrl.port}` : "";
+  return `${reqUrl.protocol}//${lanAddress}${port}`;
+}
+
+function pickConfiguredBase(req, envName) {
+  const reqBase = getRequestBaseUrl(req);
   const reqHost = String(req.get("host") || "").toLowerCase();
-  const candidates = parseEnvUrlCandidates(process.env.PUBLIC_BASE_URL);
-  if (!candidates.length) return reqBase;
+  const candidates = parseEnvUrlCandidates(process.env[envName]);
+  if (!candidates.length) return "";
 
   const byHost = candidates.find((candidate) => {
     try {
@@ -220,98 +497,43 @@ function getBaseUrl(req) {
     }
   });
 
-  return byHost || candidates[0] || reqBase;
+  return byHost || candidates[0] || "";
+}
+
+function getAndroidApiBaseUrl(req) {
+  const publicBase = pickConfiguredBase(req, "PUBLIC_BASE_URL");
+  if (publicBase) return publicBase;
+
+  const localLanBase = getLocalLanBaseUrl(req);
+  if (localLanBase) return localLanBase;
+
+  const reqBase = getRequestBaseUrl(req);
+  const reqHost = getHostName(reqBase);
+  if (reqBase) return reqBase;
+
+  return "https://lm.viacomunicativa.com";
 }
 
 function getWebBaseUrl(req) {
-  const candidates = parseEnvUrlCandidates(process.env.PUBLIC_WEB_BASE_URL);
-  return candidates[0] || getBaseUrl(req);
+  const publicWebBase = pickConfiguredBase(req, "PUBLIC_WEB_BASE_URL");
+  if (publicWebBase) return publicWebBase;
+
+  const reqBase = getRequestBaseUrl(req);
+  if (reqBase) return reqBase;
+
+  return "https://llamada.viacomunicativa.com";
 }
 
-function isPrivateOrLocalAddress(hostValue) {
-  const host = String(hostValue || "").trim().toLowerCase();
-  if (!host) return true;
-  if (["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"].includes(host)) return true;
-  if (host.endsWith(".local") || host.endsWith(".internal")) return true;
-
-  if (/^10\./.test(host)) return true;
-  if (/^127\./.test(host)) return true;
-  if (/^169\.254\./.test(host)) return true;
-  if (/^192\.168\./.test(host)) return true;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
-  if (host === "::" || host.startsWith("fe80:") || host.startsWith("fc") || host.startsWith("fd")) return true;
-
-  return false;
+function getPairingLink(req, code, token) {
+  const webBase = getWebBaseUrl(req);
+  const apiBase = getAndroidApiBaseUrl(req);
+  return `${webBase}/pairing?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}&apiBase=${encodeURIComponent(apiBase)}`;
 }
-
-async function validateExternalFetchUrl(rawUrl) {
-  const normalized = String(rawUrl || "").trim();
-  if (!normalized) return { ok: false, error: "url requerida" };
-
-  let parsed;
-  try {
-    parsed = new URL(normalized);
-  } catch {
-    return { ok: false, error: "URL invalida" };
-  }
-
-  if (!["http:", "https:"].includes(parsed.protocol)) {
-    return { ok: false, error: "Solo se permiten URLs HTTP/HTTPS" };
-  }
-
-  if (parsed.username || parsed.password) {
-    return { ok: false, error: "URL con credenciales no permitida" };
-  }
-
-  const hostname = String(parsed.hostname || "").toLowerCase();
-  if (isPrivateOrLocalAddress(hostname)) {
-    return { ok: false, error: "Host privado/local no permitido" };
-  }
-
-  try {
-    const addresses = await dns.lookup(hostname, { all: true });
-    if (!addresses.length) return { ok: false, error: "No se pudo resolver el host" };
-    if (addresses.some((entry) => isPrivateOrLocalAddress(entry.address))) {
-      return { ok: false, error: "Destino resuelto a IP privada/local no permitido" };
-    }
-  } catch {
-    return { ok: false, error: "No se pudo resolver el host" };
-  }
-
-  return { ok: true, url: parsed.toString() };
-}
-
-function pruneExpiredSessions() {
-  const now = Date.now();
-  let removed = 0;
-  for (const [code, session] of sessions.entries()) {
-    const age = now - Number(session.updatedAt || 0);
-    const ttl = session.dashboardSocketId || session.phoneSocketId
-      ? SESSION_TTL_MS
-      : DISCONNECTED_SESSION_TTL_MS;
-    if (age > ttl) {
-      sessions.delete(code);
-      removed += 1;
-    }
-  }
-  if (removed > 0) {
-    console.log(`[SESSIONS] Removed ${removed} expired sessions.`);
-    saveSoon();
-  }
-}
-
-setInterval(() => {
-  pruneExpiredSessions();
-  const now = Date.now();
-  for (const [key, bucket] of requestBuckets.entries()) {
-    if (bucket.resetAt <= now) requestBuckets.delete(key);
-  }
-}, 60_000).unref();
 
 io.on("connection", (socket) => {
   socket.on("session:create", () => {
-    if (!enforceSocketRateLimit(socket, "session:create", 60_000, 12)) return;
-    const code = createSessionCode();
+    detachSocketFromCurrentSession(socket);
+    const code = nanoid(6).toUpperCase();
     const session = getOrCreateSession(code);
     session.updatedAt = Date.now();
 
@@ -322,11 +544,12 @@ io.on("connection", (socket) => {
     session.dashboardSocketId = socket.id;
 
     socket.emit("session:created", { code });
+    emitState(code);
+    emitCampaignState(code);
   });
 
 
   socket.on("session:join", ({ code, role, token, deviceName, deviceId }) => {
-    if (!enforceSocketRateLimit(socket, "session:join", 60_000, 30)) return;
     if (!code || !role) return;
 
     const normalizedCode = String(code).toUpperCase().trim();
@@ -338,27 +561,39 @@ io.on("connection", (socket) => {
       return;
     }
 
+    detachSocketFromCurrentSession(socket);
+
     socket.data.code = normalizedCode;
     socket.data.role = role;
     socket.join(normalizedCode);
 
     if (role === "dashboard") session.dashboardSocketId = socket.id;
     if (role === "phone") {
-      session.phoneSocketId = socket.id;
-      session.phoneDevice = {
-        id: sanitizeText(deviceId || "web-phone", 120),
-        name: sanitizeText(deviceName || "Android bridge", 120),
-        linkedAt: new Date().toISOString()
-      };
+      const worker = upsertPhoneWorker(session, {
+        socketId: socket.id,
+        deviceId: deviceId || "web-phone",
+        deviceName: deviceName || "Android bridge"
+      });
+      session.activePhoneSocketId ||= worker.socketId;
+      syncSessionPhoneState(session);
       saveSoon();
     }
 
     session.updatedAt = Date.now();
     socket.emit("session:joined", { code: normalizedCode, role });
     emitState(normalizedCode);
+    emitCampaignState(normalizedCode);
+
+    // If a phone joined and a campaign is running but idle, kickstart it
+    if (role === "phone") {
+        const campaign = ensureCampaign(session);
+        if (campaign.status === "running" && !getActiveContact(session)) {
+            setTimeout(() => dispatchNextCampaignCall(normalizedCode), 1000);
+        }
+    }
   });
 
-  socket.on("call:action", ({ action, phoneNumber, companyName, contactName, imageUrl, commandId }) => {
+  socket.on("call:action", ({ action, phoneNumber, companyName, contactName, imageUrl, commandId, contactId }) => {
     const code = socket.data.code;
     const role = socket.data.role;
     if (!code || role !== "dashboard") return;
@@ -366,39 +601,72 @@ io.on("connection", (socket) => {
     const session = sessions.get(code);
     if (!session) return;
 
-    if (action === "dial") {
-      session.callState = "dialing";
-      session.lastNumber = sanitizeText(phoneNumber, 40);
-      session.lastCompanyName = sanitizeText(companyName);
-      session.lastContactName = sanitizeText(contactName);
-      session.lastImageUrl = sanitizeText(imageUrl, 500);
+  if (action === "dial") {
+      session.lastNumber = phoneNumber || "";
+      session.lastCompanyName = companyName || "";
+      session.lastContactName = contactName || "";
+      session.lastImageUrl = imageUrl || "";
+
+      const worker = getActivePhoneWorker(session);
+      if (contactId) {
+        const campaign = ensureCampaign(session);
+        campaign.activeContactId = contactId;
+        if (worker) campaign.activeWorkerSocketId = worker.socketId;
+      }
+      session.updatedAt = Date.now();
       saveSoon();
+      
+      if (worker) {
+        console.log(`[MANUAL] Marcado directo a ${phoneNumber} vía worker ${worker.name}`);
+        io.to(worker.socketId).emit("call:action", {
+          action: "dial",
+          phoneNumber: phoneNumber || "",
+          companyName: companyName || "",
+          contactName: contactName || "",
+          imageUrl: imageUrl || "",
+          contactId: contactId || "",
+          commandId: commandId || nanoid()
+        });
+        saveSoon();
+        emitState(code);
+      } else {
+        console.log(`[MANUAL] Intento fallido para ${phoneNumber} (No hay worker activo)`);
+        session.callState = "failed";
+        saveSoon();
+        emitState(code);
+      }
     }
 
     if (action === "hangup") {
+      const worker = getActivePhoneWorker(session);
+      if (worker) {
+        io.to(worker.socketId).emit("call:action", { 
+          action: "hangup", 
+          from: "dashboard", 
+          contactId 
+        });
+      }
       session.callState = "ended";
       saveSoon();
     }
 
-    session.updatedAt = Date.now();
-
-    const peerId = getPeer(session, role);
-    if (peerId) {
-      io.to(peerId).emit("call:action", {
-        action,
-        phoneNumber: sanitizeText(phoneNumber, 40),
-        companyName: sanitizeText(companyName),
-        contactName: sanitizeText(contactName),
-        imageUrl: sanitizeText(imageUrl, 500),
-        commandId: sanitizeText(commandId, 80),
-        from: "dashboard"
-      });
+    if (action === "mute" || action === "unmute" || action === "speaker_on" || action === "speaker_off" || action === "answer") {
+      const worker = getActivePhoneWorker(session);
+      if (worker) {
+        io.to(worker.socketId).emit("call:action", { 
+          action, 
+          commandId,
+          contactId 
+        });
+      }
     }
 
+    session.updatedAt = Date.now();
     emitState(code);
+    emitCampaignState(code);
   });
 
-  socket.on("phone:status", ({ callState, phoneNumber, contactName, companyName }) => {
+  socket.on("phone:status", ({ callState, phoneNumber, contactName, companyName, micMuted, speakerOn, lineLabel, lastError }) => {
     const code = socket.data.code;
     const role = socket.data.role;
     if (!code || role !== "phone") return;
@@ -406,19 +674,37 @@ io.on("connection", (socket) => {
     const session = sessions.get(code);
     if (!session) return;
 
-    session.callState = sanitizeText(callState, 40) || session.callState;
+    const worker = getPhoneWorkerBySocketId(session, socket.id);
+    if (worker) {
+      worker.callState = callState || worker.callState || "idle";
+      worker.connected = true;
+      if (lineLabel) worker.lineLabel = String(lineLabel).trim();
+      if (lastError) worker.lastError = String(lastError).trim();
+      session.activePhoneSocketId = socket.id;
+    }
+    session.callState = callState || session.callState;
     if (typeof phoneNumber === "string" && phoneNumber.trim()) {
-      session.lastNumber = sanitizeText(phoneNumber, 40);
+      session.lastNumber = phoneNumber.trim();
     }
     if (typeof contactName === "string" && contactName.trim()) {
-      session.lastContactName = sanitizeText(contactName);
+      session.lastContactName = contactName.trim();
     }
     if (typeof companyName === "string" && companyName.trim()) {
-      session.lastCompanyName = sanitizeText(companyName);
+      session.lastCompanyName = companyName.trim();
     }
+    session.micMuted = Boolean(micMuted);
+    session.isSpeakerOn = Boolean(speakerOn);
     session.updatedAt = Date.now();
+    updateActiveCallState(session, callState, worker || {});
+    syncSessionPhoneState(session);
     saveSoon();
     emitState(code);
+    emitCampaignState(code);
+
+    const campaign = ensureCampaign(session);
+    if ((callState === "idle" || callState === "ended") && campaign.status === "running" && !campaign.activeContactId) {
+      dispatchNextCampaignCall(code);
+    }
   });
 
   socket.on("phone:command_ack", ({ commandId, action, ok, message }) => {
@@ -433,10 +719,10 @@ io.on("connection", (socket) => {
     if (!peerId) return;
 
     io.to(peerId).emit("phone:command_ack", {
-      commandId: sanitizeText(commandId, 80),
-      action: sanitizeText(action, 80),
+      commandId: commandId || "",
+      action: action || "",
       ok: Boolean(ok),
-      message: sanitizeText(message, 240),
+      message: message || "",
       at: new Date().toISOString()
     });
   });
@@ -448,6 +734,10 @@ io.on("connection", (socket) => {
     if (!code || role !== "phone") return;
     const session = sessions.get(code);
     if (!session) return;
+    session.activePhoneSocketId = socket.id;
+    const worker = getPhoneWorkerBySocketId(session, socket.id);
+    if (worker) worker.callState = session.callState || worker.callState || "idle";
+    syncSessionPhoneState(session);
     const peerId = getPeer(session, "phone");  // gets dashboardSocketId
     if (peerId) io.to(peerId).emit("audio:phone", data);
   });
@@ -471,59 +761,252 @@ io.on("connection", (socket) => {
     if (!session) return;
 
     if (role === "dashboard" && session.dashboardSocketId === socket.id) session.dashboardSocketId = null;
-    if (role === "phone" && session.phoneSocketId === socket.id) {
-      session.phoneSocketId = null;
-      // If phone disconnects, force end call so dashboard doesn't get stuck
-      if (session.callState !== "idle") {
+    if (role === "phone") {
+      const removed = removePhoneWorker(session, socket.id);
+      if (session.activePhoneSocketId === socket.id) {
+        session.activePhoneSocketId = null;
+      }
+      
+      // If the disconnecting worker was in a call, cleanup campaign
+      if (removed) {
+          updateActiveCallState(session, "ended", removed);
+      }
+
+      syncSessionPhoneState(session);
+      // Let the dashboard keep the call window open during micro-cuts.
+      // The user can manually click 'Cortar' if the phone never reconnects.
+      /*
+      if (removed && session.callState !== "idle" && !session.phoneSocketId) {
         session.callState = "idle";
         const dash = session.dashboardSocketId;
-        if (dash) io.to(dash).emit("state:changed", { ...session, connected: { dashboard: true, phone: false } });
+        if (dash) io.to(dash).emit("state:changed", { ...session, connected: { dashboard: true, phone: false, phoneCount: 0 } });
       }
+      */
     }
 
     session.updatedAt = Date.now();
 
-    if (!session.dashboardSocketId && !session.phoneSocketId) {
+    if (!session.dashboardSocketId && !getConnectedPhoneWorkers(session).length) {
+      sessions.delete(code);
       saveSoon();
       return;
     }
 
     emitState(code);
+    emitCampaignState(code);
   });
 });
 
 app.get("/api/pairing/:code", (req, res) => {
-  if (!enforceHttpRateLimit(req, res, { name: "api:pairing", windowMs: 60_000, limit: 60 })) return;
   const code = String(req.params.code || "").toUpperCase().trim();
   if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
 
   const session = getOrCreateSession(code);
-  const webBase = getWebBaseUrl(req);
-  const apiBase = getBaseUrl(req);
-  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}&apiBase=${encodeURIComponent(apiBase)}`;
+  const link = getPairingLink(req, code, session.pairingToken);
 
   return res.json({
     ok: true,
     code,
     token: session.pairingToken,
-    link
+    link,
+    phoneDevice: session.phoneDevice,
+    workers: (session.phoneWorkers || []).map((worker) => ({
+      id: worker.id,
+      name: worker.name,
+      linkedAt: worker.linkedAt,
+      connected: Boolean(worker.connected && worker.socketId),
+      callState: worker.callState || "idle",
+      active: worker.socketId === session.activePhoneSocketId
+    }))
   });
 });
 
+app.get("/api/session/:code/workers", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+  syncSessionPhoneState(session);
+
+  return res.json({
+    ok: true,
+    code,
+    activePhoneSocketId: session.activePhoneSocketId,
+    workers: (session.phoneWorkers || []).map((worker) => ({
+      id: worker.id,
+      name: worker.name,
+      linkedAt: worker.linkedAt,
+      connected: Boolean(worker.connected && worker.socketId),
+      callState: worker.callState || "idle",
+      active: worker.socketId === session.activePhoneSocketId
+    }))
+  });
+});
+
+app.get("/api/session/:code/campaign", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  return res.json({
+    ok: true,
+    code,
+    campaign: getCampaignSnapshot(session)
+  });
+});
+
+
+
+app.post("/api/session/:code/campaign/start", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const contacts = Array.isArray(req.body?.contacts) ? req.body.contacts : [];
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  if (!contacts.length) return res.status(400).json({ ok: false, error: "contacts requeridos" });
+
+  const session = getOrCreateSession(code);
+  startCampaign(session, contacts);
+  session.updatedAt = Date.now();
+  saveSoon();
+  emitCampaignState(code);
+  const next = dispatchNextCampaignCall(code);
+
+  return res.json({
+    ok: true,
+    code,
+    dispatched: Boolean(next),
+    campaign: getCampaignSnapshot(session)
+  });
+});
+
+app.get("/api/session/:code/campaign", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  return res.json({ ok: true, code, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/pause", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  pauseCampaign(session);
+  saveSoon();
+  emitCampaignState(code);
+  return res.json({ ok: true, code, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/resume", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  resumeCampaign(session);
+  saveSoon();
+  emitCampaignState(code);
+  const next = dispatchNextCampaignCall(code);
+  return res.json({ ok: true, code, dispatched: Boolean(next), campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/dispatch", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const next = dispatchNextCampaignCall(code);
+  saveSoon();
+  emitCampaignState(code);
+  return res.json({ ok: true, code, dispatched: Boolean(next), nextContact: next, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/skip", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const skipped = skipActiveContact(session);
+  saveSoon();
+  emitCampaignState(code);
+  if (ensureCampaign(session).status === "running") dispatchNextCampaignCall(code);
+  return res.json({ ok: true, code, skipped, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/result", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const contactId = String(req.body?.contactId || "").trim();
+  const result = String(req.body?.result || "").trim();
+  if (!code || !contactId || !result) {
+    return res.status(400).json({ ok: false, error: "code, contactId y result son requeridos" });
+  }
+
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const hangupWorkerSocketId = ensureCampaign(session).activeWorkerSocketId;
+  const updated = markContactResult(session, contactId, result, {
+    callbackReason: req.body?.callbackReason,
+    assignedAdvisor: req.body?.assignedAdvisor,
+    transcriptSummary: req.body?.transcriptSummary
+  });
+  if (!updated) return res.status(404).json({ ok: false, error: "Contacto no encontrado" });
+
+  if (hangupWorkerSocketId && ["agendado", "no_interesado", "requiere_asesor", "sin_respuesta"].includes(updated.result)) {
+    io.to(hangupWorkerSocketId).emit("call:action", { action: "hangup", from: "dashboard", contactId });
+  }
+
+  saveSoon();
+  emitCampaignState(code);
+  if (ensureCampaign(session).status === "running" && !getActiveContact(session)) {
+    dispatchNextCampaignCall(code);
+  }
+  return res.json({ ok: true, code, contact: updated, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/callback", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const contactId = String(req.body?.contactId || "").trim();
+  if (!code || !contactId) {
+    return res.status(400).json({ ok: false, error: "code y contactId son requeridos" });
+  }
+
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const contact = markContactResult(session, contactId, "requiere_asesor", {
+    callbackReason: req.body?.callbackReason,
+    assignedAdvisor: req.body?.assignedAdvisor,
+    transcriptSummary: req.body?.transcriptSummary
+  });
+  if (!contact) return res.status(404).json({ ok: false, error: "Contacto no encontrado" });
+
+  saveSoon();
+  emitCampaignState(code);
+  if (ensureCampaign(session).status === "running" && !getActiveContact(session)) {
+    dispatchNextCampaignCall(code);
+  }
+  return res.json({ ok: true, code, contact, campaign: getCampaignSnapshot(session) });
+});
+
 app.get("/api/pairing-qr/:code.svg", async (req, res) => {
-  if (!enforceHttpRateLimit(req, res, { name: "api:pairing-qr", windowMs: 60_000, limit: 30 })) return;
   const code = String(req.params.code || "").toUpperCase().trim();
   if (!code) return res.status(400).send("Code requerido");
 
   const session = getOrCreateSession(code);
-  const webBase = getWebBaseUrl(req);
-  const apiBase = getBaseUrl(req);
-  const link = `${webBase}/phone?code=${encodeURIComponent(code)}&token=${encodeURIComponent(session.pairingToken)}&apiBase=${encodeURIComponent(apiBase)}`;
+  const link = getPairingLink(req, code, session.pairingToken);
 
   try {
     const svg = await QRCode.toString(link, {
       type: "svg",
-      errorCorrectionLevel: "M",
+      errorCorrectionLevel: "L",
       margin: 1,
       width: 320
     });
@@ -535,12 +1018,36 @@ app.get("/api/pairing-qr/:code.svg", async (req, res) => {
   }
 });
 
+app.get("/api/server-info", (req, res) => {
+  const requestBase = getRequestBaseUrl(req);
+  const androidApiBase = getAndroidApiBaseUrl(req);
+  const webBase = getWebBaseUrl(req);
+  const requestHost = getHostName(requestBase);
+  const usingPublicBase = Boolean(pickConfiguredBase(req, "PUBLIC_BASE_URL"));
+  const usingPublicWebBase = Boolean(pickConfiguredBase(req, "PUBLIC_WEB_BASE_URL"));
+  const usingLocalLanBase = Boolean(parseEnvUrlCandidates(process.env.LOCAL_LAN_BASE_URL).length);
+
+  return res.json({
+    ok: true,
+    requestBase,
+    androidApiBase,
+    webBase,
+    isLocalhostRequest: isLoopbackHost(requestHost),
+    usingPublicBase,
+    usingPublicWebBase,
+    usingLocalLanBase
+  });
+});
+
+
+
+
+
 app.post("/api/android/pair", (req, res) => {
-  if (!enforceHttpRateLimit(req, res, { name: "api:android-pair", windowMs: 60_000, limit: 40 })) return;
-  const code = sanitizeText(req.body?.code, 20).toUpperCase();
-  const token = sanitizeText(req.body?.token, 120);
-  const deviceId = sanitizeText(req.body?.deviceId, 120);
-  const deviceName = sanitizeText(req.body?.deviceName, 120) || "Android bridge";
+  const code = String(req.body?.code || "").toUpperCase().trim();
+  const token = String(req.body?.token || "").trim();
+  const deviceId = String(req.body?.deviceId || "").trim();
+  const deviceName = String(req.body?.deviceName || "").trim() || "Android bridge";
 
   if (!code || !token || !deviceId) {
     return res.status(400).json({ ok: false, error: "code, token y deviceId son requeridos" });
@@ -550,19 +1057,26 @@ app.post("/api/android/pair", (req, res) => {
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
   if (session.pairingToken !== token) return res.status(401).json({ ok: false, error: "Token invalido" });
 
-  session.phoneDevice = {
-    id: deviceId,
-    name: deviceName,
-    linkedAt: new Date().toISOString()
-  };
+  upsertPhoneWorker(session, {
+    socketId: null,
+    deviceId,
+    deviceName
+  });
+  syncSessionPhoneState(session);
   session.updatedAt = Date.now();
   saveSoon();
   emitState(code);
 
-  const baseUrl = getBaseUrl(req);
+  const baseUrl = getAndroidApiBaseUrl(req);
   return res.json({
     ok: true,
     code,
+    workers: (session.phoneWorkers || []).map((worker) => ({
+      id: worker.id,
+      name: worker.name,
+      linkedAt: worker.linkedAt,
+      connected: Boolean(worker.connected && worker.socketId)
+    })),
     socket: {
       url: baseUrl,
       role: "phone",
@@ -709,16 +1223,14 @@ app.get("/api/apk/download/:id", (req, res) => {
 
 // ── URL proxy for contact import ─────────────────────────────────────────
 app.get("/api/fetch-url", async (req, res) => {
-  if (!enforceHttpRateLimit(req, res, { name: "api:fetch-url", windowMs: 60_000, limit: 20 })) return;
-  const rawUrl = req.query.url;
-  const validation = await validateExternalFetchUrl(rawUrl);
-  if (!validation.ok) return res.status(400).json({ ok: false, error: validation.error });
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ ok: false, error: "url requerida" });
   try {
     const { default: fetch } = await import("node-fetch").catch(() => ({ default: globalThis.fetch }));
     const fetchFn = fetch || globalThis.fetch;
-    const r = await fetchFn(validation.url, {
+    const r = await fetchFn(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; VOIP VC/1.0)" },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+      signal: AbortSignal.timeout(10000)
     });
     if (!r.ok) return res.status(502).json({ ok: false, error: `HTTP ${r.status} al obtener la URL` });
     const html = await r.text();
@@ -728,52 +1240,28 @@ app.get("/api/fetch-url", async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, "../web")));
-app.get("/phone", (req, res) => {
-  const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-  return res.redirect(`/${query}`);
-});
-app.get("/health", (_, res) => res.json({
-  ok: true,
-  uptimeSeconds: Math.round(process.uptime()),
-  sessions: sessions.size,
-  timestamp: new Date().toISOString()
-}));
-
-app.use((error, _req, res, _next) => {
-  if (error?.type === "entity.too.large") {
-    return res.status(413).json({ ok: false, error: "Payload demasiado grande" });
-  }
-  console.error("[HTTP] Unhandled error:", error);
-  return res.status(500).json({ ok: false, error: "Error interno del servidor" });
-});
-
-let shuttingDown = false;
-async function shutdown(signal) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log(`[SERVER] Received ${signal}. Closing gracefully...`);
-
-  io.close();
-  server.close(async (error) => {
-    if (error) {
-      console.error("[SERVER] Error while closing HTTP server:", error);
-      process.exitCode = 1;
-    }
-    await persistence.flush();
-    process.exit();
+app.get("/api/twilio/status", async (req, res) => {
+  return res.status(501).json({
+    ok: false,
+    error: "Twilio deshabilitado en este despliegue."
   });
+});
 
-  setTimeout(async () => {
-    console.error("[SERVER] Forced shutdown after timeout.");
-    await persistence.flush();
-    process.exit(1);
-  }, 10_000).unref();
-}
+app.post("/api/twilio/configure", async (req, res) => {
+  return res.status(501).json({
+    ok: false,
+    error: "Twilio deshabilitado en este despliegue."
+  });
+});
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+app.post("/api/twilio/webhook/voice", express.urlencoded({ extended: false }), (req, res) => {
+  return res.status(501).type("text/plain").send("Twilio deshabilitado en este despliegue.");
+});
 
-server.listen(PORT, HOST, () => {
-  console.log(`Call bridge skeleton running on http://${HOST}:${PORT}`);
+app.use(express.static(path.join(__dirname, "../web")));
+app.get("/health", (_, res) => res.json({ ok: true }));
+
+bootstrap().catch(err => {
+  console.error("Fallo critico al iniciar el servidor:", err);
+  process.exit(1);
 });
