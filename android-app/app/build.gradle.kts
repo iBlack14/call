@@ -14,7 +14,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         manifestPlaceholders["cleartextTraffic"] = "false"
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://llamada.viacomunicactiva.com\"")
+        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://llamada.viacomunicativa.com\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
