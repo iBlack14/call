@@ -1,3 +1,5 @@
+import { nanoid } from 'nanoid';
+
 const DEFAULT_CAMPAIGN = () => ({
   status: "idle",
   contacts: [],
