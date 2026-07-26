@@ -1895,5 +1895,82 @@
       "updatedAt": 0
     },
     "updatedAt": 1777654510700
+  },
+  "UNTQU1": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "X52JWCE7Q_sq9sCu4oOD",
+    "phoneDevice": null,
+    "phoneWorkers": [],
+    "pairingSlots": [
+      {
+        "id": "kdsFDs0t_s",
+        "token": "X52JWCE7Q_sq9sCu4oOD",
+        "label": "Dispositivo 1",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-07-26T20:22:35.101Z",
+        "linkedAt": null
+      },
+      {
+        "id": "7Ecs4JvyNx",
+        "token": "AprQHFa4rOaZ9AX_EdRUciHK",
+        "label": "Dispositivo 2",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-07-26T20:22:41.210Z",
+        "linkedAt": null
+      },
+      {
+        "id": "Bc_YoVMyHm",
+        "token": "5SRG5INmjBv5778xvspV-zNn",
+        "label": "Dispositivo 3",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-07-26T20:22:42.020Z",
+        "linkedAt": null
+      },
+      {
+        "id": "lZx39MospO",
+        "token": "Xed27qol5D_0y5mX5zCDyDfe",
+        "label": "Dispositivo 4",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-07-26T20:22:42.556Z",
+        "linkedAt": null
+      }
+    ],
+    "micMuted": true,
+    "isSpeakerOn": false,
+    "pbx": {
+      "activeChannelId": "",
+      "activeBridgeId": "",
+      "externalMediaChannelId": "",
+      "externalMediaHost": "",
+      "externalMediaPort": 0,
+      "lastPlaybackId": "",
+      "endpoint": "",
+      "callerId": "",
+      "appArgs": "",
+      "lastTtsMedia": "",
+      "updatedAt": 0
+    },
+    "updatedAt": 1785097355094,
+    "campaign": {
+      "status": "idle",
+      "contacts": [],
+      "activeContactId": null,
+      "activeWorkerId": null,
+      "activeWorkerSocketId": null,
+      "callbacks": [],
+      "lastError": "",
+      "updatedAt": 1785097355094,
+      "startedAt": null,
+      "pausedAt": null,
+      "completedAt": null
+    }
   }
 }

@@ -555,18 +555,20 @@ function renderWorkersPanel() {
   if (refs.workersSummaryEl) refs.workersSummaryEl.textContent = `${connected.length} conectados`;
   if (!refs.workersListEl) return;
 
-  if (!connected.length) {
-    refs.workersListEl.innerHTML = `<div class="campaign-list-empty">Sin workers conectados.</div>`;
+  if (!workers.length) {
+    refs.workersListEl.innerHTML = `<div class="campaign-list-empty">Sin dispositivos registrados.</div>`;
     return;
   }
 
-  refs.workersListEl.innerHTML = connected.map((worker) => `
-    <div class="worker-chip ${worker.active ? "is-active" : ""}">
+  refs.workersListEl.innerHTML = workers.map((worker) => {
+    const state = worker.connected ? (worker.callState || "idle") : "offline";
+    return `
+    <div class="worker-chip state-${escHtml(state)} ${worker.active ? "is-active" : ""}">
       <strong>${escHtml(worker.name || "Android")}</strong>
       <span>${escHtml(worker.id || "worker")}</span>
-      <small>${escHtml(worker.callState || "idle")}</small>
+      <small>${escHtml(state)}${worker.currentNumber ? ` · ${escHtml(worker.currentNumber)}` : ""}</small>
     </div>
-  `).join("");
+  `}).join("");
 }
 
 function renderCampaignPanel() {
@@ -763,6 +765,15 @@ function bindEvents() {
       loadPairingData(code);
     }
   };
+  if (refs.addPairingSlotBtn) refs.addPairingSlotBtn.onclick = createPairingSlot;
+  if (refs.pairingSlotsEl) {
+    refs.pairingSlotsEl.onclick = async (event) => {
+      const button = event.target.closest(".copy-slot-link");
+      if (!button) return;
+      await navigator.clipboard.writeText(button.dataset.link || "");
+      setStatus("Link de este dispositivo copiado.", true);
+    };
+  }
   
   refs.cBodyEl.onclick = (e) => {
     const btn = e.target.closest("button[data-action]");
@@ -1363,8 +1374,7 @@ function updateSessionUi(st = {}) {
     refs.campaignSectionEl.style.display = dashboardConnected ? "block" : "none";
   }
   if (refs.qrBlockEl) {
-    // Show QR only if dashboard is connected but NO phone is linked yet
-    refs.qrBlockEl.style.display = (dashboardConnected && !phoneConnected) ? "flex" : "none";
+    refs.qrBlockEl.style.display = dashboardConnected ? "flex" : "none";
   }
 
   if (dashboardConnected) {
@@ -1378,14 +1388,49 @@ function updateSessionUi(st = {}) {
 // ── APK & PAIRING ────────────────────────────────────────────────────
 async function loadPairingData(code) {
   try {
-    const res = await fetch(`${API_BASE}/api/pairing/${code}`);
+    const res = await fetch(`${API_BASE}/api/session/${encodeURIComponent(code)}/pairing-slots`);
     const data = await res.json();
-    pairLink = data.link || "";
-    refs.pairLinkEl.value = data.link;
-    refs.pairQrEl.src = `${API_BASE}/api/pairing-qr/${code}.svg?ts=${Date.now()}`;
-    refs.pairQrEl.style.display = "block";
-    updatePairingHint(data.link || "");
+    if (!data.ok) throw new Error(data.error || "No se pudieron cargar los QR");
+    const slots = Array.isArray(data.slots) ? data.slots : [];
+    const first = slots[0];
+    pairLink = first?.link || "";
+    refs.pairLinkEl.value = pairLink;
+    refs.pairQrEl.style.display = "none";
+    renderPairingSlots(slots);
+    updatePairingHint(first?.link || "");
   } catch { }
+}
+
+function renderPairingSlots(slots) {
+  if (!refs.pairingSlotsEl) return;
+  refs.pairingSlotsEl.innerHTML = slots.map((slot) => `
+    <article class="pairing-slot-card">
+      <img src="${API_BASE}/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?slotId=${encodeURIComponent(slot.id)}&ts=${Date.now()}" alt="QR ${escHtml(slot.label)}" />
+      <div>
+        <strong>${escHtml(slot.label)}</strong>
+        <small>${slot.deviceId ? `Vinculado: ${escHtml(slot.deviceName || slot.deviceId)}` : "Disponible para vincular"}</small>
+        <button class="secondary copy-slot-link" data-link="${escHtml(slot.link)}">📋 Copiar link</button>
+      </div>
+    </article>
+  `).join("");
+}
+
+async function createPairingSlot() {
+  if (!sessionCode) return setStatus("Primero crea o vincula una sesión.");
+  try {
+    const currentSlots = refs.pairingSlotsEl?.children.length || 0;
+    const res = await fetch(`${API_BASE}/api/session/${encodeURIComponent(sessionCode)}/pairing-slots`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: `Dispositivo ${currentSlots + 1}` })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo crear el QR");
+    await loadPairingData(sessionCode);
+    setStatus("QR independiente creado. Escanéalo con el nuevo celular.", true);
+  } catch (error) {
+    setStatus(error.message || "No se pudo crear el QR.");
+  }
 }
 
 async function loadApkInfo() {

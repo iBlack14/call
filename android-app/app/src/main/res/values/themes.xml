@@ -12,5 +12,8 @@
         <item name="colorOnPrimary">@color/vc_text_inverse</item>
         <item name="colorOnSecondary">@color/vc_text_inverse</item>
         <item name="colorOnSurface">@color/vc_text_primary</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
     </style>
 </resources>

@@ -28,7 +28,8 @@ import {
   updateActiveCallState,
   markContactResult,
   skipActiveContact,
-  getActiveContact
+  getActiveContact,
+  getActiveContacts
 } from "./campaign-manager.js";
 const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
 
@@ -97,14 +98,16 @@ function saveSoon() {
   persistence.save(sessions);
 }
 
-function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Android bridge", linkedAt, connected = false, callState = "idle" } = {}) {
+function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Android bridge", pairingSlotId = "", linkedAt, connected = false, callState = "idle", currentNumber = "" } = {}) {
   return {
     socketId,
     id: deviceId || "android-worker",
     name: deviceName || "Android bridge",
+    pairingSlotId: pairingSlotId || "",
     linkedAt: linkedAt || new Date().toISOString(),
     connected: Boolean(connected),
-    callState: callState || "idle"
+    callState: callState || "idle",
+    currentNumber: currentNumber || ""
   };
 }
 
@@ -121,6 +124,7 @@ function normalizeSessionShape(session = {}) {
     pairingToken: nanoid(20),
     phoneDevice: null,
     phoneWorkers: [],
+    pairingSlots: [],
     micMuted: true,
     isSpeakerOn: false,
     pbx: {
@@ -143,6 +147,7 @@ function normalizeSessionShape(session = {}) {
 
   if (!Array.isArray(normalized.phoneWorkers)) normalized.phoneWorkers = [];
   normalized.phoneWorkers = normalized.phoneWorkers.map((worker) => createPhoneWorker(worker));
+  if (!Array.isArray(normalized.pairingSlots)) normalized.pairingSlots = [];
 
   if (!normalized.phoneWorkers.length && normalized.phoneDevice) {
     normalized.phoneWorkers.push(createPhoneWorker({
@@ -165,7 +170,7 @@ function getPhoneWorkerBySocketId(session, socketId) {
   return (session.phoneWorkers || []).find((worker) => worker.socketId === socketId) || null;
 }
 
-function upsertPhoneWorker(session, { socketId, deviceId, deviceName }) {
+function upsertPhoneWorker(session, { socketId, deviceId, deviceName, pairingSlotId = "" }) {
   const workers = session.phoneWorkers || (session.phoneWorkers = []);
   // Primary match: deviceId. Secondary match: socketId.
   const existingIndex = workers.findIndex((worker) => (deviceId && worker.id === deviceId) || (socketId && worker.socketId === socketId));
@@ -175,6 +180,7 @@ function upsertPhoneWorker(session, { socketId, deviceId, deviceName }) {
     existing.socketId = socketId;
     existing.id = deviceId || existing.id;
     existing.name = deviceName || existing.name;
+    existing.pairingSlotId = pairingSlotId || existing.pairingSlotId || "";
     existing.connected = Boolean(socketId);
     existing.linkedAt = existing.linkedAt || new Date().toISOString();
     existing.callState = existing.callState || "idle";
@@ -185,6 +191,7 @@ function upsertPhoneWorker(session, { socketId, deviceId, deviceName }) {
     socketId,
     deviceId,
     deviceName,
+    pairingSlotId,
     connected: Boolean(socketId)
   });
   workers.push(worker);
@@ -196,7 +203,10 @@ function removePhoneWorker(session, socketId) {
   const index = workers.findIndex((worker) => worker.socketId === socketId);
   if (index === -1) return null;
 
-  const [worker] = workers.splice(index, 1);
+  const worker = workers[index];
+  worker.socketId = null;
+  worker.connected = false;
+  worker.callState = "offline";
   return worker;
 }
 
@@ -206,19 +216,59 @@ function selectPhoneWorker(session, preferredSocketId = "") {
 
   if (preferredSocketId) {
     const preferred = workers.find((worker) => worker.socketId === preferredSocketId);
-    if (preferred) return preferred;
+    if (preferred && (preferred.callState || "idle") === "idle") return preferred;
   }
 
   const idleWorkers = workers.filter((worker) => (worker.callState || "idle") === "idle");
-  const candidates = idleWorkers.length ? idleWorkers : workers;
+  const candidates = idleWorkers;
+  if (!candidates.length) return null;
   const start = Number(session.workerCursor || 0) % candidates.length;
   const chosen = candidates[start] || candidates[0];
   session.workerCursor = (start + 1) % candidates.length;
   return chosen;
 }
 
+function createPairingSlot(session, label = "") {
+  const slots = session.pairingSlots || (session.pairingSlots = []);
+  const slot = {
+    id: nanoid(10),
+    token: nanoid(24),
+    label: String(label || "").trim() || `Dispositivo ${slots.length + 1}`,
+    deviceId: "",
+    deviceName: "",
+    createdAt: new Date().toISOString(),
+    linkedAt: null
+  };
+  slots.push(slot);
+  return slot;
+}
+
+function getPairingSlotByToken(session, token) {
+  return (session.pairingSlots || []).find((slot) => slot.token === token) || null;
+}
+
+function ensureLegacyPairingSlot(session) {
+  const slots = session.pairingSlots || (session.pairingSlots = []);
+  if (!slots.length) {
+    slots.push({
+      id: nanoid(10),
+      token: session.pairingToken || nanoid(24),
+      label: "Dispositivo 1",
+      deviceId: "",
+      deviceName: "",
+      createdAt: new Date().toISOString(),
+      linkedAt: null
+    });
+  }
+  return slots[0];
+}
+
 function getActivePhoneWorker(session) {
-  return selectPhoneWorker(session, session.activePhoneSocketId || session.phoneSocketId || "");
+  const workers = getConnectedPhoneWorkers(session);
+  return workers.find((worker) => worker.socketId === session.activePhoneSocketId)
+    || workers.find((worker) => worker.socketId === session.phoneSocketId)
+    || workers[0]
+    || null;
 }
 
 function syncSessionPhoneState(session) {
@@ -278,7 +328,11 @@ function detachSocketFromCurrentSession(socket) {
   previousSession.updatedAt = Date.now();
   socket.leave(previousCode);
 
-  if (!previousSession.dashboardSocketId && !getConnectedPhoneWorkers(previousSession).length) {
+  if (
+    !previousSession.dashboardSocketId
+    && !getConnectedPhoneWorkers(previousSession).length
+    && !(previousSession.pairingSlots || []).length
+  ) {
     sessions.delete(previousCode);
   } else {
     emitState(previousCode);
@@ -295,13 +349,17 @@ function dispatchNextCampaignCall(code) {
   if (!session) return null;
 
   const campaign = ensureCampaign(session);
-  if (campaign.status !== "running" || campaign.activeContactId) {
+  if (campaign.status !== "running") {
     emitCampaignState(code);
     return null;
   }
 
   // Seleccionar worker para saber si vamos directo o por PBX
-  const worker = getActivePhoneWorker(session);
+  const worker = selectPhoneWorker(session);
+  if (!worker) {
+    emitCampaignState(code);
+    return null;
+  }
   const next = assignNextContact(session, worker || {});
   session.updatedAt = Date.now();
   saveSoon();
@@ -317,6 +375,8 @@ function dispatchNextCampaignCall(code) {
   session.lastCompanyName = next.name;
   
   if (worker) {
+    worker.callState = "dialing";
+    worker.currentNumber = next.phone;
     console.log(`[CAMPAIGN] Marcado directo a ${next.phone} vía worker ${worker.name}`);
     io.to(worker.socketId).emit("call:action", {
       action: "dial",
@@ -341,6 +401,16 @@ function dispatchNextCampaignCall(code) {
   emitState(code);
   emitCampaignState(code);
   return next;
+}
+
+function fillAvailableCampaignWorkers(code) {
+  const dispatched = [];
+  while (true) {
+    const next = dispatchNextCampaignCall(code);
+    if (!next) break;
+    dispatched.push(next);
+  }
+  return dispatched;
 }
 
 function getOrCreateSession(code) {
@@ -373,6 +443,7 @@ function emitState(code) {
     linkedAt: worker.linkedAt,
     connected: Boolean(worker.connected && worker.socketId),
     callState: worker.callState || "idle",
+    currentNumber: worker.currentNumber || "",
     active: worker.socketId === session.activePhoneSocketId
   }));
 
@@ -556,7 +627,8 @@ io.on("connection", (socket) => {
     const session = getOrCreateSession(normalizedCode);
     const normalizedToken = token ? String(token).trim() : "";
 
-    if (role === "phone" && normalizedToken !== session.pairingToken) {
+    const pairingSlot = role === "phone" ? getPairingSlotByToken(session, normalizedToken) : null;
+    if (role === "phone" && (!pairingSlot || (pairingSlot.deviceId && pairingSlot.deviceId !== String(deviceId || "")))) {
       socket.emit("session:error", { message: "Token de vinculacion invalido." });
       return;
     }
@@ -572,7 +644,8 @@ io.on("connection", (socket) => {
       const worker = upsertPhoneWorker(session, {
         socketId: socket.id,
         deviceId: deviceId || "web-phone",
-        deviceName: deviceName || "Android bridge"
+        deviceName: deviceName || "Android bridge",
+        pairingSlotId: pairingSlot?.id || ""
       });
       session.activePhoneSocketId ||= worker.socketId;
       syncSessionPhoneState(session);
@@ -588,7 +661,7 @@ io.on("connection", (socket) => {
     if (role === "phone") {
         const campaign = ensureCampaign(session);
         if (campaign.status === "running" && !getActiveContact(session)) {
-            setTimeout(() => dispatchNextCampaignCall(normalizedCode), 1000);
+            setTimeout(() => fillAvailableCampaignWorkers(normalizedCode), 1000);
         }
     }
   });
@@ -607,7 +680,7 @@ io.on("connection", (socket) => {
       session.lastContactName = contactName || "";
       session.lastImageUrl = imageUrl || "";
 
-      const worker = getActivePhoneWorker(session);
+      const worker = selectPhoneWorker(session);
       if (contactId) {
         const campaign = ensureCampaign(session);
         campaign.activeContactId = contactId;
@@ -617,6 +690,8 @@ io.on("connection", (socket) => {
       saveSoon();
       
       if (worker) {
+        worker.callState = "dialing";
+        worker.currentNumber = phoneNumber || "";
         console.log(`[MANUAL] Marcado directo a ${phoneNumber} vía worker ${worker.name}`);
         io.to(worker.socketId).emit("call:action", {
           action: "dial",
@@ -638,7 +713,9 @@ io.on("connection", (socket) => {
     }
 
     if (action === "hangup") {
-      const worker = getActivePhoneWorker(session);
+      const worker = contactId
+        ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
+        : getActivePhoneWorker(session);
       if (worker) {
         io.to(worker.socketId).emit("call:action", { 
           action: "hangup", 
@@ -651,7 +728,9 @@ io.on("connection", (socket) => {
     }
 
     if (action === "mute" || action === "unmute" || action === "speaker_on" || action === "speaker_off" || action === "answer") {
-      const worker = getActivePhoneWorker(session);
+      const worker = contactId
+        ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
+        : getActivePhoneWorker(session);
       if (worker) {
         io.to(worker.socketId).emit("call:action", { 
           action, 
@@ -677,6 +756,9 @@ io.on("connection", (socket) => {
     const worker = getPhoneWorkerBySocketId(session, socket.id);
     if (worker) {
       worker.callState = callState || worker.callState || "idle";
+      worker.currentNumber = ["idle", "ended", "failed"].includes(callState)
+        ? ""
+        : (phoneNumber || worker.currentNumber || "");
       worker.connected = true;
       if (lineLabel) worker.lineLabel = String(lineLabel).trim();
       if (lastError) worker.lastError = String(lastError).trim();
@@ -702,8 +784,8 @@ io.on("connection", (socket) => {
     emitCampaignState(code);
 
     const campaign = ensureCampaign(session);
-    if ((callState === "idle" || callState === "ended") && campaign.status === "running" && !campaign.activeContactId) {
-      dispatchNextCampaignCall(code);
+    if ((callState === "idle" || callState === "ended") && campaign.status === "running") {
+      fillAvailableCampaignWorkers(code);
     }
   });
 
@@ -786,7 +868,11 @@ io.on("connection", (socket) => {
 
     session.updatedAt = Date.now();
 
-    if (!session.dashboardSocketId && !getConnectedPhoneWorkers(session).length) {
+    if (
+      !session.dashboardSocketId
+      && !getConnectedPhoneWorkers(session).length
+      && !(session.pairingSlots || []).length
+    ) {
       sessions.delete(code);
       saveSoon();
       return;
@@ -802,12 +888,16 @@ app.get("/api/pairing/:code", (req, res) => {
   if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
 
   const session = getOrCreateSession(code);
-  const link = getPairingLink(req, code, session.pairingToken);
+  const slotId = String(req.query.slotId || "").trim();
+  const slot = (session.pairingSlots || []).find((item) => item.id === slotId) || ensureLegacyPairingSlot(session);
+  const link = getPairingLink(req, code, slot.token);
 
   return res.json({
     ok: true,
     code,
-    token: session.pairingToken,
+    token: slot.token,
+    slotId: slot.id,
+    label: slot.label,
     link,
     phoneDevice: session.phoneDevice,
     workers: (session.phoneWorkers || []).map((worker) => ({
@@ -818,6 +908,36 @@ app.get("/api/pairing/:code", (req, res) => {
       callState: worker.callState || "idle",
       active: worker.socketId === session.activePhoneSocketId
     }))
+  });
+});
+
+app.get("/api/session/:code/pairing-slots", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+  ensureLegacyPairingSlot(session);
+  return res.json({
+    ok: true,
+    slots: session.pairingSlots.map((slot) => ({
+      id: slot.id,
+      label: slot.label,
+      deviceId: slot.deviceId,
+      deviceName: slot.deviceName,
+      linkedAt: slot.linkedAt,
+      link: getPairingLink(req, code, slot.token)
+    }))
+  });
+});
+
+app.post("/api/session/:code/pairing-slots", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+  const slot = createPairingSlot(session, req.body?.label);
+  saveSoon();
+  return res.status(201).json({
+    ok: true,
+    slot: { id: slot.id, label: slot.label, link: getPairingLink(req, code, slot.token) }
   });
 });
 
@@ -871,12 +991,12 @@ app.post("/api/session/:code/campaign/start", (req, res) => {
   session.updatedAt = Date.now();
   saveSoon();
   emitCampaignState(code);
-  const next = dispatchNextCampaignCall(code);
+  const dispatched = fillAvailableCampaignWorkers(code);
 
   return res.json({
     ok: true,
     code,
-    dispatched: Boolean(next),
+    dispatched: dispatched.length,
     campaign: getCampaignSnapshot(session)
   });
 });
@@ -911,8 +1031,8 @@ app.post("/api/session/:code/campaign/resume", (req, res) => {
   resumeCampaign(session);
   saveSoon();
   emitCampaignState(code);
-  const next = dispatchNextCampaignCall(code);
-  return res.json({ ok: true, code, dispatched: Boolean(next), campaign: getCampaignSnapshot(session) });
+  const dispatched = fillAvailableCampaignWorkers(code);
+  return res.json({ ok: true, code, dispatched: dispatched.length, campaign: getCampaignSnapshot(session) });
 });
 
 app.post("/api/session/:code/campaign/dispatch", (req, res) => {
@@ -921,10 +1041,10 @@ app.post("/api/session/:code/campaign/dispatch", (req, res) => {
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
-  const next = dispatchNextCampaignCall(code);
+  const dispatched = fillAvailableCampaignWorkers(code);
   saveSoon();
   emitCampaignState(code);
-  return res.json({ ok: true, code, dispatched: Boolean(next), nextContact: next, campaign: getCampaignSnapshot(session) });
+  return res.json({ ok: true, code, dispatched: dispatched.length, nextContacts: dispatched, campaign: getCampaignSnapshot(session) });
 });
 
 app.post("/api/session/:code/campaign/skip", (req, res) => {
@@ -936,7 +1056,7 @@ app.post("/api/session/:code/campaign/skip", (req, res) => {
   const skipped = skipActiveContact(session);
   saveSoon();
   emitCampaignState(code);
-  if (ensureCampaign(session).status === "running") dispatchNextCampaignCall(code);
+  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
   return res.json({ ok: true, code, skipped, campaign: getCampaignSnapshot(session) });
 });
 
@@ -951,7 +1071,9 @@ app.post("/api/session/:code/campaign/result", (req, res) => {
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
-  const hangupWorkerSocketId = ensureCampaign(session).activeWorkerSocketId;
+  const targetBeforeUpdate = ensureCampaign(session).contacts.find((contact) => contact.id === contactId);
+  const hangupWorkerSocketId = getConnectedPhoneWorkers(session)
+    .find((worker) => worker.id === targetBeforeUpdate?.assignedWorkerId)?.socketId;
   const updated = markContactResult(session, contactId, result, {
     callbackReason: req.body?.callbackReason,
     assignedAdvisor: req.body?.assignedAdvisor,
@@ -965,9 +1087,7 @@ app.post("/api/session/:code/campaign/result", (req, res) => {
 
   saveSoon();
   emitCampaignState(code);
-  if (ensureCampaign(session).status === "running" && !getActiveContact(session)) {
-    dispatchNextCampaignCall(code);
-  }
+  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
   return res.json({ ok: true, code, contact: updated, campaign: getCampaignSnapshot(session) });
 });
 
@@ -990,9 +1110,7 @@ app.post("/api/session/:code/campaign/callback", (req, res) => {
 
   saveSoon();
   emitCampaignState(code);
-  if (ensureCampaign(session).status === "running" && !getActiveContact(session)) {
-    dispatchNextCampaignCall(code);
-  }
+  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
   return res.json({ ok: true, code, contact, campaign: getCampaignSnapshot(session) });
 });
 
@@ -1001,7 +1119,9 @@ app.get("/api/pairing-qr/:code.svg", async (req, res) => {
   if (!code) return res.status(400).send("Code requerido");
 
   const session = getOrCreateSession(code);
-  const link = getPairingLink(req, code, session.pairingToken);
+  const slotId = String(req.query.slotId || "").trim();
+  const slot = (session.pairingSlots || []).find((item) => item.id === slotId) || ensureLegacyPairingSlot(session);
+  const link = getPairingLink(req, code, slot.token);
 
   try {
     const svg = await QRCode.toString(link, {
@@ -1055,12 +1175,20 @@ app.post("/api/android/pair", (req, res) => {
 
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
-  if (session.pairingToken !== token) return res.status(401).json({ ok: false, error: "Token invalido" });
+  const pairingSlot = getPairingSlotByToken(session, token);
+  if (!pairingSlot) return res.status(401).json({ ok: false, error: "Token invalido" });
+  if (pairingSlot.deviceId && pairingSlot.deviceId !== deviceId) {
+    return res.status(409).json({ ok: false, error: "Este QR ya pertenece a otro dispositivo" });
+  }
+  pairingSlot.deviceId = deviceId;
+  pairingSlot.deviceName = deviceName;
+  pairingSlot.linkedAt ||= new Date().toISOString();
 
   upsertPhoneWorker(session, {
     socketId: null,
     deviceId,
-    deviceName
+    deviceName,
+    pairingSlotId: pairingSlot.id
   });
   syncSessionPhoneState(session);
   session.updatedAt = Date.now();

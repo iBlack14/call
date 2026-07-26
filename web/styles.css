@@ -181,6 +181,44 @@ body {
   min-width: 0;
 }
 
+.pairing-slots {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.pairing-slot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+}
+
+.pairing-slot-card img {
+  width: 112px;
+  height: 112px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.pairing-slot-card div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pairing-slot-card small { color: var(--muted); }
+.worker-chip.state-idle { border-color: #22c55e; }
+.worker-chip.state-dialing,
+.worker-chip.state-ringing { border-color: #f59e0b; }
+.worker-chip.state-in_call { border-color: #ef4444; }
+.worker-chip.state-offline { opacity: .58; }
+
 .qr-block.is-linked {
   grid-template-columns: 180px minmax(0, 1fr);
   gap: 12px;

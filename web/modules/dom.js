@@ -10,6 +10,8 @@ export const refs = {
   qrHintEl: document.getElementById("qrHint"),
   pairLinkEl: document.getElementById("pairLink"),
   copyBtn: document.getElementById("copyPairLink"),
+  addPairingSlotBtn: document.getElementById("addPairingSlot"),
+  pairingSlotsEl: document.getElementById("pairingSlots"),
   qrBlockEl: document.getElementById("qrBlock"),
   linkedBanner: document.getElementById("linkedBanner"),
   linkedDevice: document.getElementById("linkedDevice"),

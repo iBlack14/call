@@ -95,7 +95,10 @@ export function syncCampaignContacts(session, contacts = []) {
 
 export function getCampaignSnapshot(session) {
   const campaign = ensureCampaign(session);
-  const active = getActiveContact(session);
+  const activeContacts = campaign.contacts.filter((contact) =>
+    ["dialing", "ringing", "in_call"].includes(contact.status)
+  );
+  const active = activeContacts[0] || null;
   const counts = {
     pending: 0,
     dialing: 0,
@@ -113,6 +116,8 @@ export function getCampaignSnapshot(session) {
   return {
     status: campaign.status,
     activeContactId: active?.id || null,
+    activeContactIds: activeContacts.map((contact) => contact.id),
+    activeContacts,
     activeWorkerId: campaign.activeWorkerId,
     activeWorkerSocketId: campaign.activeWorkerSocketId,
     lastError: campaign.lastError,
@@ -187,6 +192,13 @@ export function getActiveContact(session) {
   return campaign.contacts.find((c) => ["dialing", "ringing", "in_call"].includes(c.status)) || null;
 }
 
+export function getActiveContacts(session) {
+  const campaign = ensureCampaign(session);
+  return campaign.contacts.filter((contact) =>
+    ["dialing", "ringing", "in_call"].includes(contact.status)
+  );
+}
+
 export function getContactByWorker(session, workerId) {
   const campaign = ensureCampaign(session);
   return campaign.contacts.find((c) => c.assignedWorkerId === workerId && ["dialing", "ringing", "in_call"].includes(c.status)) || null;
@@ -201,11 +213,13 @@ export function assignNextContact(session, worker = {}) {
   const campaign = ensureCampaign(session);
   const next = pickNextContact(session);
   if (!next) {
-    campaign.status = campaign.status === "paused" ? "paused" : "completed";
-    campaign.completedAt = nowIso();
-    campaign.activeContactId = null;
-    campaign.activeWorkerId = null;
-    campaign.activeWorkerSocketId = null;
+    if (!getActiveContacts(session).length) {
+      campaign.status = campaign.status === "paused" ? "paused" : "completed";
+      campaign.completedAt = nowIso();
+      campaign.activeContactId = null;
+      campaign.activeWorkerId = null;
+      campaign.activeWorkerSocketId = null;
+    }
     campaign.updatedAt = Date.now();
     return null;
   }
@@ -225,11 +239,9 @@ export function assignNextContact(session, worker = {}) {
 
 export function updateActiveCallState(session, state, worker = {}) {
   const campaign = ensureCampaign(session);
-  // Try active ID first, then by worker ID
-  let contact = getActiveContact(session);
-  if (!contact && worker.id) {
-    contact = getContactByWorker(session, worker.id);
-  }
+  // In concurrent mode the worker assignment is authoritative.
+  let contact = worker.id ? getContactByWorker(session, worker.id) : null;
+  if (!contact) contact = getActiveContact(session);
 
   if (!contact) return null;
 
@@ -246,8 +258,9 @@ export function updateActiveCallState(session, state, worker = {}) {
     contact.status = "failed";
     if (!contact.result) contact.result = "sin_respuesta";
     contact.completedAt = nowIso();
-    campaign.activeContactId = null;
-    campaign.activeWorkerId = null;
+    const remaining = getActiveContacts(session).filter((item) => item.id !== contact.id);
+    campaign.activeContactId = remaining[0]?.id || null;
+    campaign.activeWorkerId = remaining[0]?.assignedWorkerId || null;
     campaign.activeWorkerSocketId = null;
     campaign.updatedAt = Date.now();
     return contact;
@@ -289,11 +302,10 @@ export function markContactResult(session, contactId, result, extras = {}) {
     contact.completedAt = nowIso();
   }
 
-  if (campaign.activeContactId === contactId) {
-    campaign.activeContactId = null;
-    campaign.activeWorkerId = null;
-    campaign.activeWorkerSocketId = null;
-  }
+  const remaining = getActiveContacts(session).filter((item) => item.id !== contactId);
+  campaign.activeContactId = remaining[0]?.id || null;
+  campaign.activeWorkerId = remaining[0]?.assignedWorkerId || null;
+  campaign.activeWorkerSocketId = null;
 
   campaign.updatedAt = Date.now();
   return contact;

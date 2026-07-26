@@ -79,6 +79,15 @@ Se agrego proyecto Android en `android-app/` con:
 4. Toca **Vincular Celular**.
 5. Desde dashboard usa **Llamar**.
 
+#### Varios celulares y llamadas simultaneas
+
+- Cada boton **Crear QR para otro celular** genera un token independiente.
+- Un QR queda vinculado al primer `deviceId` Android que lo usa y no puede reutilizarse en otro equipo.
+- Los celulares vinculados permanecen registrados aunque esten desconectados.
+- Al llamar, el servidor reserva unicamente un celular conectado con estado `idle`.
+- Si existen cuatro celulares libres, se pueden despachar cuatro llamadas simultaneas.
+- Una campaña llena automaticamente todos los celulares disponibles y continua cuando una linea vuelve a `idle`.
+
 Nota: colgar llamada remotamente en Android requiere privilegios de dialer por defecto/sistema.
 
 Respuesta:
