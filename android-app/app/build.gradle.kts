@@ -3,6 +3,16 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseKeystorePath = providers.environmentVariable("VOIP_VC_KEYSTORE_PATH")
+    .orElse("${rootProject.projectDir}/keystore/voip-vc-release.jks")
+val releaseStorePassword = providers.environmentVariable("VOIP_VC_KEYSTORE_PASSWORD")
+val releaseKeyAlias = providers.environmentVariable("VOIP_VC_KEY_ALIAS").orElse("voip-vc")
+val releaseKeyPassword = providers.environmentVariable("VOIP_VC_KEY_PASSWORD")
+val generatedVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
+    .orElse((System.currentTimeMillis() / 1000L).toString())
+val generatedVersionName = providers.environmentVariable("ANDROID_VERSION_NAME")
+    .orElse("1.1")
+
 android {
     namespace = "com.voipvc.bridge"
     compileSdk = 35
@@ -11,12 +21,22 @@ android {
         applicationId = "com.voipvc.bridge"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Un valor creciente permite que Android instale cada APK como actualización.
+        versionCode = generatedVersionCode.get().toInt()
+        versionName = generatedVersionName.get()
         manifestPlaceholders["cleartextTraffic"] = "false"
         buildConfigField("String", "DEFAULT_BASE_URL", "\"https://llamada.viacomunicativa.com\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(releaseKeystorePath.get())
+            storePassword = releaseStorePassword.orNull
+            keyAlias = releaseKeyAlias.get()
+            keyPassword = releaseKeyPassword.orNull
+        }
     }
 
     buildTypes {
@@ -25,6 +45,7 @@ android {
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["cleartextTraffic"] = "false"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -66,4 +87,18 @@ dependencies {
 
 base {
     archivesName.set("VOIP-VC")
+}
+
+tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+    doFirst {
+        require(file(releaseKeystorePath.get()).isFile) {
+            "Falta el keystore estable: ${releaseKeystorePath.get()}"
+        }
+        require(releaseStorePassword.orNull?.isNotBlank() == true) {
+            "Falta VOIP_VC_KEYSTORE_PASSWORD"
+        }
+        require(releaseKeyPassword.orNull?.isNotBlank() == true) {
+            "Falta VOIP_VC_KEY_PASSWORD"
+        }
+    }
 }

@@ -29,6 +29,9 @@ android-app/*.iml
 android-app/local.properties
 android-app/.android-local/
 android-app/.gradle-local/
+android-app/keystore/
+*.jks
+*.keystore
 
 # VS Code / OS
 .vscode/
