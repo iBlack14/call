@@ -111,7 +111,10 @@ function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Andro
     linkedAt: linkedAt || new Date().toISOString(),
     connected: Boolean(connected),
     callState: callState || "idle",
-    currentNumber: currentNumber || ""
+    currentNumber: currentNumber || "",
+    campaignContactId: null,
+    campaignCommandId: null,
+    campaignCallPhase: "idle"
   };
 }
 
@@ -388,8 +391,12 @@ function dispatchNextCampaignCall(code) {
   session.lastCompanyName = next.name;
   
   if (worker) {
+    const commandId = nanoid();
     worker.callState = "dialing";
     worker.currentNumber = next.phone;
+    worker.campaignContactId = next.id;
+    worker.campaignCommandId = commandId;
+    worker.campaignCallPhase = "command_sent";
     console.log(`[CAMPAIGN] Marcado directo a ${next.phone} vía worker ${worker.name}`);
     io.to(worker.socketId).emit("call:action", {
       action: "dial",
@@ -397,7 +404,7 @@ function dispatchNextCampaignCall(code) {
       contactId: next.id,
       companyName: next.name,
       contactName: next.name,
-      commandId: nanoid()
+      commandId
     });
     saveSoon();
     emitState(code);
@@ -762,6 +769,10 @@ io.on("connection", (socket) => {
     if (!session) return;
 
     const worker = getPhoneWorkerBySocketId(session, socket.id);
+    const terminalState = ["idle", "ended", "failed"].includes(callState);
+    const activeState = ["dialing", "ringing", "in_call"].includes(callState);
+    const campaignPhaseBeforeStatus = worker?.campaignCallPhase || "idle";
+
     if (worker) {
       worker.callState = callState || worker.callState || "idle";
       worker.currentNumber = ["idle", "ended", "failed"].includes(callState)
@@ -771,6 +782,9 @@ io.on("connection", (socket) => {
       if (lineLabel) worker.lineLabel = String(lineLabel).trim();
       if (lastError) worker.lastError = String(lastError).trim();
       session.activePhoneSocketId = socket.id;
+      if (activeState && worker.campaignContactId) {
+        worker.campaignCallPhase = "active";
+      }
     }
     session.callState = callState || session.callState;
     if (typeof phoneNumber === "string" && phoneNumber.trim()) {
@@ -785,14 +799,32 @@ io.on("connection", (socket) => {
     session.micMuted = Boolean(micMuted);
     session.isSpeakerOn = Boolean(speakerOn);
     session.updatedAt = Date.now();
-    updateActiveCallState(session, callState, worker || {});
+    // Android puede emitir un "idle" atrasado justo después de recibir dial.
+    // Solo aceptamos un final si antes vimos un estado real de llamada.
+    const confirmedCampaignEnd =
+      terminalState &&
+      campaignPhaseBeforeStatus === "active" &&
+      Boolean(worker?.campaignContactId);
+    const ignoredPrematureIdle =
+      terminalState &&
+      campaignPhaseBeforeStatus === "command_sent" &&
+      Boolean(worker?.campaignContactId);
+
+    if (!ignoredPrematureIdle) {
+      updateActiveCallState(session, callState, worker || {});
+    }
+    if (confirmedCampaignEnd && worker) {
+      worker.campaignContactId = null;
+      worker.campaignCommandId = null;
+      worker.campaignCallPhase = "idle";
+    }
     syncSessionPhoneState(session);
     saveSoon();
     emitState(code);
     emitCampaignState(code);
 
     const campaign = ensureCampaign(session);
-    if ((callState === "idle" || callState === "ended") && campaign.status === "running") {
+    if (confirmedCampaignEnd && campaign.status === "running") {
       fillAvailableCampaignWorkers(code);
     }
   });
@@ -804,6 +836,32 @@ io.on("connection", (socket) => {
 
     const session = sessions.get(code);
     if (!session) return;
+
+    const worker = getPhoneWorkerBySocketId(session, socket.id);
+    if (
+      worker &&
+      action === "dial" &&
+      worker.campaignCommandId === commandId &&
+      !ok
+    ) {
+      const failedContactId = worker.campaignContactId;
+      if (failedContactId) {
+        markContactResult(session, failedContactId, "sin_respuesta", {
+          callbackReason: message || "El teléfono rechazó la orden de llamada"
+        });
+      }
+      worker.callState = "failed";
+      worker.currentNumber = "";
+      worker.campaignContactId = null;
+      worker.campaignCommandId = null;
+      worker.campaignCallPhase = "idle";
+      saveSoon();
+      emitState(code);
+      emitCampaignState(code);
+      if (ensureCampaign(session).status === "running") {
+        setTimeout(() => fillAvailableCampaignWorkers(code), 500);
+      }
+    }
 
     const peerId = getPeer(session, "phone");
     if (!peerId) return;
@@ -995,7 +1053,25 @@ app.post("/api/session/:code/campaign/start", (req, res) => {
   if (!contacts.length) return res.status(400).json({ ok: false, error: "contacts requeridos" });
 
   const session = getOrCreateSession(code);
-  startCampaign(session, contacts);
+  const currentCampaign = ensureCampaign(session);
+  if (
+    ["running", "paused"].includes(currentCampaign.status) ||
+    getActiveContact(session)
+  ) {
+    return res.status(409).json({
+      ok: false,
+      error: "La llamada general ya está activa. No se puede iniciar otra orden."
+    });
+  }
+
+  const startedCampaign = startCampaign(session, contacts);
+  if (!startedCampaign.contacts.length) {
+    startedCampaign.status = "idle";
+    return res.status(400).json({
+      ok: false,
+      error: "La lista no contiene celulares peruanos válidos."
+    });
+  }
   session.updatedAt = Date.now();
   saveSoon();
   emitCampaignState(code);
@@ -1024,10 +1100,16 @@ app.post("/api/session/:code/campaign/pause", (req, res) => {
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
+  const activeCallContinues = Boolean(getActiveContact(session));
   pauseCampaign(session);
   saveSoon();
   emitCampaignState(code);
-  return res.json({ ok: true, code, campaign: getCampaignSnapshot(session) });
+  return res.json({
+    ok: true,
+    code,
+    activeCallContinues,
+    campaign: getCampaignSnapshot(session)
+  });
 });
 
 app.post("/api/session/:code/campaign/resume", (req, res) => {

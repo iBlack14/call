@@ -27,12 +27,17 @@ function normalizeContact(input = {}) {
   let id = String(input.id || "").trim();
   let phone = String(input.phone || "").trim();
   
-  // Keep leading + but strip all other non-digits
-  const hasPlus = phone.startsWith("+");
   phone = phone.replace(/\D/g, "");
-  if (hasPlus && !phone.startsWith("+")) phone = "+" + phone;
-  
-  if (!phone) return null;
+
+  // Las campañas solo admiten celulares peruanos. Esto también protege
+  // listas antiguas que fueron importadas antes de aplicar el filtro web.
+  let nationalDigits = phone.replace(/\D/g, "");
+  if (nationalDigits.length === 11 && nationalDigits.startsWith("51")) {
+    nationalDigits = nationalDigits.slice(2);
+  }
+  if (!/^9\d{8}$/.test(nationalDigits)) return null;
+  phone = nationalDigits;
+
   if (!id) id = nanoid();
 
   return {
@@ -83,7 +88,16 @@ export function ensureCampaign(session) {
 
 export function syncCampaignContacts(session, contacts = []) {
   const campaign = ensureCampaign(session);
-  campaign.contacts = contacts.map((contact) => normalizeContact(contact)).filter(Boolean);
+  const seenPhones = new Set();
+  campaign.contacts = contacts
+    .map((contact) => normalizeContact(contact))
+    .filter((contact) => {
+      if (!contact) return false;
+      const key = contact.phone.replace(/\D/g, "").replace(/^51(?=9\d{8}$)/, "");
+      if (seenPhones.has(key)) return false;
+      seenPhones.add(key);
+      return true;
+    });
   campaign.activeContactId = null;
   campaign.activeWorkerId = null;
   campaign.activeWorkerSocketId = null;
@@ -256,7 +270,7 @@ export function updateActiveCallState(session, state, worker = {}) {
     return contact;
   }
 
-  if ((state === "idle" || state === "ended") && ["dialing", "ringing", "in_call"].includes(contact.status)) {
+  if (["idle", "ended", "failed"].includes(state) && ["dialing", "ringing", "in_call"].includes(contact.status)) {
     contact.status = "failed";
     if (!contact.result) contact.result = "sin_respuesta";
     contact.completedAt = nowIso();

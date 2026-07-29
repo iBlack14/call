@@ -21,6 +21,7 @@ let currentCallingContactId = null;
 let currentPhoneLinked = false;
 let latestSessionState = {};
 let campaignState = null;
+let campaignStartPending = false;
 const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const DASHBOARD_SESSION_KEY = "voip vc.dashboardSessionCode";
@@ -73,11 +74,11 @@ function normalizeImportedPhone(input) {
   return raw.startsWith("+") ? `+${digits}` : digits;
 }
 
-function isPeruvianMobilePhone(value) {
-  let digits = String(value || "").replace(/\D/g, "");
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.length === 11 && digits.startsWith("51")) digits = digits.slice(2);
-  return /^9\d{8}$/.test(digits);
+function normalizePeruvianMobilePhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (/^9\d{8}$/.test(digits)) return digits;
+  if (/^519\d{8}$/.test(digits)) return digits.slice(2);
+  return "";
 }
 
 function importDetectionMessage({ accepted, rejected }, source = "archivo") {
@@ -278,9 +279,9 @@ function parseDelimitedText(text) {
 function showImportPreview(items) {
   const normalizedItems = (items || []).map((item) => ({
     ...item,
-    phone: normalizeImportedPhone(item.phone)
+    phone: normalizePeruvianMobilePhone(item.phone)
   }));
-  const mobileItems = normalizedItems.filter((item) => isPeruvianMobilePhone(item.phone));
+  const mobileItems = normalizedItems.filter((item) => Boolean(item.phone));
   const rejected = normalizedItems.length - mobileItems.length;
   importPreviewData = mobileItems.slice(0, 500);
   refs.previewBody.innerHTML = "";
@@ -589,7 +590,9 @@ function renderCampaignPanel() {
     const labelMap = {
       idle: "Sin campaña activa.",
       running: "Campaña corriendo.",
-      paused: "Campaña pausada.",
+      paused: active
+        ? "Pausada: la llamada actual continúa. Al terminar no se llamará al siguiente."
+        : "Campaña pausada. No se realizarán nuevas llamadas.",
       completed: "Campaña completada."
     };
     refs.campaignStatusLineEl.textContent = labelMap[status] || `Campaña ${status}`;
@@ -627,6 +630,16 @@ function renderCampaignPanel() {
   if (refs.campaignPauseBtn) refs.campaignPauseBtn.disabled = campaignState?.status !== "running";
   if (refs.campaignResumeBtn) refs.campaignResumeBtn.disabled = !["paused", "idle"].includes(String(campaignState?.status || "idle"));
   if (refs.campaignSkipBtn) refs.campaignSkipBtn.disabled = disableResult;
+  if (refs.campaignStartBtn) {
+    const status = String(campaignState?.status || "idle");
+    const campaignBusy = campaignStartPending || ["running", "paused"].includes(status);
+    refs.campaignStartBtn.disabled = campaignBusy;
+    refs.campaignStartBtn.textContent = campaignStartPending
+      ? "⏳ Iniciando..."
+      : campaignBusy
+        ? "🔒 Llamada general activa"
+        : "▶ Iniciar llamada general";
+  }
 
   if (refs.callbacksListEl) {
     refs.callbacksListEl.innerHTML = callbacks.length
@@ -689,6 +702,14 @@ async function saveVoiceAgentConfig(enabled) {
 }
 
 async function startCampaignRun() {
+  if (
+    campaignStartPending ||
+    ["running", "paused"].includes(String(campaignState?.status || "idle"))
+  ) {
+    setStatus("La llamada general ya está activa.", true);
+    return;
+  }
+
   const queuedContacts = Contacts.contacts.filter(
     (contact) => contact.list === Contacts.activeList
   );
@@ -696,22 +717,38 @@ async function startCampaignRun() {
     setStatus("Importa o agrega contactos antes de iniciar la campaña.", true);
     return;
   }
-  const data = await postCampaignAction("/campaign/start", {
-    contacts: queuedContacts.map((contact) => ({
-      id: contact.id,
-      name: contact.name,
-      phone: contact.phone,
-      note: contact.note || ""
-    }))
-  });
-  if (data) {
-    setStatus(`Llamada general iniciada: ${queuedContacts.length} contactos en cola.`, true);
+  campaignStartPending = true;
+  renderCampaignPanel();
+  try {
+    const data = await postCampaignAction("/campaign/start", {
+      contacts: queuedContacts.map((contact) => ({
+        id: contact.id,
+        name: contact.name,
+        phone: contact.phone,
+        note: contact.note || ""
+      }))
+    });
+    if (data) {
+      const accepted = data.campaign?.contacts?.length || 0;
+      setStatus(`Llamada general iniciada: ${accepted} celulares válidos en cola.`, true);
+    }
+  } finally {
+    campaignStartPending = false;
+    renderCampaignPanel();
   }
 }
 
 async function pauseCampaignRun() {
   const data = await postCampaignAction("/campaign/pause");
-  if (data) setStatus("Campaña pausada.", true);
+  if (data) {
+    const activeContinues = Boolean(data.activeCallContinues);
+    setStatus(
+      activeContinues
+        ? "Cola pausada. La llamada actual continúa y al terminar no avanzará."
+        : "Cola pausada. No se realizarán nuevas llamadas.",
+      true
+    );
+  }
 }
 
 async function resumeCampaignRun() {
