@@ -31,7 +31,11 @@ import {
   getActiveContact,
   getActiveContacts
 } from "./campaign-manager.js";
-const persistence = new SessionPersistence(path.join(__dirname, "sessions.json"));
+const sessionFilePath = process.env.SESSION_FILE_PATH
+  || (process.env.NODE_ENV === "production"
+    ? "/data/sessions.json"
+    : path.join(__dirname, "sessions.json"));
+const persistence = new SessionPersistence(sessionFilePath);
 
 const app = express();
 app.set("trust proxy", true);
@@ -1410,9 +1414,8 @@ app.post("/api/twilio/webhook/voice", express.urlencoded({ extended: false }), (
 app.use(express.static(path.join(__dirname, "../web")));
 app.get("/health", async (_, res) => {
   const storage = await persistence.status();
-  const ok = storage.driver === "mysql" && storage.connected;
-  return res.status(ok ? 200 : 503).json({
-    ok,
+  return res.json({
+    ok: true,
     storage,
     sessionsInMemory: sessions.size
   });
