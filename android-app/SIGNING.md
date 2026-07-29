@@ -23,6 +23,18 @@ keytool -genkeypair -v \
 Guarda una copia segura del archivo y sus contraseñas. No generes otra clave
 para versiones futuras y no la subas al repositorio.
 
+Para compilaciones locales también puedes guardar las credenciales en
+`keystore/signing.properties`:
+
+```properties
+storeFile=/ruta/absoluta/voip-vc-release.jks
+storePassword=CONTRASENA_DEL_ALMACEN
+keyAlias=voip-vc
+keyPassword=CONTRASENA_DE_LA_CLAVE
+```
+
+La carpeta `keystore` está excluida de Git. Debes respaldarla de forma segura.
+
 ## Compilar una actualización
 
 ```bash

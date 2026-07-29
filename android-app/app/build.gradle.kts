@@ -1,13 +1,27 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
+val localSigningProperties = Properties()
+val localSigningPropertiesFile = rootProject.file("keystore/signing.properties")
+if (localSigningPropertiesFile.isFile) {
+    localSigningPropertiesFile.inputStream().use(localSigningProperties::load)
+}
+
 val releaseKeystorePath = providers.environmentVariable("VOIP_VC_KEYSTORE_PATH")
-    .orElse("${rootProject.projectDir}/keystore/voip-vc-release.jks")
+    .orElse(localSigningProperties.getProperty(
+        "storeFile",
+        "${rootProject.projectDir}/keystore/voip-vc-release.jks"
+    ))
 val releaseStorePassword = providers.environmentVariable("VOIP_VC_KEYSTORE_PASSWORD")
-val releaseKeyAlias = providers.environmentVariable("VOIP_VC_KEY_ALIAS").orElse("voip-vc")
+    .orElse(localSigningProperties.getProperty("storePassword", ""))
+val releaseKeyAlias = providers.environmentVariable("VOIP_VC_KEY_ALIAS")
+    .orElse(localSigningProperties.getProperty("keyAlias", "voip-vc"))
 val releaseKeyPassword = providers.environmentVariable("VOIP_VC_KEY_PASSWORD")
+    .orElse(localSigningProperties.getProperty("keyPassword", ""))
 val generatedVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
     .orElse((System.currentTimeMillis() / 1000L).toString())
 val generatedVersionName = providers.environmentVariable("ANDROID_VERSION_NAME")
