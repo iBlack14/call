@@ -22,8 +22,6 @@ export const refs = {
   campaignResumeBtn: document.getElementById("campaignResumeBtn"),
   campaignSkipBtn: document.getElementById("campaignSkipBtn"),
   campaignCountersEl: document.getElementById("campaignCounters"),
-  workersSummaryEl: document.getElementById("workersSummary"),
-  workersListEl: document.getElementById("workersList"),
   campaignActiveCardEl: document.getElementById("campaignActiveCard"),
   callbacksListEl: document.getElementById("callbacksList"),
   callbacksSummaryEl: document.getElementById("callbacksSummary"),

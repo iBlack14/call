@@ -574,40 +574,7 @@ function campaignCounter(label, value, tone = "") {
   return `<div class="campaign-counter ${tone}"><span>${escHtml(label)}</span><strong>${value}</strong></div>`;
 }
 
-function renderWorkersPanel() {
-  const workers = Array.isArray(latestSessionState?.phoneWorkers) ? latestSessionState.phoneWorkers : [];
-  const connected = workers.filter((worker) => worker?.connected);
-  if (refs.workersSummaryEl) refs.workersSummaryEl.textContent = `${connected.length} conectados`;
-  if (!refs.workersListEl) return;
-
-  if (!connected.length) {
-    refs.workersListEl.innerHTML = `<div class="campaign-list-empty">Escanea un QR para conectar un equipo.</div>`;
-    return;
-  }
-
-  refs.workersListEl.innerHTML = connected.map((worker) => {
-    const state = worker.callState || "idle";
-    const stateLabels = {
-      idle: "Listo",
-      dialing: "Llamando",
-      ringing: "Sonando",
-      in_call: "En llamada",
-      ended: "Disponible",
-      failed: "Disponible"
-    };
-    return `
-    <div class="worker-chip state-${escHtml(state)} ${worker.active ? "is-active" : ""}">
-      <span class="worker-status-dot"></span>
-      <div>
-        <strong>${escHtml(worker.name || "Android")}</strong>
-        <small>${escHtml(stateLabels[state] || state)}${worker.currentNumber ? ` · ${escHtml(worker.currentNumber)}` : ""}</small>
-      </div>
-    </div>
-  `}).join("");
-}
-
 function renderCampaignPanel() {
-  renderWorkersPanel();
   const counts = campaignState?.counts || {};
   const active = getActiveCampaignContact();
   const callbacks = campaignState?.callbacks || [];
