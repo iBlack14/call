@@ -580,18 +580,28 @@ function renderWorkersPanel() {
   if (refs.workersSummaryEl) refs.workersSummaryEl.textContent = `${connected.length} conectados`;
   if (!refs.workersListEl) return;
 
-  if (!workers.length) {
-    refs.workersListEl.innerHTML = `<div class="campaign-list-empty">Sin dispositivos registrados.</div>`;
+  if (!connected.length) {
+    refs.workersListEl.innerHTML = `<div class="campaign-list-empty">Escanea un QR para conectar un equipo.</div>`;
     return;
   }
 
-  refs.workersListEl.innerHTML = workers.map((worker) => {
-    const state = worker.connected ? (worker.callState || "idle") : "offline";
+  refs.workersListEl.innerHTML = connected.map((worker) => {
+    const state = worker.callState || "idle";
+    const stateLabels = {
+      idle: "Listo",
+      dialing: "Llamando",
+      ringing: "Sonando",
+      in_call: "En llamada",
+      ended: "Disponible",
+      failed: "Disponible"
+    };
     return `
     <div class="worker-chip state-${escHtml(state)} ${worker.active ? "is-active" : ""}">
-      <strong>${escHtml(worker.name || "Android")}</strong>
-      <span>${escHtml(worker.id || "worker")}</span>
-      <small>${escHtml(state)}${worker.currentNumber ? ` · ${escHtml(worker.currentNumber)}` : ""}</small>
+      <span class="worker-status-dot"></span>
+      <div>
+        <strong>${escHtml(worker.name || "Android")}</strong>
+        <small>${escHtml(stateLabels[state] || state)}${worker.currentNumber ? ` · ${escHtml(worker.currentNumber)}` : ""}</small>
+      </div>
     </div>
   `}).join("");
 }
