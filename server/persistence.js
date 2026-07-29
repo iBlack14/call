@@ -11,42 +11,101 @@ export class SessionPersistence {
     this.filePath = filePath;
     this.pool = null;
     this.usingDb = false;
+    this.lastError = "";
   }
 
   async initDb() {
     if (this.pool) return;
     
-    const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
-    if (!DB_HOST || !DB_USER || !DB_NAME) {
+    const {
+      DATABASE_URL,
+      DB_HOST,
+      DB_PORT,
+      DB_USER,
+      DB_PASSWORD,
+      DB_NAME,
+      DB_SSL,
+      DB_REQUIRED
+    } = process.env;
+    if (!DATABASE_URL && (!DB_HOST || !DB_USER || !DB_NAME)) {
+      if (DB_REQUIRED === "1") {
+        throw new Error("DB_REQUIRED=1 pero falta DATABASE_URL o la configuración DB_*");
+      }
       console.log("[PERSISTENCE] No DB config found in .env, falling back to local JSON.");
       return;
     }
 
     try {
+      let connectionOptions;
+      if (DATABASE_URL) {
+        const databaseUrl = new URL(DATABASE_URL);
+        connectionOptions = {
+          host: databaseUrl.hostname,
+          port: Number(databaseUrl.port || 3306),
+          user: decodeURIComponent(databaseUrl.username),
+          password: decodeURIComponent(databaseUrl.password),
+          database: decodeURIComponent(databaseUrl.pathname.replace(/^\//, ""))
+        };
+      } else {
+        connectionOptions = {
+          host: DB_HOST,
+          port: Number(DB_PORT || 3306),
+          user: DB_USER,
+          password: DB_PASSWORD,
+          database: DB_NAME
+        };
+      }
+
       this.pool = mysql.createPool({
-        host: DB_HOST,
-        user: DB_USER,
-        password: DB_PASSWORD,
-        database: DB_NAME,
+        ...connectionOptions,
+        ssl: DB_SSL === "1" ? { rejectUnauthorized: false } : undefined,
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        enableKeepAlive: true
       });
 
-      // Asegurar que la tabla exista
+      await this.pool.query("SELECT 1");
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS sessions (
           id VARCHAR(50) PRIMARY KEY,
           data JSON NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
       
       this.usingDb = true;
-      console.log("[PERSISTENCE] Conectado exitosamente a la base de datos MySQL en cPanel.");
+      this.lastError = "";
+      console.log("[PERSISTENCE] MySQL conectado y tabla sessions disponible.");
     } catch (e) {
-      console.error("[PERSISTENCE] Error conectando a MySQL cPanel. Usando JSON local. Detalle:", e.message);
+      this.lastError = e.message;
       this.usingDb = false;
+      if (this.pool) await this.pool.end().catch(() => {});
+      this.pool = null;
+      if (DB_REQUIRED === "1") throw e;
+      console.error("[PERSISTENCE] Error conectando a MySQL. Usando JSON local:", e.message);
+    }
+  }
+
+  async status() {
+    if (!this.usingDb || !this.pool) {
+      return { driver: "json", connected: false, error: this.lastError || null };
+    }
+    try {
+      const [rows] = await this.pool.query(
+        "SELECT COUNT(*) AS sessionCount FROM sessions"
+      );
+      return {
+        driver: "mysql",
+        connected: true,
+        table: "sessions",
+        sessionCount: Number(rows[0]?.sessionCount || 0),
+        error: null
+      };
+    } catch (error) {
+      this.lastError = error.message;
+      return { driver: "mysql", connected: false, error: error.message };
     }
   }
 

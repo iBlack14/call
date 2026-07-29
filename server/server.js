@@ -1408,7 +1408,15 @@ app.post("/api/twilio/webhook/voice", express.urlencoded({ extended: false }), (
 });
 
 app.use(express.static(path.join(__dirname, "../web")));
-app.get("/health", (_, res) => res.json({ ok: true }));
+app.get("/health", async (_, res) => {
+  const storage = await persistence.status();
+  const ok = storage.driver === "mysql" && storage.connected;
+  return res.status(ok ? 200 : 503).json({
+    ok,
+    storage,
+    sessionsInMemory: sessions.size
+  });
+});
 
 bootstrap().catch(err => {
   console.error("Fallo critico al iniciar el servidor:", err);
