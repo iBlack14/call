@@ -1404,7 +1404,9 @@ function updateSessionUi(st = {}) {
   }
   if (refs.linkedDevice) {
     if (phoneConnected) {
-      const deviceLabel = phoneDeviceName || (phoneCount > 1 ? `${phoneCount} dispositivos conectados` : "Dispositivo conectado");
+      const deviceLabel = phoneCount > 1
+        ? `${phoneCount} dispositivos conectados`
+        : (phoneDeviceName || "1 dispositivo conectado");
       refs.linkedDevice.textContent = `${deviceLabel} · Sesión ${sessionCode || "activa"}`;
     } else {
       refs.linkedDevice.textContent = "Dispositivo conectado";
@@ -1421,7 +1423,15 @@ function updateSessionUi(st = {}) {
   }
 
   if (dashboardConnected) {
-    setStatus(phoneConnected ? "Marcador vinculado y listo para llamar" : "Sesión creada. Escanea el QR para conectar el teléfono", true);
+    const connectedStatus = phoneCount > 1
+      ? `${phoneCount} marcadores vinculados y listos para llamar`
+      : "Marcador vinculado y listo para llamar";
+    setStatus(
+      phoneConnected
+        ? connectedStatus
+        : "Sesión creada. Escanea el QR para conectar el teléfono",
+      true
+    );
     renderCampaignPanel();
   } else {
     setStatus("Sin vincular. Crea o une a una sesión.");
