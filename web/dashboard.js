@@ -73,6 +73,25 @@ function normalizeImportedPhone(input) {
   return raw.startsWith("+") ? `+${digits}` : digits;
 }
 
+function isPeruvianMobilePhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.length === 11 && digits.startsWith("51")) digits = digits.slice(2);
+  return /^9\d{8}$/.test(digits);
+}
+
+function importDetectionMessage({ accepted, rejected }, source = "archivo") {
+  if (!accepted) {
+    return rejected
+      ? `No se importaron contactos: se descartaron ${rejected} números fijos o no móviles.`
+      : `No se detectaron contactos en el ${source}.`;
+  }
+  const discarded = rejected
+    ? ` Se descartaron ${rejected} números fijos o no móviles.`
+    : "";
+  return `Se detectaron ${accepted} celulares${source === "URL" ? " desde la URL" : ""}.${discarded}`;
+}
+
 function normalizeHeader(value) {
   return String(value || "")
     .trim()
@@ -257,7 +276,13 @@ function parseDelimitedText(text) {
 }
 
 function showImportPreview(items) {
-  importPreviewData = items.slice(0, 500);
+  const normalizedItems = (items || []).map((item) => ({
+    ...item,
+    phone: normalizeImportedPhone(item.phone)
+  }));
+  const mobileItems = normalizedItems.filter((item) => isPeruvianMobilePhone(item.phone));
+  const rejected = normalizedItems.length - mobileItems.length;
+  importPreviewData = mobileItems.slice(0, 500);
   refs.previewBody.innerHTML = "";
   refs.previewCountEl.textContent = String(importPreviewData.length);
 
@@ -274,6 +299,7 @@ function showImportPreview(items) {
   refs.previewBody.appendChild(fragment);
 
   refs.importPreview.style.display = importPreviewData.length ? "block" : "none";
+  return { accepted: importPreviewData.length, rejected };
 }
 
 function resetImportPreview() {
@@ -333,8 +359,8 @@ async function handleImportFile(file) {
       return;
     }
 
-    showImportPreview(contacts);
-    setStatus(contacts.length ? `Se detectaron ${contacts.length} contactos.` : "No se detectaron contactos en el archivo.", true);
+    const stats = showImportPreview(contacts);
+    setStatus(importDetectionMessage(stats, "archivo"), true);
   } catch (error) {
     console.error("Import file error:", error);
     setStatus("No se pudo leer el archivo importado.", true);
@@ -359,8 +385,8 @@ async function handleImportUrl() {
     const doc = new DOMParser().parseFromString(data.html, "text/html");
     const directTableContacts = extractContactsFromHtmlTable(doc);
     if (directTableContacts.length) {
-      showImportPreview(directTableContacts);
-      setStatus(`Se detectaron ${directTableContacts.length} contactos desde la URL.`, true);
+      const stats = showImportPreview(directTableContacts);
+      setStatus(importDetectionMessage(stats, "URL"), true);
       return;
     }
 
@@ -377,8 +403,8 @@ async function handleImportUrl() {
     }
 
     const contacts = extractContactsFromRows(rows);
-    showImportPreview(contacts);
-    setStatus(contacts.length ? `Se detectaron ${contacts.length} contactos desde la URL.` : "No se detectaron contactos en la URL.", true);
+    const stats = showImportPreview(contacts);
+    setStatus(importDetectionMessage(stats, "URL"), true);
   } catch (error) {
     console.error("Import URL error:", error);
     setStatus("No se pudo importar desde la URL.", true);
@@ -455,7 +481,6 @@ function renderContacts() {
       <td class="actions-cell">
         <button data-action="edit" data-id="${c.id}" class="secondary">✏️</button>
         <button data-action="whatsapp" data-id="${c.id}" class="wa-action-btn">🟢 WA</button>
-        <button data-action="dial" data-id="${c.id}">📞 Llamar</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
       </td>`;
     fragment.appendChild(tr);
@@ -687,19 +712,24 @@ async function saveVoiceAgentConfig(enabled) {
 }
 
 async function startCampaignRun() {
-  if (!Contacts.contacts.length) {
+  const queuedContacts = Contacts.contacts.filter(
+    (contact) => contact.list === Contacts.activeList
+  );
+  if (!queuedContacts.length) {
     setStatus("Importa o agrega contactos antes de iniciar la campaña.", true);
     return;
   }
   const data = await postCampaignAction("/campaign/start", {
-    contacts: Contacts.contacts.map((contact) => ({
+    contacts: queuedContacts.map((contact) => ({
       id: contact.id,
       name: contact.name,
       phone: contact.phone,
       note: contact.note || ""
     }))
   });
-  if (data) setStatus("Campaña iniciada.", true);
+  if (data) {
+    setStatus(`Llamada general iniciada: ${queuedContacts.length} contactos en cola.`, true);
+  }
 }
 
 async function pauseCampaignRun() {
@@ -783,7 +813,6 @@ function bindEvents() {
     const contact = Contacts.contacts.find(c => c.id === id);
     if (!contact) return;
     
-    if (action === "dial") startDialForContact(contact);
     if (action === "whatsapp") WhatsApp.openWhatsAppModal(contact);
     if (action === "edit") {
        openEditModal(contact);

@@ -239,9 +239,11 @@ export function assignNextContact(session, worker = {}) {
 
 export function updateActiveCallState(session, state, worker = {}) {
   const campaign = ensureCampaign(session);
-  // In concurrent mode the worker assignment is authoritative.
-  let contact = worker.id ? getContactByWorker(session, worker.id) : null;
-  if (!contact) contact = getActiveContact(session);
+  // La asignación del dispositivo es autoritativa. Un evento tardío de otro
+  // celular nunca debe cerrar o modificar la llamada que acaba de comenzar.
+  const contact = worker.id
+    ? getContactByWorker(session, worker.id)
+    : getActiveContact(session);
 
   if (!contact) return null;
 

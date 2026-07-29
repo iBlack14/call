@@ -213,13 +213,15 @@ function removePhoneWorker(session, socketId) {
 function selectPhoneWorker(session, preferredSocketId = "") {
   const workers = getConnectedPhoneWorkers(session);
   if (!workers.length) return null;
+  const isAvailable = (worker) =>
+    ["idle", "ended", "failed"].includes(worker.callState || "idle");
 
   if (preferredSocketId) {
     const preferred = workers.find((worker) => worker.socketId === preferredSocketId);
-    if (preferred && (preferred.callState || "idle") === "idle") return preferred;
+    if (preferred && isAvailable(preferred)) return preferred;
   }
 
-  const idleWorkers = workers.filter((worker) => (worker.callState || "idle") === "idle");
+  const idleWorkers = workers.filter(isAvailable);
   const candidates = idleWorkers;
   if (!candidates.length) return null;
   const start = Number(session.workerCursor || 0) % candidates.length;
@@ -354,7 +356,14 @@ function dispatchNextCampaignCall(code) {
     return null;
   }
 
-  // Seleccionar worker para saber si vamos directo o por PBX
+  // La campaña es una cola estrictamente secuencial: nunca se inicia otro
+  // contacto mientras exista una llamada activa, aunque haya más celulares.
+  if (getActiveContact(session)) {
+    emitCampaignState(code);
+    return null;
+  }
+
+  // Los dispositivos vinculados se seleccionan por turnos para cada llamada.
   const worker = selectPhoneWorker(session);
   if (!worker) {
     emitCampaignState(code);
@@ -404,13 +413,8 @@ function dispatchNextCampaignCall(code) {
 }
 
 function fillAvailableCampaignWorkers(code) {
-  const dispatched = [];
-  while (true) {
-    const next = dispatchNextCampaignCall(code);
-    if (!next) break;
-    dispatched.push(next);
-  }
-  return dispatched;
+  const next = dispatchNextCampaignCall(code);
+  return next ? [next] : [];
 }
 
 function getOrCreateSession(code) {
@@ -1053,10 +1057,23 @@ app.post("/api/session/:code/campaign/skip", (req, res) => {
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
+  const activeBeforeSkip = getActiveContact(session);
+  const workerSocketId = getConnectedPhoneWorkers(session)
+    .find((worker) => worker.id === activeBeforeSkip?.assignedWorkerId)?.socketId;
   const skipped = skipActiveContact(session);
+  if (workerSocketId && skipped) {
+    io.to(workerSocketId).emit("call:action", {
+      action: "hangup",
+      from: "dashboard",
+      contactId: skipped.id
+    });
+  }
   saveSoon();
   emitCampaignState(code);
-  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
+  // Si había una llamada, esperamos su estado "ended/idle" antes de avanzar.
+  if (!workerSocketId && ensureCampaign(session).status === "running") {
+    fillAvailableCampaignWorkers(code);
+  }
   return res.json({ ok: true, code, skipped, campaign: getCampaignSnapshot(session) });
 });
 
@@ -1087,7 +1104,11 @@ app.post("/api/session/:code/campaign/result", (req, res) => {
 
   saveSoon();
   emitCampaignState(code);
-  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
+  // El comando hangup termina de forma asíncrona. La siguiente llamada se
+  // despacha desde phone:status cuando el dispositivo confirma ended/idle.
+  if (!hangupWorkerSocketId && ensureCampaign(session).status === "running") {
+    fillAvailableCampaignWorkers(code);
+  }
   return res.json({ ok: true, code, contact: updated, campaign: getCampaignSnapshot(session) });
 });
 
