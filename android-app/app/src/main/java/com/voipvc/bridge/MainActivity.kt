@@ -365,7 +365,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun launchScanner() {
         qrLauncher.launch(ScanOptions().apply {
-            setCaptureActivity(QrCaptureActivity::class.java)
             setPrompt("Apunta al QR del dashboard")
             setBeepEnabled(true)
             setOrientationLocked(true)

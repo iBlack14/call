@@ -1,11 +1,12 @@
 # VOIP VC - Skeleton de Vinculacion Celular <-> Web
 
-Este proyecto crea un **esqueleto funcional** para conectar un dashboard web con un cliente movil usando tiempo real (Socket.IO).
+Este proyecto conecta el dashboard web con la APK Android mediante tiempo real
+(Socket.IO).
 
 ## Que incluye
 
 - Dashboard web (`/`) para crear y unir sesion
-- Cliente movil web (`/phone`) para simular el telefono
+- APK Android nativa como marcador vinculado
 - Vinculacion por QR con token de sesion
 - Backend Node.js + Express + Socket.IO
 - Endpoint de pairing para Android (`POST /api/android/pair`)
@@ -21,7 +22,6 @@ npm run start
 Abrir:
 
 - Dashboard: `http://localhost:3000/`
-- Cliente movil: `http://localhost:3000/phone`
 
 Variables opcionales en `.env`:
 
@@ -34,9 +34,9 @@ Variables opcionales en `.env`:
 
 1. En dashboard, click en **Crear Sesion**.
 2. Click en **Vincular Dashboard**.
-3. Escanea el QR con tu celular o abre el link de vinculacion.
-4. En `/phone` se autocompleta `code + token` y se vincula.
-5. Desde dashboard, usa **Llamar** o **Colgar**.
+3. Abre la APK Android y toca **Escanear QR**.
+4. Escanea uno de los QR personales del dashboard.
+5. Desde dashboard, inicia la llamada general.
 
 ## Endpoint para APK Android
 
@@ -79,14 +79,14 @@ Se agrego proyecto Android en `android-app/` con:
 4. Toca **Vincular Celular**.
 5. Desde dashboard usa **Llamar**.
 
-#### Varios celulares y llamadas simultaneas
+#### Varios celulares y cola secuencial
 
 - Cada boton **Crear QR para otro celular** genera un token independiente.
 - Un QR queda vinculado al primer `deviceId` Android que lo usa y no puede reutilizarse en otro equipo.
 - Los celulares vinculados permanecen registrados aunque esten desconectados.
 - Al llamar, el servidor reserva unicamente un celular conectado con estado `idle`.
-- Si existen cuatro celulares libres, se pueden despachar cuatro llamadas simultaneas.
-- Una campaña llena automaticamente todos los celulares disponibles y continua cuando una linea vuelve a `idle`.
+- Solo existe una llamada de campaña activa a la vez.
+- Al terminar, la siguiente llamada se asigna por turnos a otro equipo disponible.
 
 Nota: colgar llamada remotamente en Android requiere privilegios de dialer por defecto/sistema.
 
@@ -171,6 +171,23 @@ Luego:
 - `Socket.IO` con `ping` y buffer definidos
 - headers HTTP de endurecimiento basicos
 
+### Sesiones persistentes en Supabase
+
+Ejecuta `infrastructure/supabase/001_call_sessions.sql` en el SQL Editor de
+Supabase. Después configura únicamente en el backend/Coolify:
+
+```env
+SUPABASE_URL=https://TU_PROYECTO.supabase.co
+SUPABASE_SECRET_KEY=TU_CLAVE_SECRETA_DE_BACKEND
+SUPABASE_SESSIONS_TABLE=call_sessions
+SUPABASE_REQUIRED=1
+```
+
+La clave secreta nunca debe incluirse en `web/`, en la APK ni en Git. El
+servidor migra automáticamente el JSON local cuando la tabla remota está
+vacía. Comprueba la conexión en `/health`; debe indicar
+`"driver":"supabase"` y `"connected":true`.
+
 ## APK para produccion
 
 - La APK usa `BuildConfig.DEFAULT_BASE_URL` como base por defecto.
@@ -180,16 +197,6 @@ Luego:
 Para publicar con otro dominio por defecto, cambia este valor en:
 
 - `android-app/app/build.gradle.kts`
-
-## Siguiente integracion real
-
-Para llamadas reales desde Android/iOS, reemplaza la simulacion de `web/phone.js` por:
-
-- app movil nativa con permisos de llamada
-- puente hacia este backend (WebSocket/HTTP)
-- proveedor de telefonia (SIP/Twilio/operador)
-
-Este skeleton esta listo para evolucionar hacia ese bridge real.
 
 ## Despliegue rapido en la nube (Web + Server)
 
@@ -204,7 +211,6 @@ Para tener funcionando **dashboard + server** en una URL publica (por ahora):
    - `PUBLIC_BASE_URL=https://TU-APP.onrender.com`
 5. Espera deploy y prueba:
    - `https://TU-APP.onrender.com/` (dashboard)
-   - `https://TU-APP.onrender.com/phone` (phone bridge)
    - `https://TU-APP.onrender.com/health`
 
 Nota: en este repo, `web` se sirve desde el mismo `server`, asi que no necesitas desplegar frontend por separado para esta etapa.
@@ -219,6 +225,5 @@ Si separas frontend y backend (ejemplo: `https://app.tudominio.com` y `https://a
    - `CORS_ORIGIN=https://app.tudominio.com,https://api.tudominio.com`
 2. En el frontend agrega `apiBase` en la URL:
    - Dashboard: `https://app.tudominio.com/?apiBase=https://api.tudominio.com`
-   - Phone: `https://app.tudominio.com/phone?apiBase=https://api.tudominio.com`
 
 El frontend ya esta preparado para usar ese `apiBase` y conectarse por Socket.IO al dominio del backend.

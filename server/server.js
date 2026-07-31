@@ -73,7 +73,9 @@ app.use((req, res, next) => {
 });
 
 
-app.use(express.json());
+app.use(express.json({
+  limit: process.env.MAX_JSON_SIZE || "5mb"
+}));
 
 let sessions = new Map();
 
@@ -175,6 +177,14 @@ function getConnectedPhoneWorkers(session) {
 
 function getPhoneWorkerBySocketId(session, socketId) {
   return (session.phoneWorkers || []).find((worker) => worker.socketId === socketId) || null;
+}
+
+function emitToPhoneWorker(worker, eventName, payload) {
+  if (!worker?.socketId) return false;
+  const targetSocket = io.sockets.sockets.get(worker.socketId);
+  if (!targetSocket || targetSocket.data.role !== "phone") return false;
+  targetSocket.emit(eventName, payload);
+  return true;
 }
 
 function upsertPhoneWorker(session, { socketId, deviceId, deviceName, pairingSlotId = "" }) {
@@ -398,7 +408,7 @@ function dispatchNextCampaignCall(code) {
     worker.campaignCommandId = commandId;
     worker.campaignCallPhase = "command_sent";
     console.log(`[CAMPAIGN] Marcado directo a ${next.phone} vía worker ${worker.name}`);
-    io.to(worker.socketId).emit("call:action", {
+    emitToPhoneWorker(worker, "call:action", {
       action: "dial",
       phoneNumber: next.phone,
       contactId: next.id,
@@ -455,6 +465,7 @@ function emitState(code) {
   const phoneWorkers = (session.phoneWorkers || []).map((worker) => ({
     id: worker.id,
     name: worker.name,
+    pairingSlotId: worker.pairingSlotId || "",
     linkedAt: worker.linkedAt,
     connected: Boolean(worker.connected && worker.socketId),
     callState: worker.callState || "idle",
@@ -658,7 +669,7 @@ io.on("connection", (socket) => {
     if (role === "phone") {
       const worker = upsertPhoneWorker(session, {
         socketId: socket.id,
-        deviceId: deviceId || "web-phone",
+        deviceId: deviceId || "android-phone",
         deviceName: deviceName || "Android bridge",
         pairingSlotId: pairingSlot?.id || ""
       });
@@ -708,7 +719,7 @@ io.on("connection", (socket) => {
         worker.callState = "dialing";
         worker.currentNumber = phoneNumber || "";
         console.log(`[MANUAL] Marcado directo a ${phoneNumber} vía worker ${worker.name}`);
-        io.to(worker.socketId).emit("call:action", {
+        emitToPhoneWorker(worker, "call:action", {
           action: "dial",
           phoneNumber: phoneNumber || "",
           companyName: companyName || "",
@@ -732,7 +743,7 @@ io.on("connection", (socket) => {
         ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
         : getActivePhoneWorker(session);
       if (worker) {
-        io.to(worker.socketId).emit("call:action", { 
+        emitToPhoneWorker(worker, "call:action", {
           action: "hangup", 
           from: "dashboard", 
           contactId 
@@ -747,7 +758,7 @@ io.on("connection", (socket) => {
         ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
         : getActivePhoneWorker(session);
       if (worker) {
-        io.to(worker.socketId).emit("call:action", { 
+        emitToPhoneWorker(worker, "call:action", {
           action, 
           commandId,
           contactId 
@@ -984,14 +995,21 @@ app.get("/api/session/:code/pairing-slots", (req, res) => {
   ensureLegacyPairingSlot(session);
   return res.json({
     ok: true,
-    slots: session.pairingSlots.map((slot) => ({
-      id: slot.id,
-      label: slot.label,
-      deviceId: slot.deviceId,
-      deviceName: slot.deviceName,
-      linkedAt: slot.linkedAt,
-      link: getPairingLink(req, code, slot.token)
-    }))
+    slots: session.pairingSlots.map((slot) => {
+      const worker = (session.phoneWorkers || []).find((item) =>
+        item.pairingSlotId === slot.id || (slot.deviceId && item.id === slot.deviceId)
+      );
+      return {
+        id: slot.id,
+        label: slot.label,
+        deviceId: slot.deviceId,
+        deviceName: slot.deviceName,
+        linkedAt: slot.linkedAt,
+        connected: Boolean(worker?.connected && worker?.socketId),
+        callState: worker?.callState || "offline",
+        link: getPairingLink(req, code, slot.token)
+      };
+    })
   });
 });
 
@@ -1148,7 +1166,7 @@ app.post("/api/session/:code/campaign/skip", (req, res) => {
     .find((worker) => worker.id === activeBeforeSkip?.assignedWorkerId)?.socketId;
   const skipped = skipActiveContact(session);
   if (workerSocketId && skipped) {
-    io.to(workerSocketId).emit("call:action", {
+    emitToPhoneWorker({ socketId: workerSocketId }, "call:action", {
       action: "hangup",
       from: "dashboard",
       contactId: skipped.id
@@ -1185,7 +1203,11 @@ app.post("/api/session/:code/campaign/result", (req, res) => {
   if (!updated) return res.status(404).json({ ok: false, error: "Contacto no encontrado" });
 
   if (hangupWorkerSocketId && ["agendado", "no_interesado", "requiere_asesor", "sin_respuesta"].includes(updated.result)) {
-    io.to(hangupWorkerSocketId).emit("call:action", { action: "hangup", from: "dashboard", contactId });
+    emitToPhoneWorker(
+      { socketId: hangupWorkerSocketId },
+      "call:action",
+      { action: "hangup", from: "dashboard", contactId }
+    );
   }
 
   saveSoon();
@@ -1493,11 +1515,22 @@ app.post("/api/twilio/webhook/voice", express.urlencoded({ extended: false }), (
   return res.status(501).type("text/plain").send("Twilio deshabilitado en este despliegue.");
 });
 
+app.use((error, req, res, next) => {
+  if (error?.type === "entity.too.large") {
+    return res.status(413).json({
+      ok: false,
+      error: `La carga supera el límite permitido (${process.env.MAX_JSON_SIZE || "5mb"}).`
+    });
+  }
+  return next(error);
+});
+
 app.use(express.static(path.join(__dirname, "../web")));
 app.get("/health", async (_, res) => {
   const storage = await persistence.status();
-  return res.json({
-    ok: true,
+  const ok = Boolean(storage.connected);
+  return res.status(ok ? 200 : 503).json({
+    ok,
     storage,
     sessionsInMemory: sessions.size
   });

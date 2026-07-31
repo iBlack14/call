@@ -22,6 +22,7 @@ let currentPhoneLinked = false;
 let latestSessionState = {};
 let campaignState = null;
 let campaignStartPending = false;
+let pairingConnectionSignature = "";
 const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const DASHBOARD_SESSION_KEY = "voip vc.dashboardSessionCode";
@@ -1390,6 +1391,16 @@ function updateSessionUi(st = {}) {
   const phoneDeviceName = String(st?.phoneDevice?.name || "").trim();
   currentPhoneLinked = phoneConnected;
 
+  const workers = Array.isArray(st?.phoneWorkers) ? st.phoneWorkers : [];
+  const nextPairingSignature = workers
+    .map((worker) => `${worker.id || ""}:${worker.connected ? "1" : "0"}`)
+    .sort()
+    .join("|");
+  if (nextPairingSignature !== pairingConnectionSignature) {
+    pairingConnectionSignature = nextPairingSignature;
+    if (sessionCode) void loadPairingData(sessionCode);
+  }
+
   if (refs.qrHintEl && phoneLinking) {
     refs.qrHintEl.innerHTML = `<strong>¡Celular detectado!</strong> Sincronizando datos...`;
     refs.qrHintEl.style.color = "var(--success)";
@@ -1457,11 +1468,17 @@ async function loadPairingData(code) {
 function renderPairingSlots(slots) {
   if (!refs.pairingSlotsEl) return;
   refs.pairingSlotsEl.innerHTML = slots.map((slot) => `
-    <article class="pairing-slot-card">
+    <article class="pairing-slot-card ${slot.connected ? "is-connected" : (slot.deviceId ? "is-disconnected" : "")}">
       <img src="${API_BASE}/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?slotId=${encodeURIComponent(slot.id)}&ts=${Date.now()}" alt="QR ${escHtml(slot.label)}" />
       <div>
         <strong>${escHtml(slot.label)}</strong>
-        <small>${slot.deviceId ? `Vinculado: ${escHtml(slot.deviceName || slot.deviceId)}` : "Disponible para vincular"}</small>
+        <small class="pairing-live-state">
+          ${slot.connected
+            ? `● Conectado · ${escHtml(slot.deviceName || slot.deviceId)}`
+            : slot.deviceId
+              ? `○ Desconectado · QR activo para reconectar`
+              : "Disponible para vincular"}
+        </small>
         <button class="secondary copy-slot-link" data-link="${escHtml(slot.link)}">📋 Copiar link</button>
       </div>
     </article>

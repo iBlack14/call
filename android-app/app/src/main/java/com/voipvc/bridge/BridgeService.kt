@@ -246,11 +246,21 @@ class BridgeService : Service() {
         // Keep APK UI in sync with the authoritative session state from server.
         socket!!.on("state:changed") { args ->
             val data = args.firstOrNull() as? JSONObject ?: return@on
-            val st = data.optString("callState")
+            val workers = data.optJSONArray("phoneWorkers") ?: return@on
+            var ownWorker: JSONObject? = null
+            for (index in 0 until workers.length()) {
+                val candidate = workers.optJSONObject(index) ?: continue
+                if (candidate.optString("id") == devId) {
+                    ownWorker = candidate
+                    break
+                }
+            }
+            val workerState = ownWorker ?: return@on
+            val st = workerState.optString("callState", "idle")
             if (st.isNotBlank()) {
                 lastCallState = st
                 if (currentPhoneNumber.isBlank()) {
-                    currentPhoneNumber = data.optString("lastNumber")
+                    currentPhoneNumber = workerState.optString("currentNumber")
                 }
                 emitCallUiState()
                 if (st == "in_call" || st == "dialing" || st == "ringing") {

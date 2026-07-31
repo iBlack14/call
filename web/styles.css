@@ -214,6 +214,20 @@ body {
 }
 
 .pairing-slot-card small { color: var(--muted); }
+.pairing-slot-card.is-connected {
+  border-color: rgba(16, 185, 129, 0.48);
+  background: rgba(16, 185, 129, 0.07);
+}
+.pairing-slot-card.is-connected .pairing-live-state {
+  color: #047857;
+  font-weight: 700;
+}
+.pairing-slot-card.is-disconnected {
+  border-color: rgba(245, 158, 11, 0.38);
+}
+.pairing-slot-card.is-disconnected .pairing-live-state {
+  color: #b45309;
+}
 
 .worker-chip.state-idle { border-color: #22c55e; }
 .worker-chip.state-dialing,
