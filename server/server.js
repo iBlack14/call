@@ -231,7 +231,9 @@ function selectPhoneWorker(session, preferredSocketId = "") {
   const workers = getConnectedPhoneWorkers(session);
   if (!workers.length) return null;
   const isAvailable = (worker) =>
-    ["idle", "ended", "failed"].includes(worker.callState || "idle");
+    ["idle", "ended", "failed"].includes(worker.callState || "idle")
+    && !worker.campaignContactId
+    && ["idle", "ended", "failed"].includes(worker.campaignCallPhase || "idle");
 
   if (preferredSocketId) {
     const preferred = workers.find((worker) => worker.socketId === preferredSocketId);
@@ -373,14 +375,8 @@ function dispatchNextCampaignCall(code) {
     return null;
   }
 
-  // La campaña es una cola estrictamente secuencial: nunca se inicia otro
-  // contacto mientras exista una llamada activa, aunque haya más celulares.
-  if (getActiveContact(session)) {
-    emitCampaignState(code);
-    return null;
-  }
-
-  // Los dispositivos vinculados se seleccionan por turnos para cada llamada.
+  // Cada celular admite como máximo una llamada. Si hay varios conectados,
+  // cada worker libre recibe un contacto distinto.
   const worker = selectPhoneWorker(session);
   if (!worker) {
     emitCampaignState(code);
@@ -434,8 +430,21 @@ function dispatchNextCampaignCall(code) {
 }
 
 function fillAvailableCampaignWorkers(code) {
-  const next = dispatchNextCampaignCall(code);
-  return next ? [next] : [];
+  const session = sessions.get(code);
+  if (!session || ensureCampaign(session).status !== "running") return [];
+
+  const dispatched = [];
+  const capacity = getConnectedPhoneWorkers(session).length;
+
+  // El límite evita un bucle accidental y representa la concurrencia máxima:
+  // una orden por cada dispositivo actualmente conectado.
+  for (let index = 0; index < capacity; index += 1) {
+    const next = dispatchNextCampaignCall(code);
+    if (!next) break;
+    dispatched.push(next);
+  }
+
+  return dispatched;
 }
 
 function getOrCreateSession(code) {
@@ -683,12 +692,13 @@ io.on("connection", (socket) => {
     emitState(normalizedCode);
     emitCampaignState(normalizedCode);
 
-    // If a phone joined and a campaign is running but idle, kickstart it
+    // Si un nuevo celular se conecta durante una campaña, se aprovecha
+    // inmediatamente la capacidad adicional sin esperar a que terminen los demás.
     if (role === "phone") {
-        const campaign = ensureCampaign(session);
-        if (campaign.status === "running" && !getActiveContact(session)) {
-            setTimeout(() => fillAvailableCampaignWorkers(normalizedCode), 1000);
-        }
+      const campaign = ensureCampaign(session);
+      if (campaign.status === "running") {
+        setTimeout(() => fillAvailableCampaignWorkers(normalizedCode), 1000);
+      }
     }
   });
 

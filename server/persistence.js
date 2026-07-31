@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 /**
  * Supabase is the authoritative session store in production. A local JSON
@@ -30,9 +31,29 @@ export class SessionPersistence {
           campaignCallPhase: "idle"
         }))
       : [];
+    const campaign = session.campaign && typeof session.campaign === "object"
+      ? {
+          ...session.campaign,
+          activeContactId: null,
+          activeWorkerId: null,
+          activeWorkerSocketId: null,
+          contacts: Array.isArray(session.campaign.contacts)
+            ? session.campaign.contacts.map((contact) =>
+                ["dialing", "ringing", "in_call"].includes(contact?.status)
+                  ? {
+                      ...contact,
+                      status: "pending",
+                      assignedWorkerId: null
+                    }
+                  : contact
+              )
+            : []
+        }
+      : session.campaign;
 
     return {
       ...session,
+      campaign,
       dashboardSocketId: null,
       phoneSocketId: null,
       activePhoneSocketId: null,
@@ -65,6 +86,9 @@ export class SessionPersistence {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false
+      },
+      realtime: {
+        transport: WebSocket
       }
     });
 

@@ -79,14 +79,14 @@ Se agrego proyecto Android en `android-app/` con:
 4. Toca **Vincular Celular**.
 5. Desde dashboard usa **Llamar**.
 
-#### Varios celulares y cola secuencial
+#### Varios celulares y reparto automatico
 
 - Cada boton **Crear QR para otro celular** genera un token independiente.
 - Un QR queda vinculado al primer `deviceId` Android que lo usa y no puede reutilizarse en otro equipo.
 - Los celulares vinculados permanecen registrados aunque esten desconectados.
-- Al llamar, el servidor reserva unicamente un celular conectado con estado `idle`.
-- Solo existe una llamada de campaña activa a la vez.
-- Al terminar, la siguiente llamada se asigna por turnos a otro equipo disponible.
+- Al llamar, el servidor reserva unicamente celulares conectados con estado `idle`.
+- Cada celular recibe como maximo una llamada activa y un numero distinto.
+- Cuando un celular termina, recibe el siguiente numero pendiente sin afectar las llamadas de los demas.
 
 Nota: colgar llamada remotamente en Android requiere privilegios de dialer por defecto/sistema.
 
