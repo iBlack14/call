@@ -179,6 +179,22 @@ function getPhoneWorkerBySocketId(session, socketId) {
   return (session.phoneWorkers || []).find((worker) => worker.socketId === socketId) || null;
 }
 
+function getWorkerLabel(session, worker) {
+  if (!worker) return "sin dispositivo";
+  const slot = (session?.pairingSlots || []).find((item) => item.id === worker.pairingSlotId);
+  const slotLabel = String(slot?.label || "").trim();
+  const deviceName = String(worker.name || worker.id || "Android bridge").trim();
+  return slotLabel ? `${slotLabel} (${deviceName})` : deviceName;
+}
+
+function campaignLog(code, event, details = {}) {
+  const fields = Object.entries(details)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+    .join(" ");
+  console.log(`[CAMPAIGN][${new Date().toISOString()}][${code}][${event}]${fields ? ` ${fields}` : ""}`);
+}
+
 function emitToPhoneWorker(worker, eventName, payload) {
   if (!worker?.socketId) return false;
   const targetSocket = io.sockets.sockets.get(worker.socketId);
@@ -379,6 +395,12 @@ function dispatchNextCampaignCall(code) {
   // cada worker libre recibe un contacto distinto.
   const worker = selectPhoneWorker(session);
   if (!worker) {
+    const pending = campaign.contacts.filter((contact) => ["pending", "reintentar"].includes(contact.status)).length;
+    if (pending) campaignLog(code, "ESPERA", {
+      motivo: "sin dispositivo libre",
+      pendientes: pending,
+      conectados: getConnectedPhoneWorkers(session).length
+    });
     emitCampaignState(code);
     return null;
   }
@@ -387,6 +409,12 @@ function dispatchNextCampaignCall(code) {
   saveSoon();
 
   if (!next) {
+    if (campaign.status === "completed") campaignLog(code, "FINALIZADA", {
+      total: campaign.contacts.length,
+      completados: campaign.contacts.filter((contact) => contact.status === "completed").length,
+      fallidos: campaign.contacts.filter((contact) => contact.status === "failed").length,
+      callbacks: campaign.contacts.filter((contact) => contact.status === "awaiting_callback").length
+    });
     emitCampaignState(code);
     return null;
   }
@@ -403,14 +431,21 @@ function dispatchNextCampaignCall(code) {
     worker.campaignContactId = next.id;
     worker.campaignCommandId = commandId;
     worker.campaignCallPhase = "command_sent";
-    console.log(`[CAMPAIGN] Marcado directo a ${next.phone} vía worker ${worker.name}`);
-    emitToPhoneWorker(worker, "call:action", {
+    const workerLabel = getWorkerLabel(session, worker);
+    campaignLog(code, "ASIGNADA", {
+      contacto: next.name, numero: next.phone, dispositivo: workerLabel,
+      intento: next.attempts, commandId
+    });
+    const delivered = emitToPhoneWorker(worker, "call:action", {
       action: "dial",
       phoneNumber: next.phone,
       contactId: next.id,
       companyName: next.name,
       contactName: next.name,
       commandId
+    });
+    campaignLog(code, delivered ? "ORDEN_ENVIADA" : "ORDEN_NO_ENTREGADA", {
+      numero: next.phone, dispositivo: workerLabel, commandId
     });
     saveSoon();
     emitState(code);
@@ -684,6 +719,10 @@ io.on("connection", (socket) => {
       });
       session.activePhoneSocketId ||= worker.socketId;
       syncSessionPhoneState(session);
+      campaignLog(normalizedCode, "DISPOSITIVO_CONECTADO", {
+        dispositivo: getWorkerLabel(session, worker), deviceId: worker.id,
+        socketId: socket.id, conectados: getConnectedPhoneWorkers(session).length
+      });
       saveSoon();
     }
 
@@ -793,6 +832,9 @@ io.on("connection", (socket) => {
     const terminalState = ["idle", "ended", "failed"].includes(callState);
     const activeState = ["dialing", "ringing", "in_call"].includes(callState);
     const campaignPhaseBeforeStatus = worker?.campaignCallPhase || "idle";
+    const previousCallState = worker?.callState || "idle";
+    const campaignContactId = worker?.campaignContactId || "";
+    const trackedNumber = phoneNumber || worker?.currentNumber || session.lastNumber || "";
 
     if (worker) {
       worker.callState = callState || worker.callState || "idle";
@@ -822,19 +864,41 @@ io.on("connection", (socket) => {
     session.updatedAt = Date.now();
     // Android puede emitir un "idle" atrasado justo después de recibir dial.
     // Solo aceptamos un final si antes vimos un estado real de llamada.
+    // ended/failed son finales explícitos: liberan el dispositivo incluso si
+    // Android no alcanzó a enviar ringing/in_call. Solo se ignora un idle
+    // atrasado inmediatamente después de enviar la orden dial.
     const confirmedCampaignEnd =
       terminalState &&
-      campaignPhaseBeforeStatus === "active" &&
-      Boolean(worker?.campaignContactId);
+      Boolean(worker?.campaignContactId) &&
+      (campaignPhaseBeforeStatus === "active" || ["ended", "failed"].includes(callState));
     const ignoredPrematureIdle =
-      terminalState &&
+      callState === "idle" &&
       campaignPhaseBeforeStatus === "command_sent" &&
       Boolean(worker?.campaignContactId);
+
+    if (worker && callState && callState !== previousCallState) {
+      campaignLog(code, "ESTADO", {
+        numero: trackedNumber, dispositivo: getWorkerLabel(session, worker),
+        anterior: previousCallState, actual: callState,
+        contactoId: campaignContactId, error: lastError || undefined
+      });
+    }
+    if (ignoredPrematureIdle) campaignLog(code, "IDLE_IGNORADO", {
+      numero: trackedNumber, dispositivo: getWorkerLabel(session, worker),
+      motivo: "estado atrasado después de enviar dial"
+    });
 
     if (!ignoredPrematureIdle) {
       updateActiveCallState(session, callState, worker || {});
     }
     if (confirmedCampaignEnd && worker) {
+      const finishedContact = ensureCampaign(session).contacts.find((contact) => contact.id === campaignContactId);
+      campaignLog(code, "LLAMADA_TERMINADA", {
+        contacto: finishedContact?.name,
+        numero: finishedContact?.phone || trackedNumber,
+        dispositivo: getWorkerLabel(session, worker), estado: callState,
+        resultado: finishedContact?.result || "sin_respuesta"
+      });
       worker.campaignContactId = null;
       worker.campaignCommandId = null;
       worker.campaignCallPhase = "idle";
@@ -859,6 +923,10 @@ io.on("connection", (socket) => {
     if (!session) return;
 
     const worker = getPhoneWorkerBySocketId(session, socket.id);
+    if (action === "dial") campaignLog(code, ok ? "ORDEN_ACEPTADA" : "ORDEN_RECHAZADA", {
+      dispositivo: getWorkerLabel(session, worker), numero: worker?.currentNumber,
+      commandId, mensaje: message || undefined
+    });
     if (
       worker &&
       action === "dial" &&
@@ -938,6 +1006,10 @@ io.on("connection", (socket) => {
       
       // If the disconnecting worker was in a call, cleanup campaign
       if (removed) {
+          campaignLog(code, "DISPOSITIVO_DESCONECTADO", {
+            dispositivo: getWorkerLabel(session, removed), deviceId: removed.id,
+            contactoId: removed.campaignContactId, socketId: socket.id
+          });
           updateActiveCallState(session, "ended", removed);
       }
 
@@ -1104,6 +1176,13 @@ app.post("/api/session/:code/campaign/start", (req, res) => {
   saveSoon();
   emitCampaignState(code);
   const dispatched = fillAvailableCampaignWorkers(code);
+  campaignLog(code, "INICIADA", {
+    recibidos: contacts.length,
+    validos: startedCampaign.contacts.length,
+    descartados: contacts.length - startedCampaign.contacts.length,
+    dispositivos: getConnectedPhoneWorkers(session).length,
+    llamadasIniciales: dispatched.length
+  });
 
   return res.json({
     ok: true,
