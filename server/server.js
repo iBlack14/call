@@ -43,7 +43,7 @@ const server = http.createServer(app);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "https://llamada.viacomunicativa.com,https://lm.viacomunicativa.com,http://localhost:3000";
 const corsOptions = {
   origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN.split(",").map(s => s.trim()).filter(Boolean),
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "OPTIONS"],
   credentials: false
 };
 app.use(cors(corsOptions));
@@ -101,7 +101,7 @@ async function bootstrap() {
 }
 
 function saveSoon() {
-  persistence.save(sessions);
+  return persistence.save(sessions);
 }
 
 function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Android bridge", pairingSlotId = "", linkedAt, connected = false, callState = "idle", currentNumber = "" } = {}) {
@@ -369,6 +369,7 @@ function detachSocketFromCurrentSession(socket) {
     !previousSession.dashboardSocketId
     && !getConnectedPhoneWorkers(previousSession).length
     && !(previousSession.pairingSlots || []).length
+    && !previousSession.dashboardData
   ) {
     sessions.delete(previousCode);
   } else {
@@ -1031,6 +1032,7 @@ io.on("connection", (socket) => {
       !session.dashboardSocketId
       && !getConnectedPhoneWorkers(session).length
       && !(session.pairingSlots || []).length
+      && !session.dashboardData
     ) {
       sessions.delete(code);
       saveSoon();
@@ -1128,6 +1130,49 @@ app.get("/api/session/:code/workers", (req, res) => {
       active: worker.socketId === session.activePhoneSocketId
     }))
   });
+});
+
+app.get("/api/session/:code/workspace", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+  return res.json({ ok: true, code, workspace: session.dashboardData || null });
+});
+
+app.put("/api/session/:code/workspace", async (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const input = req.body?.workspace;
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return res.status(400).json({ ok: false, error: "workspace requerido" });
+  }
+  const contacts = Array.isArray(input.contacts) ? input.contacts.slice(0, 10000) : [];
+  const lists = Array.isArray(input.lists)
+    ? input.lists.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 200)
+    : ["Principal"];
+  if (!lists.includes("Principal")) lists.unshift("Principal");
+  session.dashboardData = {
+    contacts,
+    lists,
+    activeList: lists.includes(input.activeList) ? input.activeList : "Principal",
+    calledCounts: input.calledCounts && typeof input.calledCounts === "object" ? input.calledCounts : {},
+    contactRowStatus: input.contactRowStatus && typeof input.contactRowStatus === "object" ? input.contactRowStatus : {},
+    callDurations: input.callDurations && typeof input.callDurations === "object" ? input.callDurations : {},
+    dismissedReminderIds: input.dismissedReminderIds && typeof input.dismissedReminderIds === "object" ? input.dismissedReminderIds : {},
+    callHistory: Array.isArray(input.callHistory) ? input.callHistory.slice(0, 100) : [],
+    updatedAt: new Date().toISOString()
+  };
+  session.updatedAt = Date.now();
+  await saveSoon();
+  const persistenceStatus = await persistence.status();
+  if (!persistenceStatus.connected) {
+    return res.status(503).json({ ok: false, error: persistenceStatus.error || "Supabase no disponible" });
+  }
+  return res.json({ ok: true, code, updatedAt: session.dashboardData.updatedAt });
 });
 
 app.get("/api/session/:code/campaign", (req, res) => {

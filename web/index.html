@@ -532,7 +532,7 @@
       const socketScript = document.createElement("script");
       socketScript.src = `${apiBase}/socket.io/socket.io.js`;
       socketScript.onload = () => {
-        import("/dashboard.js");
+        import("/dashboard.js?v=3");
       };
       socketScript.onerror = () => {
         console.error("No se pudo cargar Socket.IO desde", socketScript.src);

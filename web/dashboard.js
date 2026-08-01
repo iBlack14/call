@@ -1,6 +1,6 @@
 import { socket, API_BASE } from './modules/socket.js?v=2';
 import { refs, setStatus, setBadge, setAckBadge } from './modules/dom.js?v=2';
-import * as Contacts from './modules/contacts.js?v=2';
+import * as Contacts from './modules/contacts.js?v=3';
 import * as AudioBridge from './modules/audio-bridge.js?v=2';
 import * as WhatsApp from './modules/whatsapp.js?v=2';
 import * as Quotation from './modules/quotation.js?v=2';
@@ -27,6 +27,8 @@ const pendingCommandTimeouts = new Map();
 const PAGE_SIZE = 20;
 const DASHBOARD_SESSION_KEY = "voip vc.dashboardSessionCode";
 let restoreAttempted = false;
+let workspaceSaveTimer = null;
+let workspaceHydrating = false;
 
 // ── INITIALIZATION ──────────────────────────────────────────────────
 async function init() {
@@ -37,6 +39,7 @@ async function init() {
   Contacts.loadCallDurations();
   Contacts.loadDismissedReminders();
   WhatsApp.loadWhatsAppPresetMessages();
+  Contacts.setPersistenceListener(scheduleWorkspaceSave);
   
   renderContacts();
   loadApkInfo().catch(e => console.error("Error loading APK info:", e));
@@ -736,6 +739,54 @@ async function startCampaignRun() {
   } finally {
     campaignStartPending = false;
     renderCampaignPanel();
+  }
+}
+
+function getWorkspaceSnapshot() {
+  return { ...Contacts.getSnapshot(), callHistory };
+}
+
+function scheduleWorkspaceSave() {
+  if (!sessionCode || workspaceHydrating) return;
+  clearTimeout(workspaceSaveTimer);
+  workspaceSaveTimer = setTimeout(() => saveWorkspaceToSupabase(), 500);
+}
+
+async function saveWorkspaceToSupabase() {
+  if (!sessionCode || workspaceHydrating) return;
+  const code = sessionCode;
+  try {
+    const response = await fetch(`${API_BASE}/api/session/${encodeURIComponent(code)}/workspace`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace: getWorkspaceSnapshot() })
+    });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || `HTTP ${response.status}`);
+  } catch (error) {
+    console.error("No se pudo guardar la sesión en Supabase:", error);
+  }
+}
+
+async function loadWorkspaceFromSupabase(code) {
+  try {
+    const response = await fetch(`${API_BASE}/api/session/${encodeURIComponent(code)}/workspace`);
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || `HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data.workspace) {
+      scheduleWorkspaceSave(); // migración única de los datos locales existentes
+      return;
+    }
+    workspaceHydrating = true;
+    Contacts.applySnapshot(data.workspace);
+    callHistory = Array.isArray(data.workspace.callHistory) ? data.workspace.callHistory : [];
+    workspaceHydrating = false;
+    renderTabs();
+    renderContacts();
+    renderReminderFloat();
+    setStatus("Sesión recuperada desde Supabase.", true);
+  } catch (error) {
+    workspaceHydrating = false;
+    console.error("No se pudo recuperar la sesión desde Supabase:", error);
   }
 }
 
@@ -1534,6 +1585,7 @@ socket.on("session:created", ({ code }) => {
   updateSessionUi({ connected: { dashboard: true, phone: false } });
   loadPairingData(code);
   fetchCampaignState(code);
+  loadWorkspaceFromSupabase(code);
 });
 
 socket.on("session:joined", ({ code, role }) => {
@@ -1544,6 +1596,7 @@ socket.on("session:joined", ({ code, role }) => {
     updateSessionUi({ connected: { dashboard: true, phone: currentPhoneLinked } });
     loadPairingData(code);
     fetchCampaignState(code);
+    loadWorkspaceFromSupabase(code);
   }
 });
 
@@ -1584,6 +1637,7 @@ function loadHistory() {
 
 function saveHistory() {
   localStorage.setItem("voip.callHistory", JSON.stringify(callHistory));
+  scheduleWorkspaceSave();
 }
 
 function addHistoryEntry(phone, duration) {
