@@ -69,7 +69,7 @@ Se agrego proyecto Android en `android-app/` con:
 2. Espera sync de Gradle.
 3. Ejecuta `Build > Build APK(s)`.
 4. APK debug en:
-   `android-app/app/build/outputs/apk/debug/app-debug.apk`
+   `android-app/app/build/outputs/apk/debug/VOIP-VC-debug.apk`
 
 ### Flujo real
 
@@ -79,14 +79,15 @@ Se agrego proyecto Android en `android-app/` con:
 4. Toca **Vincular Celular**.
 5. Desde dashboard usa **Llamar**.
 
-#### Varios celulares y reparto automatico
+#### Varios celulares y respaldo seguro
 
 - Cada boton **Crear QR para otro celular** genera un token independiente.
 - Un QR queda vinculado al primer `deviceId` Android que lo usa y no puede reutilizarse en otro equipo.
 - Los celulares vinculados permanecen registrados aunque esten desconectados.
 - Al llamar, el servidor reserva unicamente celulares conectados con estado `idle`.
-- Cada celular recibe como maximo una llamada activa y un numero distinto.
-- Cuando un celular termina, recibe el siguiente numero pendiente sin afectar las llamadas de los demas.
+- La sesion mantiene una sola llamada fisica activa para que audio y controles nunca se crucen entre clientes.
+- Los otros celulares quedan en espera y pueden tomar la llamada siguiente como respaldo.
+- Si el telefono activo pierde internet, la llamada queda en cuarentena: perder el socket no prueba que Telecom haya cortado. El respaldo solo avanza cuando la APK confirma que no quedan llamadas o cuando el operador revisa el celular y usa **Liberar telefono**.
 
 Nota: colgar llamada remotamente en Android requiere privilegios de dialer por defecto/sistema.
 
@@ -163,13 +164,43 @@ Luego:
 ### Estabilidad que ya queda aplicada
 
 - guardado atomico de sesiones
+- guardados coalescidos para no bloquear Socket.IO con campañas grandes
 - cierre graceful con `SIGTERM` y `SIGINT`
+- correlacion de cada estado por `commandId` + `contactId`
+- rechazo de estados duplicados, regresivos, entrantes o pertenecientes a intentos anteriores
+- gracia de reconexion para microcortes y recuperacion de llamadas tras reiniciar el servidor
+- timeout de orden para que un telefono sin respuesta no bloquee la cola
+- confirmacion fisica y watchdog independiente para cada orden de corte
 - timeouts HTTP configurados
 - limpieza automatica de sesiones viejas
 - limites de payload JSON
 - rate limiting basico para endpoints sensibles
 - `Socket.IO` con `ping` y buffer definidos
 - headers HTTP de endurecimiento basicos
+
+Variables de tolerancia opcionales:
+
+```env
+CAMPAIGN_DISCONNECT_GRACE_MS=15000
+CAMPAIGN_COMMAND_TIMEOUT_MS=30000
+CAMPAIGN_HANGUP_TIMEOUT_MS=10000
+```
+
+El despliegue actual debe ejecutarse con **una sola replica** del servidor: los
+sockets y watchdogs activos viven en memoria. Para varias replicas se requiere
+un adaptador compartido de Socket.IO y coordinacion distribuida de intentos.
+
+### Verificacion
+
+```bash
+npm test
+cd android-app
+gradlew.bat lintDebug assembleDebug
+```
+
+Las pruebas cubren identidad persistente, standby/failover seguro, aislamiento de
+audio, cuarentena de microcortes, llamadas entrantes, eventos atrasados y
+coalescencia de guardado.
 
 ### Sesiones persistentes en Supabase
 
@@ -193,6 +224,7 @@ vacía. Comprueba la conexión en `/health`; debe indicar
 - La APK usa `BuildConfig.DEFAULT_BASE_URL` como base por defecto.
 - `release` ahora queda con `cleartext` desactivado.
 - Solo `debug` permite HTTP plano para `localhost`, `127.0.0.1` y `10.0.2.2`.
+- El protocolo seguro actual es la version 2. Despliega primero el servidor y luego instala esta APK en todos los celulares; el servidor rechaza APK antiguas para no mezclar estados sin correlacion.
 
 Para publicar con otro dominio por defecto, cambia este valor en:
 

@@ -575,6 +575,18 @@ function getActiveCampaignContact() {
   return getCampaignContactMap().get(campaignState.activeContactId) || null;
 }
 
+function getVisibleCallContactId() {
+  const activeContacts = campaignState?.activeContacts || [];
+  const visibleNumber = normalizePhone(callCtx?.phone || latestSessionState?.lastNumber || "");
+  const byNumber = activeContacts.find((contact) =>
+    visibleNumber && normalizePhone(contact.phone) === visibleNumber
+  );
+  if (byNumber) return byNumber.id;
+  const byLocalId = activeContacts.find((contact) => contact.id === currentCallingContactId);
+  if (byLocalId) return byLocalId.id;
+  return activeContacts.length === 1 ? activeContacts[0].id : "";
+}
+
 function campaignCounter(label, value, tone = "") {
   return `<div class="campaign-counter ${tone}"><span>${escHtml(label)}</span><strong>${value}</strong></div>`;
 }
@@ -634,6 +646,13 @@ function renderCampaignPanel() {
   if (refs.campaignPauseBtn) refs.campaignPauseBtn.disabled = campaignState?.status !== "running";
   if (refs.campaignResumeBtn) refs.campaignResumeBtn.disabled = !["paused", "idle"].includes(String(campaignState?.status || "idle"));
   if (refs.campaignSkipBtn) refs.campaignSkipBtn.disabled = disableResult;
+  if (refs.campaignForceReleaseBtn) {
+    const hasQuarantine = Boolean(
+      campaignState?.quarantinedCalls?.length || campaignState?.quarantinedContactIds?.length
+    );
+    refs.campaignForceReleaseBtn.style.display = hasQuarantine ? "inline-flex" : "none";
+    refs.campaignForceReleaseBtn.disabled = !hasQuarantine;
+  }
   if (refs.campaignStartBtn) {
     const status = String(campaignState?.status || "idle");
     const campaignBusy = campaignStartPending || ["running", "paused"].includes(status);
@@ -809,8 +828,31 @@ async function resumeCampaignRun() {
 }
 
 async function skipCampaignContact() {
-  const data = await postCampaignAction("/campaign/skip");
+  const active = getActiveCampaignContact();
+  if (!active) {
+    setStatus("No hay contacto activo en campaña.", true);
+    return;
+  }
+  const data = await postCampaignAction("/campaign/skip", { contactId: active.id });
   if (data) setStatus("Contacto saltado y marcado para reintento.", true);
+}
+
+async function forceReleaseCampaignPhone() {
+  const quarantined = campaignState?.quarantinedCalls?.[0] || null;
+  const contactId = quarantined?.contactId || campaignState?.quarantinedContactIds?.[0] || "";
+  const workerId = quarantined?.workerId || "";
+  if (!contactId && !workerId) return;
+  const accepted = window.confirm(
+    "No se pudo comprobar si la llamada terminó físicamente. Forzar la liberación desconectará ese teléfono y, si pertenece a la campaña, marcará el contacto como fallido. Úsalo solo después de revisar el celular."
+  );
+  if (!accepted) return;
+  const data = await postCampaignAction("/campaign/force-release", {
+    contactId,
+    workerId,
+    confirm: true,
+    retry: false
+  });
+  if (data) setStatus("Teléfono liberado manualmente y desconectado por seguridad.", true);
 }
 
 async function markCampaignResult(result) {
@@ -892,8 +934,9 @@ function bindEvents() {
   };
 
   refs.hangupBtnEl.onclick = () => {
-    emitCallActionWithAck("hangup");
-    applyState("ended", callCtx?.phone || "");
+    const contactId = getVisibleCallContactId();
+    emitCallActionWithAck("hangup", contactId ? { contactId } : {});
+    if (refs.callHintEl) refs.callHintEl.textContent = "Solicitando corte al teléfono; esperando confirmación física…";
   };
 
   refs.muteBtnEl.onclick = toggleMute;
@@ -927,6 +970,7 @@ function bindEvents() {
   if (refs.campaignPauseBtn) refs.campaignPauseBtn.onclick = pauseCampaignRun;
   if (refs.campaignResumeBtn) refs.campaignResumeBtn.onclick = resumeCampaignRun;
   if (refs.campaignSkipBtn) refs.campaignSkipBtn.onclick = skipCampaignContact;
+  if (refs.campaignForceReleaseBtn) refs.campaignForceReleaseBtn.onclick = forceReleaseCampaignPhone;
   if (refs.campaignResultAgendaBtn) refs.campaignResultAgendaBtn.onclick = () => markCampaignResult("agendado");
   if (refs.campaignResultNoBtn) refs.campaignResultNoBtn.onclick = () => markCampaignResult("no_interesado");
   if (refs.campaignResultAdvisorBtn) refs.campaignResultAdvisorBtn.onclick = () => markCampaignResult("requiere_asesor");
@@ -1253,10 +1297,12 @@ async function toggleMute() {
     if (currentState === "in_call") {
       await AudioBridge.startWebMicStreaming();
     }
-    emitCallActionWithAck("unmute");
+    const contactId = getVisibleCallContactId();
+    emitCallActionWithAck("unmute", contactId ? { contactId } : {});
   } else {
     AudioBridge.stopMic();
-    emitCallActionWithAck("mute");
+    const contactId = getVisibleCallContactId();
+    emitCallActionWithAck("mute", contactId ? { contactId } : {});
   }
 
   syncAudioButtons();
@@ -1267,7 +1313,11 @@ function toggleSpeaker() {
   AudioBridge.setPhoneAudioEnabled(speakerEnabled && currentState === "in_call");
   
   // Enviar comando al APK para el altavoz físico
-  emitCallActionWithAck(speakerEnabled ? "speaker_on" : "speaker_off");
+  const contactId = getVisibleCallContactId();
+  emitCallActionWithAck(
+    speakerEnabled ? "speaker_on" : "speaker_off",
+    contactId ? { contactId } : {}
+  );
   
   syncAudioButtons();
 }

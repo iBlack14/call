@@ -1,9 +1,13 @@
 package com.voipvc.bridge
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.core.app.NotificationCompat
 
 /**
  * Auto-starts BridgeService after device reboot.
@@ -23,6 +27,38 @@ class BootReceiver : BroadcastReceiver() {
         val devName = prefs.getString(BridgeService.PREF_DEVICE_NAME,  "") ?: ""
 
         if (url.isBlank() || code.isBlank() || token.isBlank()) return
+
+        // Android 14+ forbids starting a microphone foreground service from
+        // BOOT_COMPLETED. Ask for one explicit tap instead of entering a crash
+        // loop that repeatedly disconnects/reconnects the bridge.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(
+                NotificationChannel(
+                    BridgeService.CHANNEL_ID,
+                    "Phone-VC Bridge",
+                    NotificationManager.IMPORTANCE_HIGH
+                )
+            )
+            val openApp = PendingIntent.getActivity(
+                context,
+                4,
+                Intent(context, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            manager?.notify(
+                9203,
+                NotificationCompat.Builder(context, BridgeService.CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_menu_call)
+                    .setContentTitle("Phone-VC listo para reconectar")
+                    .setContentText("Toca para activar el bridge después del reinicio")
+                    .setContentIntent(openApp)
+                    .setAutoCancel(true)
+                    .build()
+            )
+            return
+        }
 
         val si = Intent(context, BridgeService::class.java).apply {
             this.action = BridgeService.ACTION_START

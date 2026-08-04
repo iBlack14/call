@@ -19,6 +19,15 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 import { SessionPersistence } from "./persistence.js";
 import {
+  buildStatusSignature,
+  createPhoneWorker,
+  isActiveCallState,
+  isAllowedCampaignTransition,
+  isCampaignStatusCorrelated,
+  isTerminalCallState,
+  normalizePhoneNumber
+} from "./phone-worker.js";
+import {
   ensureCampaign,
   getCampaignSnapshot,
   startCampaign,
@@ -36,6 +45,28 @@ const sessionFilePath = process.env.SESSION_FILE_PATH
     ? "/data/sessions.json"
     : path.join(__dirname, "sessions.json"));
 const persistence = new SessionPersistence(sessionFilePath);
+function positiveDuration(value, fallback, minimum) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.max(minimum, parsed) : fallback;
+}
+const CAMPAIGN_DISCONNECT_GRACE_MS = positiveDuration(
+  process.env.CAMPAIGN_DISCONNECT_GRACE_MS,
+  15_000,
+  5_000
+);
+const CAMPAIGN_COMMAND_TIMEOUT_MS = positiveDuration(
+  process.env.CAMPAIGN_COMMAND_TIMEOUT_MS,
+  30_000,
+  10_000
+);
+const CAMPAIGN_HANGUP_TIMEOUT_MS = positiveDuration(
+  process.env.CAMPAIGN_HANGUP_TIMEOUT_MS,
+  10_000,
+  3_000
+);
+const workerDisconnectTimers = new Map();
+const campaignCommandTimers = new Map();
+const campaignHangupTimers = new Map();
 
 const app = express();
 app.set("trust proxy", true);
@@ -78,17 +109,33 @@ app.use(express.json({
 }));
 
 let sessions = new Map();
+const normalizedSessions = new WeakSet();
 
 async function bootstrap() {
   sessions = await persistence.load();
   // Post-load cleanup to avoid stuck campaigns
-  for (const session of sessions.values()) {
+  for (const [code, loadedSession] of sessions.entries()) {
+    const session = normalizeSessionShape(loadedSession);
+    sessions.set(code, session);
     if (session.campaign) {
+        const campaign = ensureCampaign(session);
+        const assignedContactIds = new Set(
+          (session.phoneWorkers || []).map((worker) => worker.campaignContactId).filter(Boolean)
+        );
+        for (const contact of campaign.contacts) {
+          if (["dialing", "ringing", "in_call"].includes(contact.status) && !assignedContactIds.has(contact.id)) {
+            contact.status = "pending";
+            contact.assignedWorkerId = null;
+          }
+        }
         const active = getActiveContact(session);
         if (active) {
             session.campaign.activeContactId = active.id;
         } else if (session.campaign.status === "running") {
             session.campaign.activeContactId = null;
+        }
+        for (const worker of session.phoneWorkers || []) {
+          if (worker.campaignContactId) scheduleWorkerDisconnectGrace(code, worker);
         }
     }
   }
@@ -104,23 +151,8 @@ function saveSoon() {
   return persistence.save(sessions);
 }
 
-function createPhoneWorker({ socketId = null, deviceId = "", deviceName = "Android bridge", pairingSlotId = "", linkedAt, connected = false, callState = "idle", currentNumber = "" } = {}) {
-  return {
-    socketId,
-    id: deviceId || "android-worker",
-    name: deviceName || "Android bridge",
-    pairingSlotId: pairingSlotId || "",
-    linkedAt: linkedAt || new Date().toISOString(),
-    connected: Boolean(connected),
-    callState: callState || "idle",
-    currentNumber: currentNumber || "",
-    campaignContactId: null,
-    campaignCommandId: null,
-    campaignCallPhase: "idle"
-  };
-}
-
 function normalizeSessionShape(session = {}) {
+  if (session && typeof session === "object" && normalizedSessions.has(session)) return session;
   const normalized = {
     dashboardSocketId: null,
     phoneSocketId: null,
@@ -154,9 +186,79 @@ function normalizeSessionShape(session = {}) {
     ...session
   };
 
-  if (!Array.isArray(normalized.phoneWorkers)) normalized.phoneWorkers = [];
-  normalized.phoneWorkers = normalized.phoneWorkers.map((worker) => createPhoneWorker(worker));
   if (!Array.isArray(normalized.pairingSlots)) normalized.pairingSlots = [];
+  if (!Array.isArray(normalized.phoneWorkers)) normalized.phoneWorkers = [];
+  const persistedWorkers = normalized.phoneWorkers;
+  const workerIdTargets = new Map();
+  normalized.phoneWorkers = persistedWorkers.map((worker) => {
+    const slot = normalized.pairingSlots.find((item) => item.id === worker?.pairingSlotId);
+    const legacyId = String(worker?.id || "").trim();
+    const restored = createPhoneWorker({
+      ...worker,
+      deviceId: legacyId && legacyId !== "android-worker" ? legacyId : (slot?.deviceId || legacyId),
+      deviceName: String(worker?.name || "").trim() !== "Android bridge"
+        ? worker.name
+        : (slot?.deviceName || worker?.name)
+    });
+    if (legacyId && restored.id !== legacyId) {
+      const targets = workerIdTargets.get(legacyId) || new Set();
+      targets.add(restored.id);
+      workerIdTargets.set(legacyId, targets);
+    }
+    if (worker?.campaignContactId && Array.isArray(normalized.campaign?.contacts)) {
+      const bound = normalized.campaign.contacts.find((contact) => contact.id === worker.campaignContactId);
+      if (bound) bound.assignedWorkerId = restored.id;
+      if (normalized.campaign.activeContactId === worker.campaignContactId) {
+        normalized.campaign.activeWorkerId = restored.id;
+      }
+    }
+    return restored;
+  });
+  if (Array.isArray(normalized.campaign?.contacts)) {
+    for (const [oldId, targets] of workerIdTargets.entries()) {
+      if (targets.size !== 1) continue;
+      const [newId] = targets;
+      for (const contact of normalized.campaign.contacts) {
+        if (contact.assignedWorkerId === oldId) contact.assignedWorkerId = newId;
+      }
+      if (normalized.campaign.activeWorkerId === oldId) normalized.campaign.activeWorkerId = newId;
+    }
+  }
+  // Keep a single row per pairing slot/device when loading snapshots produced
+  // by the legacy normalizer.
+  normalized.phoneWorkers = normalized.phoneWorkers.filter((worker, index, all) => {
+    const key = worker.pairingSlotId || (worker.id !== "android-worker" ? worker.id : "");
+    if (!key) return true;
+    const matches = all
+      .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+      .filter(({ candidate }) =>
+      (candidate.pairingSlotId || (candidate.id !== "android-worker" ? candidate.id : "")) === key
+      );
+    const preferred = matches.find(({ candidate }) => candidate.campaignContactId)
+      || matches.find(({ candidate }) => candidate.physicalStateUnconfirmed)
+      || matches.find(({ candidate }) => candidate.manualCommandId)
+      || matches[0];
+    if (preferred?.candidateIndex !== index) return false;
+    for (const { candidate } of matches) {
+      if (candidate === worker) continue;
+      worker.campaignContactId ||= candidate.campaignContactId || null;
+      worker.campaignCommandId ||= candidate.campaignCommandId || null;
+      worker.manualCommandId ||= candidate.manualCommandId || null;
+      worker.manualContactId ||= candidate.manualContactId || null;
+      if (worker.manualCallPhase === "idle" && candidate.manualCallPhase !== "idle") {
+        worker.manualCallPhase = candidate.manualCallPhase;
+      }
+      worker.hangupUnconfirmed ||= Boolean(candidate.hangupUnconfirmed);
+      worker.manualHangupUnconfirmed ||= Boolean(candidate.manualHangupUnconfirmed);
+      worker.physicalStateUnconfirmed ||= Boolean(candidate.physicalStateUnconfirmed);
+      worker.quarantineKind ||= candidate.quarantineKind || "";
+      worker.quarantineContactId ||= candidate.quarantineContactId || "";
+      worker.quarantinePhoneNumber ||= candidate.quarantinePhoneNumber || "";
+      worker.quarantineReason ||= candidate.quarantineReason || "";
+    }
+    if (worker.physicalStateUnconfirmed && worker.connected) worker.callState = "blocked";
+    return true;
+  });
 
   if (!normalized.phoneWorkers.length && normalized.phoneDevice) {
     normalized.phoneWorkers.push(createPhoneWorker({
@@ -168,6 +270,7 @@ function normalizeSessionShape(session = {}) {
     }));
   }
 
+  normalizedSessions.add(normalized);
   return normalized;
 }
 
@@ -195,6 +298,419 @@ function campaignLog(code, event, details = {}) {
   console.log(`[CAMPAIGN][${new Date().toISOString()}][${code}][${event}]${fields ? ` ${fields}` : ""}`);
 }
 
+function workerTimerKey(code, workerId) {
+  return `${code}:${workerId}`;
+}
+
+function clearWorkerDisconnectTimer(code, workerId) {
+  const key = workerTimerKey(code, workerId);
+  const timer = workerDisconnectTimers.get(key);
+  if (timer) clearTimeout(timer);
+  workerDisconnectTimers.delete(key);
+}
+
+function clearCampaignCommandTimer(code, workerId) {
+  const key = workerTimerKey(code, workerId);
+  const timer = campaignCommandTimers.get(key);
+  if (timer) clearTimeout(timer);
+  campaignCommandTimers.delete(key);
+}
+
+function clearCampaignHangupTimer(code, workerId, expectedCommandId = "") {
+  const key = workerTimerKey(code, workerId);
+  const entry = campaignHangupTimers.get(key);
+  if (!entry || (expectedCommandId && entry.commandId !== expectedCommandId)) return null;
+  clearTimeout(entry.timer);
+  campaignHangupTimers.delete(key);
+  return entry;
+}
+
+function markPhysicalStateUnconfirmed(worker, details = {}) {
+  if (!worker) return;
+  worker.physicalStateUnconfirmed = true;
+  worker.quarantineKind = String(
+    worker.quarantineKind || details.kind || (worker.campaignContactId ? "campaign" : "manual")
+  );
+  worker.quarantineContactId = String(
+    details.contactId || worker.quarantineContactId || worker.campaignContactId || worker.manualContactId || ""
+  );
+  worker.quarantinePhoneNumber = String(
+    details.phoneNumber || worker.quarantinePhoneNumber || worker.currentNumber || ""
+  );
+  worker.quarantineReason = String(
+    details.reason || worker.quarantineReason || worker.lastError ||
+    "No se pudo verificar si la llamada terminó físicamente"
+  );
+}
+
+function clearPhysicalStateQuarantine(worker) {
+  if (!worker) return;
+  worker.physicalStateUnconfirmed = false;
+  worker.quarantineKind = "";
+  worker.quarantineContactId = "";
+  worker.quarantinePhoneNumber = "";
+  worker.quarantineReason = "";
+}
+
+function releaseCampaignWorker(worker, finalState = "idle") {
+  if (!worker) return;
+  if (["blocked", "unresponsive"].includes(finalState)) {
+    markPhysicalStateUnconfirmed(worker, { kind: "campaign" });
+  } else {
+    clearPhysicalStateQuarantine(worker);
+  }
+  worker.callState = finalState;
+  worker.currentNumber = "";
+  worker.currentContactName = "";
+  worker.currentCompanyName = "";
+  worker.campaignContactId = null;
+  worker.campaignCommandId = null;
+  worker.campaignCallPhase = "idle";
+  worker.campaignLastState = finalState;
+  worker.hangupUnconfirmed = false;
+}
+
+function releaseManualWorker(worker, finalState = "idle") {
+  if (!worker) return;
+  if (["blocked", "unresponsive"].includes(finalState)) {
+    markPhysicalStateUnconfirmed(worker, { kind: "manual" });
+  } else {
+    clearPhysicalStateQuarantine(worker);
+  }
+  worker.callState = finalState;
+  worker.currentNumber = "";
+  worker.currentContactName = "";
+  worker.currentCompanyName = "";
+  worker.manualCommandId = null;
+  worker.manualContactId = null;
+  worker.manualCallPhase = "idle";
+  worker.manualLastState = finalState;
+  worker.pendingManualHangupCommandId = null;
+  worker.manualHangupUnconfirmed = false;
+}
+
+function failAssignedCampaignContact(code, worker, reason, eventName, workerFinalState = "") {
+  const session = sessions.get(code);
+  if (!session || !worker?.campaignContactId) return false;
+  const contactId = worker.campaignContactId;
+  const commandId = worker.campaignCommandId;
+  const contact = ensureCampaign(session).contacts.find((item) => item.id === contactId);
+  const contactWasActive = ["dialing", "ringing", "in_call"].includes(contact?.status);
+  updateActiveCallState(session, "failed", worker);
+  if (
+    contact &&
+    contactWasActive &&
+    !contact.callbackReason
+  ) contact.callbackReason = reason;
+  campaignLog(code, eventName, {
+    contacto: contact?.name,
+    numero: contact?.phone || worker.currentNumber,
+    dispositivo: getWorkerLabel(session, worker),
+    contactoId: contactId,
+    commandId,
+    motivo: reason
+  });
+  clearCampaignCommandTimer(code, worker.id);
+  worker.lastError = reason;
+  const finalState = workerFinalState || (worker.connected ? "failed" : "offline");
+  releaseCampaignWorker(worker, finalState);
+  session.callState = ["blocked", "unresponsive"].includes(finalState) ? finalState : "failed";
+  session.updatedAt = Date.now();
+  saveSoon();
+  emitState(code);
+  emitCampaignState(code);
+  if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
+  return true;
+}
+
+function settleUnconfirmedCampaignHangup(
+  code,
+  worker,
+  { contactId, dialCommandId, hangupCommandId, retryDeferred = false, reason, eventName }
+) {
+  const session = sessions.get(code);
+  if (
+    !session ||
+    !worker ||
+    worker.campaignContactId !== contactId ||
+    worker.campaignCommandId !== dialCommandId
+  ) return false;
+
+  clearCampaignHangupTimer(code, worker.id, hangupCommandId);
+  clearCampaignCommandTimer(code, worker.id);
+  clearWorkerDisconnectTimer(code, worker.id);
+
+  const campaign = ensureCampaign(session);
+  const contact = campaign.contacts.find((item) => item.id === contactId);
+  if (contact) {
+    if (retryDeferred) {
+      // A failed/unknown hangup must not immediately redial the same person
+      // from another phone while the original physical call may still exist.
+      contact.result = "reintentar";
+      contact.status = "failed";
+      contact.completedAt = new Date().toISOString();
+    }
+    if (retryDeferred || !["dialing", "ringing", "in_call"].includes(contact.status)) {
+      contact.assignedWorkerId = null;
+    }
+    contact.lastCallState = "hangup_unconfirmed";
+  }
+
+  const remaining = getActiveContacts(session);
+  campaign.activeContactId = remaining[0]?.id || null;
+  campaign.activeWorkerId = remaining[0]?.assignedWorkerId || null;
+  campaign.activeWorkerSocketId = null;
+  campaign.updatedAt = Date.now();
+
+  worker.lastError = reason;
+  worker.callState = worker.connected ? "blocked" : "offline";
+  worker.campaignLastState = worker.callState;
+  worker.hangupUnconfirmed = true;
+  markPhysicalStateUnconfirmed(worker, {
+    kind: "campaign",
+    contactId,
+    phoneNumber: contact?.phone,
+    reason
+  });
+  campaignLog(code, eventName, {
+    contacto: contact?.name,
+    numero: contact?.phone,
+    dispositivo: getWorkerLabel(session, worker),
+    contactoId: contactId,
+    commandId: hangupCommandId,
+    motivo: reason
+  });
+
+  session.updatedAt = Date.now();
+  syncSessionPhoneState(session);
+  if (!worker.connected) scheduleWorkerDisconnectGrace(code, worker);
+  saveSoon();
+  emitState(code);
+  emitCampaignState(code);
+  if (campaign.status === "running") fillAvailableCampaignWorkers(code);
+  return true;
+}
+
+function requestCampaignHangup(code, worker, contactId, { retryDeferred = false, commandId = "" } = {}) {
+  if (!worker?.id || !worker.campaignCommandId || !contactId) return null;
+
+  const dialCommandId = worker.campaignCommandId;
+  const hangupCommandId = commandId || nanoid();
+  worker.hangupUnconfirmed = false;
+  clearCampaignHangupTimer(code, worker.id);
+  const delivered = emitToPhoneWorker(worker, "call:action", {
+    action: "hangup",
+    from: "dashboard",
+    commandId: hangupCommandId,
+    contactId
+  });
+  campaignLog(code, delivered ? "CORTE_ENVIADO" : "CORTE_NO_ENTREGADO", {
+    dispositivo: worker.name || worker.id,
+    contactoId: contactId,
+    commandId: hangupCommandId
+  });
+
+  const context = {
+    contactId,
+    dialCommandId,
+    hangupCommandId,
+    retryDeferred
+  };
+  if (!delivered) {
+    const dashboardSocketId = sessions.get(code)?.dashboardSocketId;
+    if (dashboardSocketId) {
+      emitCommandFailure(io.to(dashboardSocketId), {
+        commandId: hangupCommandId,
+        action: "hangup",
+        message: "El socket del dispositivo no recibió la orden de corte"
+      });
+    }
+    settleUnconfirmedCampaignHangup(code, worker, {
+      ...context,
+      reason: "El socket del dispositivo no recibió la orden de corte",
+      eventName: "CORTE_NO_CONFIRMADO"
+    });
+    return { delivered: false, commandId: hangupCommandId };
+  }
+
+  const key = workerTimerKey(code, worker.id);
+  const timer = setTimeout(() => {
+    const entry = campaignHangupTimers.get(key);
+    if (!entry || entry.commandId !== hangupCommandId) return;
+    campaignHangupTimers.delete(key);
+    const session = sessions.get(code);
+    const current = session?.phoneWorkers?.find((item) => item.id === worker.id);
+    settleUnconfirmedCampaignHangup(code, current, {
+      ...context,
+      reason: `La APK no confirmó el corte en ${Math.round(CAMPAIGN_HANGUP_TIMEOUT_MS / 1000)} segundos`,
+      eventName: "CORTE_EXPIRADO"
+    });
+  }, CAMPAIGN_HANGUP_TIMEOUT_MS);
+  timer.unref?.();
+  campaignHangupTimers.set(key, {
+    timer,
+    commandId: hangupCommandId,
+    contactId,
+    dialCommandId,
+    retryDeferred
+  });
+  return { delivered: true, commandId: hangupCommandId };
+}
+
+function settlePendingCampaignHangupOnDisconnect(code, worker) {
+  if (!worker?.id) return false;
+  const pending = clearCampaignHangupTimer(code, worker.id);
+  if (!pending) return false;
+  if (pending.manual && worker.manualCommandId === pending.dialCommandId) {
+    const session = sessions.get(code);
+    worker.callState = "offline";
+    worker.manualLastState = "offline";
+    worker.manualHangupUnconfirmed = true;
+    worker.lastError = "El socket se desconectó antes de confirmar el corte manual";
+    markPhysicalStateUnconfirmed(worker, {
+      kind: "manual",
+      reason: worker.lastError
+    });
+    if (session) {
+      session.updatedAt = Date.now();
+      saveSoon();
+      emitState(code);
+    }
+    return true;
+  }
+  if (!pending.contactId) return false;
+  return settleUnconfirmedCampaignHangup(code, worker, {
+    contactId: pending.contactId,
+    dialCommandId: pending.dialCommandId,
+    hangupCommandId: pending.commandId,
+    retryDeferred: pending.retryDeferred,
+    reason: "El socket se desconectó antes de confirmar el corte",
+    eventName: "CORTE_INTERRUMPIDO_POR_DESCONEXION"
+  });
+}
+
+function scheduleManualHangupTimeout(code, worker, hangupCommandId) {
+  if (!worker?.id || !worker.manualCommandId || !hangupCommandId) return;
+  clearCampaignHangupTimer(code, worker.id);
+  const key = workerTimerKey(code, worker.id);
+  const expectedDialCommandId = worker.manualCommandId;
+  const timer = setTimeout(() => {
+    const entry = campaignHangupTimers.get(key);
+    if (!entry || entry.commandId !== hangupCommandId) return;
+    campaignHangupTimers.delete(key);
+    const session = sessions.get(code);
+    const current = session?.phoneWorkers?.find((item) => item.id === worker.id);
+    if (
+      !current ||
+      current.manualCommandId !== expectedDialCommandId ||
+      current.pendingManualHangupCommandId !== hangupCommandId
+    ) return;
+    current.callState = "blocked";
+    current.lastError = `La APK no confirmó el corte en ${Math.round(CAMPAIGN_HANGUP_TIMEOUT_MS / 1000)} segundos`;
+    current.manualLastState = "blocked";
+    current.manualHangupUnconfirmed = true;
+    markPhysicalStateUnconfirmed(current, {
+      kind: "manual",
+      reason: current.lastError
+    });
+    session.updatedAt = Date.now();
+    saveSoon();
+    emitState(code);
+  }, CAMPAIGN_HANGUP_TIMEOUT_MS);
+  timer.unref?.();
+  campaignHangupTimers.set(key, {
+    timer,
+    commandId: hangupCommandId,
+    dialCommandId: expectedDialCommandId,
+    manual: true
+  });
+}
+
+function scheduleCampaignCommandTimeout(code, worker, commandId) {
+  if (!worker?.id || !commandId) return;
+  clearCampaignCommandTimer(code, worker.id);
+  const key = workerTimerKey(code, worker.id);
+  const timer = setTimeout(() => {
+    campaignCommandTimers.delete(key);
+    const session = sessions.get(code);
+    const current = session?.phoneWorkers?.find((item) => item.id === worker.id);
+    if (
+      !current ||
+      current.campaignCommandId !== commandId ||
+      current.campaignCallPhase !== "command_sent"
+    ) return;
+    failAssignedCampaignContact(
+      code,
+      current,
+      "La APK no confirmó el inicio de la llamada dentro del tiempo límite",
+      "ORDEN_EXPIRADA",
+      "unresponsive"
+    );
+  }, CAMPAIGN_COMMAND_TIMEOUT_MS);
+  timer.unref?.();
+  campaignCommandTimers.set(key, timer);
+}
+
+function scheduleWorkerDisconnectGrace(code, worker, { allowConnected = false } = {}) {
+  if (!worker?.id || !worker.campaignContactId) return;
+  clearWorkerDisconnectTimer(code, worker.id);
+  const key = workerTimerKey(code, worker.id);
+  const expectedContactId = worker.campaignContactId;
+  const timer = setTimeout(() => {
+    workerDisconnectTimers.delete(key);
+    const session = sessions.get(code);
+    const current = session?.phoneWorkers?.find((item) => item.id === worker.id);
+    if (
+      !current ||
+      (!allowConnected && current.connected) ||
+      current.campaignContactId !== expectedContactId
+    ) return;
+    if (allowConnected && current.connected) {
+      current.callState = "blocked";
+      current.campaignLastState = "blocked";
+      current.lastError = "El teléfono reconectó, pero no resincronizó la llamada física";
+      markPhysicalStateUnconfirmed(current, {
+        kind: "campaign",
+        reason: current.lastError
+      });
+      campaignLog(code, "RESINCRONIZACION_EXPIRADA", {
+        dispositivo: current.name || current.id,
+        contactoId: current.campaignContactId,
+        commandId: current.campaignCommandId
+      });
+      saveSoon();
+      emitState(code);
+      emitCampaignState(code);
+      if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
+      return;
+    }
+    if (current.hangupUnconfirmed) {
+      current.callState = current.connected ? "blocked" : "offline";
+      current.campaignLastState = current.callState;
+      campaignLog(code, "CORTE_EN_CUARENTENA", {
+        dispositivo: current.name || current.id,
+        contactoId: current.campaignContactId,
+        commandId: current.campaignCommandId,
+        motivo: "Se conserva la correlación hasta que el teléfono confirme el estado físico"
+      });
+      saveSoon();
+      emitState(code);
+      emitCampaignState(code);
+      if (ensureCampaign(session).status === "running") fillAvailableCampaignWorkers(code);
+      return;
+    }
+    failAssignedCampaignContact(
+      code,
+      current,
+      `El dispositivo no se reconectó en ${Math.round(CAMPAIGN_DISCONNECT_GRACE_MS / 1000)} segundos`,
+      "DESCONEXION_CONFIRMADA",
+      "unresponsive"
+    );
+  }, CAMPAIGN_DISCONNECT_GRACE_MS);
+  timer.unref?.();
+  workerDisconnectTimers.set(key, timer);
+}
+
 function emitToPhoneWorker(worker, eventName, payload) {
   if (!worker?.socketId) return false;
   const targetSocket = io.sockets.sockets.get(worker.socketId);
@@ -203,20 +719,92 @@ function emitToPhoneWorker(worker, eventName, payload) {
   return true;
 }
 
+function emitCommandFailure(target, { commandId = "", action = "", message = "" } = {}) {
+  target?.emit("phone:command_ack", {
+    commandId,
+    action,
+    ok: false,
+    message,
+    at: new Date().toISOString()
+  });
+}
+
+function remapCampaignWorkerId(session, oldId, newId, boundContactId = "") {
+  if (!session?.campaign || !oldId || !newId || oldId === newId) return;
+  const campaign = ensureCampaign(session);
+  for (const contact of campaign.contacts) {
+    if (
+      (boundContactId && contact.id === boundContactId) ||
+      (!boundContactId && contact.assignedWorkerId === oldId)
+    ) contact.assignedWorkerId = newId;
+  }
+  if (
+    campaign.activeWorkerId === oldId ||
+    (boundContactId && campaign.activeContactId === boundContactId)
+  ) campaign.activeWorkerId = newId;
+}
+
 function upsertPhoneWorker(session, { socketId, deviceId, deviceName, pairingSlotId = "" }) {
   const workers = session.phoneWorkers || (session.phoneWorkers = []);
-  // Primary match: deviceId. Secondary match: socketId.
-  const existingIndex = workers.findIndex((worker) => (deviceId && worker.id === deviceId) || (socketId && worker.socketId === socketId));
+  // A pairing slot represents one physical phone. Matching it also repairs
+  // legacy entries whose persisted `id` was accidentally restored as
+  // "android-worker".
+  const matchingIndexes = workers
+    .map((worker, index) => ({ worker, index }))
+    .filter(({ worker }) =>
+      (deviceId && worker.id === deviceId) ||
+      (pairingSlotId && worker.pairingSlotId === pairingSlotId) ||
+      (socketId && worker.socketId === socketId)
+    );
+  const preferred = matchingIndexes.find(({ worker }) => worker.campaignContactId)
+    || matchingIndexes.find(({ worker }) => deviceId && worker.id === deviceId)
+    || matchingIndexes[0];
+  const existingIndex = preferred?.index ?? -1;
   
   if (existingIndex !== -1) {
     const existing = workers[existingIndex];
+    const wasDisconnected = !existing.connected || !existing.socketId;
+    const previousWorkerId = existing.id;
     existing.socketId = socketId;
     existing.id = deviceId || existing.id;
+    remapCampaignWorkerId(session, previousWorkerId, existing.id, existing.campaignContactId || "");
     existing.name = deviceName || existing.name;
     existing.pairingSlotId = pairingSlotId || existing.pairingSlotId || "";
     existing.connected = Boolean(socketId);
     existing.linkedAt = existing.linkedAt || new Date().toISOString();
-    existing.callState = existing.callState || "idle";
+    existing.callState = existing.physicalStateUnconfirmed
+      ? "blocked"
+      : existing.campaignContactId
+        ? (existing.campaignLastState && existing.campaignLastState !== "offline" ? existing.campaignLastState : "dialing")
+        : existing.manualCommandId
+          ? (existing.manualLastState && existing.manualLastState !== "offline" ? existing.manualLastState : "dialing")
+          : (wasDisconnected ? "idle" : (existing.callState || "idle"));
+    existing.disconnectedAt = null;
+
+    // Merge and remove duplicate rows created by the old persistence bug.
+    for (const { worker: duplicate, index } of [...matchingIndexes].sort((a, b) => b.index - a.index)) {
+      if (index === existingIndex) continue;
+      remapCampaignWorkerId(session, duplicate.id, existing.id, duplicate.campaignContactId || "");
+      existing.campaignContactId ||= duplicate.campaignContactId || null;
+      existing.campaignCommandId ||= duplicate.campaignCommandId || null;
+      existing.manualCommandId ||= duplicate.manualCommandId || null;
+      existing.manualContactId ||= duplicate.manualContactId || null;
+      if (existing.manualCallPhase === "idle" && duplicate.manualCallPhase !== "idle") {
+        existing.manualCallPhase = duplicate.manualCallPhase;
+      }
+      existing.hangupUnconfirmed ||= Boolean(duplicate.hangupUnconfirmed);
+      existing.manualHangupUnconfirmed ||= Boolean(duplicate.manualHangupUnconfirmed);
+      existing.physicalStateUnconfirmed ||= Boolean(duplicate.physicalStateUnconfirmed);
+      existing.quarantineKind ||= duplicate.quarantineKind || "";
+      existing.quarantineContactId ||= duplicate.quarantineContactId || "";
+      existing.quarantinePhoneNumber ||= duplicate.quarantinePhoneNumber || "";
+      existing.quarantineReason ||= duplicate.quarantineReason || "";
+      if (existing.campaignCallPhase === "idle" && duplicate.campaignCallPhase !== "idle") {
+        existing.campaignCallPhase = duplicate.campaignCallPhase;
+      }
+      workers.splice(index, 1);
+    }
+    if (existing.physicalStateUnconfirmed) existing.callState = "blocked";
     return existing;
   }
 
@@ -237,18 +825,34 @@ function removePhoneWorker(session, socketId) {
   if (index === -1) return null;
 
   const worker = workers[index];
+  worker.campaignLastState = worker.callState || worker.campaignLastState || "idle";
+  worker.manualLastState = worker.callState || worker.manualLastState || "idle";
   worker.socketId = null;
   worker.connected = false;
   worker.callState = "offline";
+  worker.disconnectedAt = new Date().toISOString();
   return worker;
+}
+
+function isWorkerCallBusy(worker) {
+  return Boolean(
+    worker?.campaignContactId ||
+    worker?.manualCommandId ||
+    worker?.physicalStateUnconfirmed ||
+    ["dialing", "ringing", "in_call", "blocked", "unresponsive"].includes(worker?.callState)
+  );
 }
 
 function selectPhoneWorker(session, preferredSocketId = "") {
   const workers = getConnectedPhoneWorkers(session);
   if (!workers.length) return null;
+  // Audio and dashboard controls currently represent one selected call. Keep
+  // one physical call per session so frames/actions can never cross customers.
+  if ((session.phoneWorkers || []).some(isWorkerCallBusy)) return null;
   const isAvailable = (worker) =>
     ["idle", "ended", "failed"].includes(worker.callState || "idle")
     && !worker.campaignContactId
+    && !worker.manualCommandId
     && ["idle", "ended", "failed"].includes(worker.campaignCallPhase || "idle");
 
   if (preferredSocketId) {
@@ -302,14 +906,69 @@ function ensureLegacyPairingSlot(session) {
 
 function getActivePhoneWorker(session) {
   const workers = getConnectedPhoneWorkers(session);
-  return workers.find((worker) => worker.socketId === session.activePhoneSocketId)
+  return workers.find((worker) => worker.campaignContactId || worker.manualCommandId)
+    || workers.find(isWorkerCallBusy)
+    || workers.find((worker) => worker.socketId === session.activePhoneSocketId)
     || workers.find((worker) => worker.socketId === session.phoneSocketId)
     || workers[0]
     || null;
 }
 
+function getAuthoritativeCallOwner(session) {
+  const workers = session.phoneWorkers || [];
+  const activeWorkerId = session.campaign?.activeWorkerId || "";
+  const activeContactId = session.campaign?.activeContactId || "";
+  return workers.find((worker) =>
+    (activeWorkerId && worker.id === activeWorkerId) ||
+    (activeContactId && worker.campaignContactId === activeContactId)
+  )
+    || workers.find((worker) => worker.campaignContactId)
+    || workers.find((worker) => worker.manualCommandId)
+    || workers.find(isWorkerCallBusy)
+    || getActivePhoneWorker(session);
+}
+
+function resolvePhoneWorkerForAction(session, contactId = "") {
+  const connected = getConnectedPhoneWorkers(session);
+  if (contactId) {
+    const exact = (session.phoneWorkers || []).find((worker) =>
+      worker.campaignContactId === contactId ||
+      worker.manualContactId === contactId ||
+      worker.quarantineContactId === contactId
+    ) || null;
+    return {
+      worker: !exact?.physicalStateUnconfirmed && exact?.connected && exact.socketId ? exact : null,
+      ambiguous: false,
+      disconnected: Boolean(exact && (!exact.connected || !exact.socketId)),
+      quarantined: Boolean(exact?.physicalStateUnconfirmed)
+    };
+  }
+  const authoritative = getAuthoritativeCallOwner(session);
+  if (authoritative && isWorkerCallBusy(authoritative)) {
+    return {
+      worker: !authoritative.physicalStateUnconfirmed && authoritative.connected && authoritative.socketId
+        ? authoritative
+        : null,
+      ambiguous: false,
+      disconnected: !authoritative.connected || !authoritative.socketId,
+      quarantined: Boolean(authoritative.physicalStateUnconfirmed)
+    };
+  }
+  const tracked = connected.filter((worker) => worker.campaignContactId || worker.manualCommandId);
+  if (tracked.length > 1) {
+    return { worker: null, ambiguous: true, disconnected: false, quarantined: false };
+  }
+  return {
+    worker: tracked[0] || getActivePhoneWorker(session),
+    ambiguous: false,
+    disconnected: false,
+    quarantined: false
+  };
+}
+
 function syncSessionPhoneState(session) {
-  const activeWorker = getActivePhoneWorker(session);
+  const previousOwnerSocketId = session.activePhoneSocketId;
+  const activeWorker = getAuthoritativeCallOwner(session);
   const connectedWorkers = getConnectedPhoneWorkers(session);
   session.phoneSocketId = activeWorker?.socketId || null;
   session.activePhoneSocketId = activeWorker?.socketId || null;
@@ -326,6 +985,17 @@ function syncSessionPhoneState(session) {
           linkedAt: connectedWorkers[0].linkedAt
         }
     : null;
+  if (
+    activeWorker?.socketId &&
+    isWorkerCallBusy(activeWorker)
+  ) {
+    session.callState = activeWorker.callState || session.callState;
+    if (activeWorker.socketId !== previousOwnerSocketId) {
+      if (activeWorker.currentNumber) session.lastNumber = activeWorker.currentNumber;
+      if (activeWorker.currentContactName) session.lastContactName = activeWorker.currentContactName;
+      if (activeWorker.currentCompanyName) session.lastCompanyName = activeWorker.currentCompanyName;
+    }
+  }
 }
 
 function emitCampaignState(code) {
@@ -352,10 +1022,15 @@ function detachSocketFromCurrentSession(socket) {
 
   if (previousRole === "phone") {
     const removed = removePhoneWorker(previousSession, socket.id);
+    if (removed) settlePendingCampaignHangupOnDisconnect(previousCode, removed);
     if (previousSession.activePhoneSocketId === socket.id) {
       previousSession.activePhoneSocketId = null;
     }
     syncSessionPhoneState(previousSession);
+
+    if (removed?.campaignContactId) {
+      scheduleWorkerDisconnectGrace(previousCode, removed);
+    }
 
     if (removed && previousSession.callState !== "idle" && !previousSession.phoneSocketId) {
       previousSession.callState = "idle";
@@ -392,8 +1067,8 @@ function dispatchNextCampaignCall(code) {
     return null;
   }
 
-  // Cada celular admite como máximo una llamada. Si hay varios conectados,
-  // cada worker libre recibe un contacto distinto.
+  // Solo una llamada física por sesión: el audio y los controles del dashboard
+  // pertenecen siempre a un único cliente, aunque haya teléfonos de respaldo.
   const worker = selectPhoneWorker(session);
   if (!worker) {
     const pending = campaign.contacts.filter((contact) => ["pending", "reintentar"].includes(contact.status)).length;
@@ -429,6 +1104,8 @@ function dispatchNextCampaignCall(code) {
     const commandId = nanoid();
     worker.callState = "dialing";
     worker.currentNumber = next.phone;
+    worker.currentContactName = next.name || "";
+    worker.currentCompanyName = next.name || "";
     worker.campaignContactId = next.id;
     worker.campaignCommandId = commandId;
     worker.campaignCallPhase = "command_sent";
@@ -448,6 +1125,18 @@ function dispatchNextCampaignCall(code) {
     campaignLog(code, delivered ? "ORDEN_ENVIADA" : "ORDEN_NO_ENTREGADA", {
       numero: next.phone, dispositivo: workerLabel, commandId
     });
+    if (delivered) {
+      scheduleCampaignCommandTimeout(code, worker, commandId);
+    } else {
+      worker.connected = false;
+      worker.socketId = null;
+      failAssignedCampaignContact(
+        code,
+        worker,
+        "El socket del dispositivo no recibió la orden",
+        "ENTREGA_FALLIDA"
+      );
+    }
     saveSoon();
     emitState(code);
     emitCampaignState(code);
@@ -470,10 +1159,9 @@ function fillAvailableCampaignWorkers(code) {
   if (!session || ensureCampaign(session).status !== "running") return [];
 
   const dispatched = [];
-  const capacity = getConnectedPhoneWorkers(session).length;
+  const capacity = getConnectedPhoneWorkers(session).length ? 1 : 0;
 
-  // El límite evita un bucle accidental y representa la concurrencia máxima:
-  // una orden por cada dispositivo actualmente conectado.
+  // Los demás dispositivos quedan listos como respaldo/failover.
   for (let index = 0; index < capacity; index += 1) {
     const next = dispatchNextCampaignCall(code);
     if (!next) break;
@@ -521,9 +1209,9 @@ function emitState(code) {
   io.to(code).emit("state:changed", {
     connected: {
       dashboard: Boolean(session.dashboardSocketId),
-      phone: Boolean(session.phoneSocketId),
+      phone: phoneWorkers.some((worker) => worker.connected),
       phoneCount: phoneWorkers.filter((worker) => worker.connected).length,
-      linking: Boolean(session.phoneDevice) && !session.phoneSocketId
+      linking: Boolean(session.phoneDevice) && !phoneWorkers.some((worker) => worker.connected)
     },
     phoneDevice: session.phoneDevice,
     phoneWorkers,
@@ -691,8 +1379,15 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on("session:join", ({ code, role, token, deviceName, deviceId }) => {
+  socket.on("session:join", ({ code, role, token, deviceName, deviceId, protocolVersion }) => {
     if (!code || !role) return;
+
+    if (role === "phone" && Number(protocolVersion || 0) < 2) {
+      socket.emit("session:error", {
+        message: "Esta APK es antigua. Instala la versión estable más reciente antes de vincularla."
+      });
+      return;
+    }
 
     const normalizedCode = String(code).toUpperCase().trim();
     const session = getOrCreateSession(normalizedCode);
@@ -718,11 +1413,21 @@ io.on("connection", (socket) => {
         deviceName: deviceName || "Android bridge",
         pairingSlotId: pairingSlot?.id || ""
       });
+      const resumedCampaignContactId = worker.campaignContactId;
+      clearWorkerDisconnectTimer(normalizedCode, worker.id);
+      if (resumedCampaignContactId) {
+        scheduleWorkerDisconnectGrace(normalizedCode, worker, { allowConnected: true });
+      }
       session.activePhoneSocketId ||= worker.socketId;
       syncSessionPhoneState(session);
       campaignLog(normalizedCode, "DISPOSITIVO_CONECTADO", {
         dispositivo: getWorkerLabel(session, worker), deviceId: worker.id,
         socketId: socket.id, conectados: getConnectedPhoneWorkers(session).length
+      });
+      if (resumedCampaignContactId) campaignLog(normalizedCode, "LLAMADA_RECUPERANDO", {
+        dispositivo: getWorkerLabel(session, worker),
+        contactoId: resumedCampaignContactId,
+        commandId: worker.campaignCommandId
       });
       saveSoon();
     }
@@ -732,8 +1437,8 @@ io.on("connection", (socket) => {
     emitState(normalizedCode);
     emitCampaignState(normalizedCode);
 
-    // Si un nuevo celular se conecta durante una campaña, se aprovecha
-    // inmediatamente la capacidad adicional sin esperar a que terminen los demás.
+    // Un celular nuevo queda disponible como respaldo y toma la próxima llamada
+    // solo cuando no existe otra llamada física en la sesión.
     if (role === "phone") {
       const campaign = ensureCampaign(session);
       if (campaign.status === "running") {
@@ -751,6 +1456,7 @@ io.on("connection", (socket) => {
     if (!session) return;
 
   if (action === "dial") {
+      const effectiveCommandId = commandId || nanoid();
       session.lastNumber = phoneNumber || "";
       session.lastCompanyName = companyName || "";
       session.lastContactName = contactName || "";
@@ -768,50 +1474,128 @@ io.on("connection", (socket) => {
       if (worker) {
         worker.callState = "dialing";
         worker.currentNumber = phoneNumber || "";
+        worker.currentContactName = contactName || "";
+        worker.currentCompanyName = companyName || "";
+        worker.manualCommandId = effectiveCommandId;
+        worker.manualContactId = contactId || null;
+        worker.manualCallPhase = "command_sent";
+        worker.manualLastState = "dialing";
+        worker.pendingManualHangupCommandId = null;
+        worker.manualHangupUnconfirmed = false;
         console.log(`[MANUAL] Marcado directo a ${phoneNumber} vía worker ${worker.name}`);
-        emitToPhoneWorker(worker, "call:action", {
+        const delivered = emitToPhoneWorker(worker, "call:action", {
           action: "dial",
           phoneNumber: phoneNumber || "",
           companyName: companyName || "",
           contactName: contactName || "",
           imageUrl: imageUrl || "",
           contactId: contactId || "",
-          commandId: commandId || nanoid()
+          commandId: effectiveCommandId
         });
+        if (!delivered) {
+          worker.connected = false;
+          worker.socketId = null;
+          releaseManualWorker(worker, "offline");
+          session.callState = "failed";
+          emitCommandFailure(socket, {
+            commandId: effectiveCommandId,
+            action: "dial",
+            message: "El socket del dispositivo no recibió la orden de llamada"
+          });
+        }
         saveSoon();
         emitState(code);
       } else {
         console.log(`[MANUAL] Intento fallido para ${phoneNumber} (No hay worker activo)`);
         session.callState = "failed";
+        emitCommandFailure(socket, {
+          commandId: effectiveCommandId,
+          action: "dial",
+          message: "No hay un teléfono disponible para iniciar la llamada"
+        });
         saveSoon();
         emitState(code);
       }
     }
 
     if (action === "hangup") {
-      const worker = contactId
-        ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
-        : getActivePhoneWorker(session);
-      if (worker) {
-        emitToPhoneWorker(worker, "call:action", {
-          action: "hangup", 
-          from: "dashboard", 
-          contactId 
+      const { worker, ambiguous, disconnected, quarantined } = resolvePhoneWorkerForAction(session, contactId || "");
+      if (!worker) {
+        socket.emit("phone:command_ack", {
+          commandId: commandId || "",
+          action,
+          ok: false,
+          message: ambiguous
+            ? "Hay varias llamadas activas; selecciona el contacto exacto"
+            : quarantined
+              ? "La llamada está en cuarentena; revisa el celular y usa la liberación de seguridad"
+            : disconnected
+              ? "El teléfono de esta llamada está desconectado; revisa el celular o usa la liberación de seguridad"
+            : "No se encontró una llamada activa para cortar",
+          at: new Date().toISOString()
         });
       }
-      session.callState = "ended";
+      if (worker) {
+        if (worker.campaignContactId && (!contactId || worker.campaignContactId === contactId)) {
+          requestCampaignHangup(code, worker, worker.campaignContactId, { commandId });
+        } else {
+          const hangupCommandId = commandId || nanoid();
+          worker.pendingManualHangupCommandId = hangupCommandId;
+          const delivered = emitToPhoneWorker(worker, "call:action", {
+            action: "hangup",
+            from: "dashboard",
+            commandId: hangupCommandId,
+            contactId: contactId || worker.manualContactId || ""
+          });
+          if (delivered) scheduleManualHangupTimeout(code, worker, hangupCommandId);
+          else {
+            worker.callState = "blocked";
+            worker.manualLastState = "blocked";
+            worker.manualHangupUnconfirmed = true;
+            worker.lastError = "El socket del dispositivo no recibió la orden de corte";
+            markPhysicalStateUnconfirmed(worker, {
+              kind: "manual",
+              reason: worker.lastError
+            });
+            emitCommandFailure(socket, {
+              commandId: hangupCommandId,
+              action: "hangup",
+              message: worker.lastError
+            });
+          }
+        }
+      }
       saveSoon();
     }
 
     if (action === "mute" || action === "unmute" || action === "speaker_on" || action === "speaker_off" || action === "answer") {
-      const worker = contactId
-        ? getConnectedPhoneWorkers(session).find((item) => item.id === ensureCampaign(session).contacts.find((contact) => contact.id === contactId)?.assignedWorkerId)
-        : getActivePhoneWorker(session);
+      const { worker, ambiguous, disconnected, quarantined } = resolvePhoneWorkerForAction(session, contactId || "");
       if (worker) {
-        emitToPhoneWorker(worker, "call:action", {
+        const delivered = emitToPhoneWorker(worker, "call:action", {
           action, 
           commandId,
           contactId 
+        });
+        if (!delivered) {
+          emitCommandFailure(socket, {
+            commandId: commandId || "",
+            action,
+            message: "El socket del teléfono no recibió la orden"
+          });
+        }
+      } else {
+        socket.emit("phone:command_ack", {
+          commandId: commandId || "",
+          action,
+          ok: false,
+          message: ambiguous
+            ? "Hay varias llamadas activas; selecciona el contacto exacto"
+            : quarantined
+              ? "La llamada está en cuarentena; revisa el celular y usa la liberación de seguridad"
+            : disconnected
+              ? "El teléfono de esta llamada está desconectado; revisa el celular o usa la liberación de seguridad"
+            : "No se encontró el teléfono de esta llamada",
+          at: new Date().toISOString()
         });
       }
     }
@@ -821,7 +1605,7 @@ io.on("connection", (socket) => {
     emitCampaignState(code);
   });
 
-  socket.on("phone:status", ({ callState, phoneNumber, contactName, companyName, micMuted, speakerOn, lineLabel, lastError }) => {
+  socket.on("phone:status", (payload = {}) => {
     const code = socket.data.code;
     const role = socket.data.role;
     if (!code || role !== "phone") return;
@@ -829,59 +1613,231 @@ io.on("connection", (socket) => {
     const session = sessions.get(code);
     if (!session) return;
 
+    const {
+      callState,
+      phoneNumber,
+      contactName,
+      companyName,
+      micMuted,
+      speakerOn,
+      lineLabel,
+      lastError,
+      commandId,
+      contactId,
+      callDirection,
+      source,
+      physicalObserved,
+      noLiveCalls
+    } = payload;
+    if (!isActiveCallState(callState) && !isTerminalCallState(callState)) return;
+
     const worker = getPhoneWorkerBySocketId(session, socket.id);
-    const terminalState = ["idle", "ended", "failed"].includes(callState);
-    const activeState = ["dialing", "ringing", "in_call"].includes(callState);
+    if (!worker) return;
+
+    const terminalState = isTerminalCallState(callState);
+    const activeState = isActiveCallState(callState);
     const campaignPhaseBeforeStatus = worker?.campaignCallPhase || "idle";
     const previousCallState = worker?.callState || "idle";
     const campaignContactId = worker?.campaignContactId || "";
-    const trackedNumber = phoneNumber || worker?.currentNumber || session.lastNumber || "";
+    const manualCommandId = worker?.manualCommandId || "";
+    const manualContactId = worker?.manualContactId || "";
+    const manualPhaseBeforeStatus = worker?.manualCallPhase || "idle";
+    const campaignContact = campaignContactId
+      ? ensureCampaign(session).contacts.find((contact) => contact.id === campaignContactId)
+      : null;
+    const exactOrphanedCampaignEvent = Boolean(
+      campaignContactId &&
+      !campaignContact &&
+      commandId &&
+      contactId &&
+      commandId === worker.campaignCommandId &&
+      contactId === campaignContactId &&
+      String(callDirection || "").toLowerCase() !== "incoming"
+    );
+    const correlatedCampaignEvent = exactOrphanedCampaignEvent || isCampaignStatusCorrelated(worker, campaignContact, {
+      commandId,
+      contactId,
+      phoneNumber,
+      callDirection
+    });
+    const expectedManualNumber = normalizePhoneNumber(worker.currentNumber);
+    const observedManualNumber = normalizePhoneNumber(phoneNumber);
+    const hasReportedManualIds = Boolean(commandId || contactId);
+    const manualIdsMatch = Boolean(
+      commandId === manualCommandId &&
+      (!manualContactId || contactId === manualContactId)
+    );
+    const legacyManualNumberMatch = Boolean(
+      !hasReportedManualIds &&
+      expectedManualNumber &&
+      observedManualNumber &&
+      expectedManualNumber === observedManualNumber
+    );
+    const correlatedManualEvent = Boolean(
+      !campaignContactId &&
+      manualCommandId &&
+      String(callDirection || "").toLowerCase() !== "incoming" &&
+      (manualIdsMatch || legacyManualNumberMatch) &&
+      (!expectedManualNumber || !observedManualNumber || expectedManualNumber === observedManualNumber)
+    );
+    const reportedSource = String(source || "").trim();
+    const confirmsPhysicalCall = physicalObserved === true ||
+      !reportedSource ||
+      ["telecom", "telephony_fallback", "user_action"].includes(reportedSource);
+    const ignoredPrematureIdle = Boolean(
+      callState === "idle" &&
+      campaignPhaseBeforeStatus === "command_sent" &&
+      correlatedCampaignEvent
+    );
+    const allowedCampaignTransition = Boolean(
+      correlatedCampaignEvent &&
+      campaignContact &&
+      isAllowedCampaignTransition(campaignContact.status, callState) &&
+      (!activeState || confirmsPhysicalCall || campaignPhaseBeforeStatus === "active")
+    );
+    const sameCampaignState = Boolean(campaignContact && campaignContact.status === callState);
+    const confirmedCampaignActive = Boolean(
+      activeState &&
+      correlatedCampaignEvent &&
+      campaignContact &&
+      (allowedCampaignTransition || sameCampaignState) &&
+      (confirmsPhysicalCall || campaignPhaseBeforeStatus === "active")
+    );
+    const confirmedCampaignEnd = Boolean(
+      terminalState &&
+      correlatedCampaignEvent &&
+      !ignoredPrematureIdle &&
+      (
+        campaignPhaseBeforeStatus === "active" ||
+        worker.hangupUnconfirmed ||
+        ["ended", "failed"].includes(callState)
+      )
+    );
+    const allowedManualTransition = Boolean(
+      correlatedManualEvent &&
+      isAllowedCampaignTransition(worker.manualLastState, callState) &&
+      (!activeState || confirmsPhysicalCall)
+    );
+    const sameManualState = worker.manualLastState === callState;
+    const confirmedManualActive = Boolean(
+      activeState &&
+      correlatedManualEvent &&
+      (allowedManualTransition || sameManualState) &&
+      confirmsPhysicalCall
+    );
+    const ignoredPrematureManualIdle = Boolean(
+      callState === "idle" &&
+      manualPhaseBeforeStatus === "command_sent" &&
+      correlatedManualEvent &&
+      noLiveCalls !== true
+    );
+    const confirmedManualEnd = Boolean(
+      terminalState &&
+      correlatedManualEvent &&
+      !ignoredPrematureManualIdle &&
+      (
+        manualPhaseBeforeStatus === "active" ||
+        worker.manualHangupUnconfirmed ||
+        ["ringing", "in_call"].includes(worker.manualLastState) ||
+        ["ended", "failed"].includes(callState) ||
+        noLiveCalls === true
+      )
+    );
+    const untrackedTerminalNeedsProof =
+      !campaignContactId &&
+      !manualCommandId &&
+      terminalState;
+    const trustedUntrackedTerminal =
+      terminalState &&
+      noLiveCalls === true;
+    const shouldApplyWorkerStatus = campaignContactId
+      ? (confirmedCampaignActive || confirmedCampaignEnd)
+      : manualCommandId
+        ? (confirmedManualActive || confirmedManualEnd)
+        : (activeState ? confirmsPhysicalCall : trustedUntrackedTerminal);
+    const trackedNumber = campaignContact?.phone || worker.currentNumber || phoneNumber || session.lastNumber || "";
+    const statusSignature = buildStatusSignature(payload);
+    const duplicateStatus = statusSignature === worker.lastStatusSignature;
+    worker.lastStatusSignature = statusSignature;
 
-    if (worker) {
+    if (shouldApplyWorkerStatus) {
       worker.callState = callState || worker.callState || "idle";
       worker.currentNumber = ["idle", "ended", "failed"].includes(callState)
         ? ""
         : (phoneNumber || worker.currentNumber || "");
-      worker.connected = true;
-      if (lineLabel) worker.lineLabel = String(lineLabel).trim();
-      if (lastError) worker.lastError = String(lastError).trim();
-      session.activePhoneSocketId = socket.id;
-      if (activeState && worker.campaignContactId) {
-        worker.campaignCallPhase = "active";
+      if (typeof contactName === "string" && contactName.trim()) {
+        worker.currentContactName = contactName.trim();
+      }
+      if (typeof companyName === "string" && companyName.trim()) {
+        worker.currentCompanyName = companyName.trim();
+      }
+      if (manualCommandId) worker.manualLastState = callState || worker.manualLastState || "idle";
+      if (untrackedTerminalNeedsProof && trustedUntrackedTerminal) {
+        clearPhysicalStateQuarantine(worker);
       }
     }
-    session.callState = callState || session.callState;
-    if (typeof phoneNumber === "string" && phoneNumber.trim()) {
+    worker.connected = true;
+    worker.disconnectedAt = null;
+    if (lineLabel) worker.lineLabel = String(lineLabel).trim();
+    if (shouldApplyWorkerStatus && lastError) worker.lastError = String(lastError).trim();
+    const competingCallOwner = (session.phoneWorkers || [])
+      .find((item) => item !== worker && isWorkerCallBusy(item));
+    const shouldUpdateSessionState = !competingCallOwner;
+    if (shouldUpdateSessionState) session.activePhoneSocketId = socket.id;
+    if (confirmedCampaignActive) {
+      worker.campaignCallPhase = "active";
+      worker.campaignLastState = callState;
+      clearCampaignCommandTimer(code, worker.id);
+      clearWorkerDisconnectTimer(code, worker.id);
+    }
+    if (confirmedManualActive) worker.manualCallPhase = "active";
+
+    // An unrelated incoming call may be shown by Android, but it must never
+    // overwrite the number or state of an assigned campaign call.
+    if (shouldApplyWorkerStatus && shouldUpdateSessionState) {
+      session.callState = callState || session.callState;
+    }
+    if (shouldApplyWorkerStatus && shouldUpdateSessionState && typeof phoneNumber === "string" && phoneNumber.trim()) {
       session.lastNumber = phoneNumber.trim();
     }
-    if (typeof contactName === "string" && contactName.trim()) {
+    if (shouldApplyWorkerStatus && shouldUpdateSessionState && typeof contactName === "string" && contactName.trim()) {
       session.lastContactName = contactName.trim();
     }
-    if (typeof companyName === "string" && companyName.trim()) {
+    if (shouldApplyWorkerStatus && shouldUpdateSessionState && typeof companyName === "string" && companyName.trim()) {
       session.lastCompanyName = companyName.trim();
     }
-    session.micMuted = Boolean(micMuted);
-    session.isSpeakerOn = Boolean(speakerOn);
+    if (shouldUpdateSessionState && typeof micMuted === "boolean") session.micMuted = micMuted;
+    if (shouldUpdateSessionState && typeof speakerOn === "boolean") session.isSpeakerOn = speakerOn;
     session.updatedAt = Date.now();
-    // Android puede emitir un "idle" atrasado justo después de recibir dial.
-    // Solo aceptamos un final si antes vimos un estado real de llamada.
-    // ended/failed son finales explícitos: liberan el dispositivo incluso si
-    // Android no alcanzó a enviar ringing/in_call. Solo se ignora un idle
-    // atrasado inmediatamente después de enviar la orden dial.
-    const confirmedCampaignEnd =
-      terminalState &&
-      Boolean(worker?.campaignContactId) &&
-      (campaignPhaseBeforeStatus === "active" || ["ended", "failed"].includes(callState));
-    const ignoredPrematureIdle =
-      callState === "idle" &&
-      campaignPhaseBeforeStatus === "command_sent" &&
-      Boolean(worker?.campaignContactId);
 
-    if (worker && callState && callState !== previousCallState) {
+    const workerBecameAvailable =
+      !campaignContactId &&
+      !manualCommandId &&
+      terminalState &&
+      noLiveCalls === true &&
+      !["idle", "ended", "failed"].includes(previousCallState);
+    if (campaignContactId && !correlatedCampaignEvent && !duplicateStatus) {
+      campaignLog(code, "ESTADO_NO_CORRELACIONADO", {
+        numeroReportado: phoneNumber,
+        numeroEsperado: campaignContact?.phone,
+        dispositivo: getWorkerLabel(session, worker),
+        estado: callState,
+        direccion: callDirection || undefined,
+        fuente: source || undefined,
+        commandIdReportado: commandId || undefined,
+        contactoIdReportado: contactId || undefined
+      });
+    } else if (
+      correlatedCampaignEvent &&
+      shouldApplyWorkerStatus &&
+      !duplicateStatus &&
+      callState !== previousCallState
+    ) {
       campaignLog(code, "ESTADO", {
         numero: trackedNumber, dispositivo: getWorkerLabel(session, worker),
         anterior: previousCallState, actual: callState,
-        contactoId: campaignContactId, error: lastError || undefined
+        contactoId: campaignContactId, commandId: worker.campaignCommandId,
+        fuente: source || undefined, error: lastError || undefined
       });
     }
     if (ignoredPrematureIdle) campaignLog(code, "IDLE_IGNORADO", {
@@ -889,20 +1845,57 @@ io.on("connection", (socket) => {
       motivo: "estado atrasado después de enviar dial"
     });
 
-    if (!ignoredPrematureIdle) {
+    if (!ignoredPrematureIdle && allowedCampaignTransition) {
       updateActiveCallState(session, callState, worker || {});
     }
     if (confirmedCampaignEnd && worker) {
-      const finishedContact = ensureCampaign(session).contacts.find((contact) => contact.id === campaignContactId);
+      const finishedContact = campaignContact;
+      if (finishedContact?.result === "reintentar") {
+        finishedContact.status = "reintentar";
+        finishedContact.completedAt = null;
+        finishedContact.assignedWorkerId = null;
+      }
       campaignLog(code, "LLAMADA_TERMINADA", {
         contacto: finishedContact?.name,
         numero: finishedContact?.phone || trackedNumber,
         dispositivo: getWorkerLabel(session, worker), estado: callState,
         resultado: finishedContact?.result || "sin_respuesta"
       });
-      worker.campaignContactId = null;
-      worker.campaignCommandId = null;
-      worker.campaignCallPhase = "idle";
+      clearCampaignCommandTimer(code, worker.id);
+      clearCampaignHangupTimer(code, worker.id);
+      clearWorkerDisconnectTimer(code, worker.id);
+      releaseCampaignWorker(
+        worker,
+        noLiveCalls === true ? (callState === "failed" ? "failed" : "idle") : "blocked"
+      );
+    }
+    if (confirmedManualEnd && worker) {
+      clearCampaignHangupTimer(code, worker.id);
+      releaseManualWorker(
+        worker,
+        noLiveCalls === true ? (callState === "failed" ? "failed" : "idle") : "blocked"
+      );
+    }
+    if (commandId) {
+      const acknowledgedTerminal = terminalState && (
+        campaignContactId
+          ? confirmedCampaignEnd
+          : manualCommandId
+            ? confirmedManualEnd
+            : trustedUntrackedTerminal
+      );
+      const acceptedStatus = campaignContactId
+        ? (correlatedCampaignEvent && (!terminalState || confirmedCampaignEnd))
+        : manualCommandId
+          ? (correlatedManualEvent && (!terminalState || confirmedManualEnd))
+          : (terminalState ? trustedUntrackedTerminal : confirmsPhysicalCall);
+      socket.emit("phone:status_ack", {
+        commandId,
+        contactId,
+        callState,
+        accepted: acceptedStatus,
+        terminal: acknowledgedTerminal
+      });
     }
     syncSessionPhoneState(session);
     saveSoon();
@@ -910,7 +1903,7 @@ io.on("connection", (socket) => {
     emitCampaignState(code);
 
     const campaign = ensureCampaign(session);
-    if (confirmedCampaignEnd && campaign.status === "running") {
+    if ((confirmedCampaignEnd || confirmedManualEnd || workerBecameAvailable) && campaign.status === "running") {
       fillAvailableCampaignWorkers(code);
     }
   });
@@ -934,22 +1927,62 @@ io.on("connection", (socket) => {
       worker.campaignCommandId === commandId &&
       !ok
     ) {
-      const failedContactId = worker.campaignContactId;
-      if (failedContactId) {
-        markContactResult(session, failedContactId, "sin_respuesta", {
-          callbackReason: message || "El teléfono rechazó la orden de llamada"
-        });
-      }
-      worker.callState = "failed";
-      worker.currentNumber = "";
-      worker.campaignContactId = null;
-      worker.campaignCommandId = null;
-      worker.campaignCallPhase = "idle";
+      failAssignedCampaignContact(
+        code,
+        worker,
+        message || "El teléfono rechazó la orden de llamada",
+        "ORDEN_RECHAZADA_PROCESADA",
+        "blocked"
+      );
+    } else if (
+      worker &&
+      action === "dial" &&
+      worker.manualCommandId === commandId &&
+      !ok
+    ) {
+      worker.lastError = message || "El teléfono rechazó la orden de llamada";
+      releaseManualWorker(worker, "blocked");
+      session.callState = "failed";
+      session.updatedAt = Date.now();
       saveSoon();
       emitState(code);
-      emitCampaignState(code);
-      if (ensureCampaign(session).status === "running") {
-        setTimeout(() => fillAvailableCampaignWorkers(code), 500);
+    }
+
+    if (worker && action === "hangup") {
+      const key = workerTimerKey(code, worker.id);
+      const pendingHangup = campaignHangupTimers.get(key);
+      if (pendingHangup?.commandId === commandId && pendingHangup.contactId) {
+        campaignLog(code, ok ? "CORTE_ACEPTADO" : "CORTE_RECHAZADO", {
+          dispositivo: getWorkerLabel(session, worker),
+          contactoId: pendingHangup.contactId,
+          commandId,
+          mensaje: message || undefined
+        });
+        if (!ok) {
+          settleUnconfirmedCampaignHangup(code, worker, {
+            contactId: pendingHangup.contactId,
+            dialCommandId: pendingHangup.dialCommandId,
+            hangupCommandId: commandId,
+            retryDeferred: pendingHangup.retryDeferred,
+            reason: message || "La APK rechazó la orden de corte",
+            eventName: "CORTE_RECHAZADO_PROCESADO"
+          });
+        }
+      } else if (worker.pendingManualHangupCommandId === commandId) {
+        if (!ok) {
+          clearCampaignHangupTimer(code, worker.id, commandId);
+          worker.callState = "blocked";
+          worker.manualLastState = "blocked";
+          worker.manualHangupUnconfirmed = true;
+          worker.lastError = message || "La APK rechazó la orden de corte";
+          markPhysicalStateUnconfirmed(worker, {
+            kind: "manual",
+            reason: worker.lastError
+          });
+          session.updatedAt = Date.now();
+          saveSoon();
+          emitState(code);
+        }
       }
     }
 
@@ -972,10 +2005,10 @@ io.on("connection", (socket) => {
     if (!code || role !== "phone") return;
     const session = sessions.get(code);
     if (!session) return;
-    session.activePhoneSocketId = socket.id;
-    const worker = getPhoneWorkerBySocketId(session, socket.id);
-    if (worker) worker.callState = session.callState || worker.callState || "idle";
-    syncSessionPhoneState(session);
+    // Never let a standby/incoming phone steal the media route while another
+    // worker owns (or is quarantined with) the tracked call.
+    const owner = getAuthoritativeCallOwner(session);
+    if (!owner || owner.socketId !== socket.id) return;
     const peerId = getPeer(session, "phone");  // gets dashboardSocketId
     if (peerId) io.to(peerId).emit("audio:phone", data);
   });
@@ -986,7 +2019,8 @@ io.on("connection", (socket) => {
     if (!code || role !== "dashboard") return;
     const session = sessions.get(code);
     if (!session) return;
-    const peerId = getPeer(session, "dashboard");  // gets phoneSocketId
+    const owner = getAuthoritativeCallOwner(session);
+    const peerId = owner?.connected ? owner.socketId : null;
     if (peerId) io.to(peerId).emit("audio:dashboard", data);
   });
 
@@ -1005,13 +2039,17 @@ io.on("connection", (socket) => {
         session.activePhoneSocketId = null;
       }
       
-      // If the disconnecting worker was in a call, cleanup campaign
+      // Socket.IO reconnects transparently after short network cuts. Preserve
+      // the assignment during a grace window instead of failing the contact
+      // immediately.
       if (removed) {
-          campaignLog(code, "DISPOSITIVO_DESCONECTADO", {
-            dispositivo: getWorkerLabel(session, removed), deviceId: removed.id,
-            contactoId: removed.campaignContactId, socketId: socket.id
-          });
-          updateActiveCallState(session, "ended", removed);
+        settlePendingCampaignHangupOnDisconnect(code, removed);
+        campaignLog(code, "DISPOSITIVO_DESCONECTADO", {
+          dispositivo: getWorkerLabel(session, removed), deviceId: removed.id,
+          contactoId: removed.campaignContactId, socketId: socket.id,
+          graciaMs: removed.campaignContactId ? CAMPAIGN_DISCONNECT_GRACE_MS : undefined
+        });
+        if (removed.campaignContactId) scheduleWorkerDisconnectGrace(code, removed);
       }
 
       syncSessionPhoneState(session);
@@ -1039,6 +2077,7 @@ io.on("connection", (socket) => {
       return;
     }
 
+    saveSoon();
     emitState(code);
     emitCampaignState(code);
   });
@@ -1199,13 +2238,18 @@ app.post("/api/session/:code/campaign/start", (req, res) => {
 
   const session = getOrCreateSession(code);
   const currentCampaign = ensureCampaign(session);
+  const hasBoundCampaignWorker = (session.phoneWorkers || []).some((worker) =>
+    worker.campaignContactId ||
+    (worker.physicalStateUnconfirmed && worker.quarantineKind === "campaign")
+  );
   if (
     ["running", "paused"].includes(currentCampaign.status) ||
-    getActiveContact(session)
+    getActiveContact(session) ||
+    hasBoundCampaignWorker
   ) {
     return res.status(409).json({
       ok: false,
-      error: "La llamada general ya está activa. No se puede iniciar otra orden."
+      error: "Todavía hay una llamada física pendiente de cierre. No se puede reemplazar la campaña."
     });
   }
 
@@ -1235,15 +2279,6 @@ app.post("/api/session/:code/campaign/start", (req, res) => {
     dispatched: dispatched.length,
     campaign: getCampaignSnapshot(session)
   });
-});
-
-app.get("/api/session/:code/campaign", (req, res) => {
-  const code = String(req.params.code || "").toUpperCase().trim();
-  if (!code) return res.status(400).json({ ok: false, error: "Code requerido" });
-  const session = sessions.get(code);
-  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
-
-  return res.json({ ok: true, code, campaign: getCampaignSnapshot(session) });
 });
 
 app.post("/api/session/:code/campaign/pause", (req, res) => {
@@ -1295,16 +2330,29 @@ app.post("/api/session/:code/campaign/skip", (req, res) => {
   const session = sessions.get(code);
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
-  const activeBeforeSkip = getActiveContact(session);
-  const workerSocketId = getConnectedPhoneWorkers(session)
-    .find((worker) => worker.id === activeBeforeSkip?.assignedWorkerId)?.socketId;
-  const skipped = skipActiveContact(session);
-  if (workerSocketId && skipped) {
-    emitToPhoneWorker({ socketId: workerSocketId }, "call:action", {
-      action: "hangup",
-      from: "dashboard",
-      contactId: skipped.id
+  const requestedContactId = String(req.body?.contactId || "").trim();
+  const activeBeforeSkip = requestedContactId
+    ? ensureCampaign(session).contacts.find((contact) => contact.id === requestedContactId)
+    : getActiveContact(session);
+  const skipWorker = (session.phoneWorkers || [])
+    .find((worker) => worker.id === activeBeforeSkip?.assignedWorkerId);
+  const workerSocketId = skipWorker?.connected ? skipWorker.socketId : null;
+  const skipped = skipActiveContact(session, requestedContactId);
+  if (!skipped) return res.status(409).json({ ok: false, error: "El contacto ya no tiene una llamada activa" });
+  if (skipWorker) clearCampaignCommandTimer(code, skipWorker.id);
+  if (skipWorker && !workerSocketId) {
+    clearCampaignHangupTimer(code, skipWorker.id);
+    settleUnconfirmedCampaignHangup(code, skipWorker, {
+      contactId: skipped.id,
+      dialCommandId: skipWorker.campaignCommandId,
+      hangupCommandId: nanoid(),
+      retryDeferred: true,
+      reason: "El dispositivo estaba desconectado al solicitar el corte",
+      eventName: "CORTE_DIFERIDO_SIN_CONEXION"
     });
+  }
+  if (workerSocketId && skipped) {
+    requestCampaignHangup(code, skipWorker, skipped.id, { retryDeferred: true });
   }
   saveSoon();
   emitCampaignState(code);
@@ -1313,6 +2361,105 @@ app.post("/api/session/:code/campaign/skip", (req, res) => {
     fillAvailableCampaignWorkers(code);
   }
   return res.json({ ok: true, code, skipped, campaign: getCampaignSnapshot(session) });
+});
+
+app.post("/api/session/:code/campaign/force-release", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const contactId = String(req.body?.contactId || "").trim();
+  const workerId = String(req.body?.workerId || "").trim();
+  if (!code || (!contactId && !workerId) || req.body?.confirm !== true) {
+    return res.status(400).json({
+      ok: false,
+      error: "workerId o contactId, además de confirm=true, son requeridos para forzar la liberación"
+    });
+  }
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const worker = (session.phoneWorkers || []).find((item) =>
+    (
+      workerId
+        ? item.id === workerId
+        : [item.campaignContactId, item.manualContactId, item.quarantineContactId].includes(contactId)
+    ) &&
+    (item.campaignContactId || item.manualCommandId || item.physicalStateUnconfirmed) &&
+    (
+      item.hangupUnconfirmed ||
+      item.manualHangupUnconfirmed ||
+      ["blocked", "unresponsive", "offline"].includes(item.callState)
+    )
+  );
+  const campaign = ensureCampaign(session);
+  if (!worker) {
+    return res.status(409).json({ ok: false, error: "No existe una llamada en cuarentena para liberar" });
+  }
+  const campaignContactId = worker.campaignContactId || "";
+  const releaseKind = campaignContactId
+    ? "campaign"
+    : (worker.manualCommandId ? "manual" : (worker.quarantineKind || "manual"));
+  const releasedContactId = campaignContactId || worker.manualContactId || worker.quarantineContactId || contactId || "";
+  const contact = releaseKind === "campaign" && releasedContactId
+    ? campaign.contacts.find((item) => item.id === releasedContactId) || null
+    : null;
+
+  const retryAfterRelease = req.body?.retry === true;
+  const oldSocketId = worker.socketId;
+  clearCampaignCommandTimer(code, worker.id);
+  clearCampaignHangupTimer(code, worker.id);
+  clearWorkerDisconnectTimer(code, worker.id);
+
+  if (contact) {
+    contact.assignedWorkerId = null;
+    contact.lastCallState = "force_released";
+    contact.completedAt = retryAfterRelease ? null : new Date().toISOString();
+    if (retryAfterRelease) {
+      contact.status = "reintentar";
+      contact.result = "reintentar";
+    } else {
+      if (["dialing", "ringing", "in_call", "reintentar"].includes(contact.status)) {
+        contact.status = "failed";
+      }
+      if (!contact.result || contact.result === "reintentar") contact.result = "sin_respuesta";
+    }
+  }
+
+  const remaining = getActiveContacts(session);
+  campaign.activeContactId = remaining[0]?.id || null;
+  campaign.activeWorkerId = remaining[0]?.assignedWorkerId || null;
+  campaign.activeWorkerSocketId = null;
+  campaign.updatedAt = Date.now();
+
+  if (campaignContactId) {
+    releaseCampaignWorker(worker, "offline");
+  } else if (worker.manualCommandId) {
+    releaseManualWorker(worker, "offline");
+  } else {
+    clearPhysicalStateQuarantine(worker);
+    worker.callState = "offline";
+    worker.currentNumber = "";
+    worker.currentContactName = "";
+    worker.currentCompanyName = "";
+  }
+  worker.connected = false;
+  worker.socketId = null;
+  worker.lastError = "Liberado manualmente por el operador";
+  session.callState = "failed";
+  session.updatedAt = Date.now();
+  syncSessionPhoneState(session);
+  campaignLog(code, "LIBERACION_FORZADA", {
+    dispositivo: getWorkerLabel(session, worker),
+    tipo: releaseKind,
+    contactoId: releasedContactId || undefined,
+    reintentar: retryAfterRelease,
+    advertencia: "No se pudo verificar el estado físico del teléfono"
+  });
+
+  saveSoon();
+  emitState(code);
+  emitCampaignState(code);
+  if (campaign.status === "running") fillAvailableCampaignWorkers(code);
+  if (oldSocketId) io.sockets.sockets.get(oldSocketId)?.disconnect(true);
+  return res.json({ ok: true, code, contact, campaign: getCampaignSnapshot(session) });
 });
 
 app.post("/api/session/:code/campaign/result", (req, res) => {
@@ -1327,21 +2474,52 @@ app.post("/api/session/:code/campaign/result", (req, res) => {
   if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
 
   const targetBeforeUpdate = ensureCampaign(session).contacts.find((contact) => contact.id === contactId);
-  const hangupWorkerSocketId = getConnectedPhoneWorkers(session)
-    .find((worker) => worker.id === targetBeforeUpdate?.assignedWorkerId)?.socketId;
+  const targetCallStateBeforeUpdate = targetBeforeUpdate?.status || "";
+  const resultWorker = (session.phoneWorkers || [])
+    .find((worker) => worker.campaignContactId === contactId);
+  const hangupWorkerSocketId = resultWorker?.connected ? resultWorker.socketId : null;
   const updated = markContactResult(session, contactId, result, {
     callbackReason: req.body?.callbackReason,
     assignedAdvisor: req.body?.assignedAdvisor,
     transcriptSummary: req.body?.transcriptSummary
   });
   if (!updated) return res.status(404).json({ ok: false, error: "Contacto no encontrado" });
+  if (resultWorker && updated.result === "reintentar") {
+    if (
+      hangupWorkerSocketId &&
+      !resultWorker.hangupUnconfirmed &&
+      ["dialing", "ringing", "in_call"].includes(targetCallStateBeforeUpdate)
+    ) {
+      // Keep the contact out of the pending queue until Android confirms that
+      // the original physical call ended; this prevents a duplicate redial.
+      updated.status = targetCallStateBeforeUpdate;
+      const campaign = ensureCampaign(session);
+      campaign.activeContactId = contactId;
+      campaign.activeWorkerId = resultWorker.id;
+      campaign.activeWorkerSocketId = resultWorker.socketId;
+    } else {
+      updated.status = "failed";
+      updated.completedAt ||= new Date().toISOString();
+      updated.assignedWorkerId = null;
+    }
+  }
+  if (resultWorker) clearCampaignCommandTimer(code, resultWorker.id);
+  if (resultWorker && !hangupWorkerSocketId) {
+    clearCampaignHangupTimer(code, resultWorker.id);
+    settleUnconfirmedCampaignHangup(code, resultWorker, {
+      contactId,
+      dialCommandId: resultWorker.campaignCommandId,
+      hangupCommandId: nanoid(),
+      retryDeferred: updated.result === "reintentar",
+      reason: "El dispositivo estaba desconectado al registrar el resultado",
+      eventName: "RESULTADO_CON_DISPOSITIVO_DESCONECTADO"
+    });
+  }
 
-  if (hangupWorkerSocketId && ["agendado", "no_interesado", "requiere_asesor", "sin_respuesta"].includes(updated.result)) {
-    emitToPhoneWorker(
-      { socketId: hangupWorkerSocketId },
-      "call:action",
-      { action: "hangup", from: "dashboard", contactId }
-    );
+  if (hangupWorkerSocketId) {
+    requestCampaignHangup(code, resultWorker, contactId, {
+      retryDeferred: updated.result === "reintentar"
+    });
   }
 
   saveSoon();
@@ -1667,6 +2845,39 @@ app.get("/health", async (_, res) => {
     ok,
     storage,
     sessionsInMemory: sessions.size
+  });
+});
+
+let shuttingDown = false;
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[SERVER] ${signal}: cerrando conexiones y persistiendo estado...`);
+  for (const timer of workerDisconnectTimers.values()) clearTimeout(timer);
+  for (const timer of campaignCommandTimers.values()) clearTimeout(timer);
+  for (const entry of campaignHangupTimers.values()) clearTimeout(entry.timer);
+  workerDisconnectTimers.clear();
+  campaignCommandTimers.clear();
+  campaignHangupTimers.clear();
+  saveSoon();
+  io.close();
+  await Promise.race([
+    new Promise((resolve) => server.close(resolve)),
+    new Promise((resolve) => setTimeout(resolve, 8_000))
+  ]);
+  await persistence.close();
+}
+
+process.once("SIGTERM", () => {
+  shutdown("SIGTERM").then(() => process.exit(0)).catch((error) => {
+    console.error("[SERVER] Error durante cierre:", error);
+    process.exit(1);
+  });
+});
+process.once("SIGINT", () => {
+  shutdown("SIGINT").then(() => process.exit(0)).catch((error) => {
+    console.error("[SERVER] Error durante cierre:", error);
+    process.exit(1);
   });
 });
 

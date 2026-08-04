@@ -16,6 +16,10 @@ export class SessionPersistence {
     this.required = process.env.SUPABASE_REQUIRED === "1";
     this.saveChain = Promise.resolve();
     this.lastError = "";
+    this.knownRemoteCodes = new Set();
+    this.saveRevision = 0;
+    this.saveScheduled = false;
+    this.pendingSessionsMap = null;
   }
 
   cleanSessionOnLoad(session = {}) {
@@ -24,30 +28,16 @@ export class SessionPersistence {
           ...worker,
           socketId: null,
           connected: false,
-          callState: "idle",
-          currentNumber: "",
-          campaignContactId: null,
-          campaignCommandId: null,
-          campaignCallPhase: "idle"
+          campaignLastState: worker.campaignLastState || worker.callState || "idle",
+          callState: "offline",
+          disconnectedAt: new Date().toISOString()
         }))
       : [];
     const campaign = session.campaign && typeof session.campaign === "object"
       ? {
           ...session.campaign,
-          activeContactId: null,
-          activeWorkerId: null,
           activeWorkerSocketId: null,
-          contacts: Array.isArray(session.campaign.contacts)
-            ? session.campaign.contacts.map((contact) =>
-                ["dialing", "ringing", "in_call"].includes(contact?.status)
-                  ? {
-                      ...contact,
-                      status: "pending",
-                      assignedWorkerId: null
-                    }
-                  : contact
-              )
-            : []
+          contacts: Array.isArray(session.campaign.contacts) ? session.campaign.contacts : []
         }
       : session.campaign;
 
@@ -141,6 +131,7 @@ export class SessionPersistence {
     for (const row of data || []) {
       sessions.set(row.code, this.cleanSessionOnLoad(row.data));
     }
+    this.knownRemoteCodes = new Set((data || []).map((row) => row.code));
 
     if (!sessions.size) {
       const localSessions = await this.loadLocalFile();
@@ -183,32 +174,65 @@ export class SessionPersistence {
     await fs.rename(temporaryPath, this.filePath);
   }
 
+  async persistSnapshot(snapshot) {
+    const errors = [];
+    if (this.usingSupabase) {
+      try {
+        const rows = Object.entries(snapshot).map(([code, data]) => ({
+          code,
+          data,
+          updated_at: new Date().toISOString()
+        }));
+        if (rows.length) {
+          const { error } = await this.client
+            .from(this.table)
+            .upsert(rows, { onConflict: "code" });
+          if (error) throw new Error(`Supabase save: ${error.message}`);
+        }
+        const currentCodes = new Set(Object.keys(snapshot));
+        const deletedCodes = [...this.knownRemoteCodes].filter((code) => !currentCodes.has(code));
+        if (deletedCodes.length) {
+          const { error } = await this.client.from(this.table).delete().in("code", deletedCodes);
+          if (error) throw new Error(`Supabase delete: ${error.message}`);
+        }
+        this.knownRemoteCodes = currentCodes;
+      } catch (error) {
+        errors.push(error.message);
+        console.error("[PERSISTENCE] Error guardando en Supabase:", error.message);
+      }
+    }
+
+    // The local snapshot is an independent recovery path and must still be
+    // written if the remote database has a temporary outage.
+    try {
+      await this.saveLocalSnapshot(snapshot);
+    } catch (error) {
+      errors.push(`JSON local: ${error.message}`);
+      console.error("[PERSISTENCE] Error guardando JSON local:", error.message);
+    }
+    this.lastError = errors.join(" | ");
+  }
+
   save(sessionsMap) {
-    const snapshot = this.createSnapshot(sessionsMap);
+    this.pendingSessionsMap = sessionsMap;
+    this.saveRevision += 1;
+    if (this.saveScheduled) return this.saveChain;
+
+    this.saveScheduled = true;
     this.saveChain = this.saveChain
       .catch(() => {})
       .then(async () => {
-        try {
-          if (this.usingSupabase) {
-            const rows = Object.entries(snapshot).map(([code, data]) => ({
-              code,
-              data,
-              updated_at: new Date().toISOString()
-            }));
-            if (rows.length) {
-              const { error } = await this.client
-                .from(this.table)
-                .upsert(rows, { onConflict: "code" });
-              if (error) throw new Error(`Supabase save: ${error.message}`);
-            }
-          }
-
-          await this.saveLocalSnapshot(snapshot);
-          this.lastError = "";
-        } catch (error) {
-          this.lastError = error.message;
-          console.error("[PERSISTENCE] Error guardando sesiones:", error.message);
+        // Coalesce bursts such as dialing -> in_call -> ended and snapshot only
+        // the newest state. This keeps large campaigns from blocking pings.
+        await new Promise((resolve) => setTimeout(resolve, 75));
+        while (this.pendingSessionsMap) {
+          const revision = this.saveRevision;
+          const snapshot = this.createSnapshot(this.pendingSessionsMap);
+          await this.persistSnapshot(snapshot);
+          if (revision === this.saveRevision) break;
+          await new Promise((resolve) => setTimeout(resolve, 25));
         }
+        this.saveScheduled = false;
       });
     return this.saveChain;
   }

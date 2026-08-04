@@ -96,12 +96,7 @@ class IncomingCallActivity : AppCompatActivity() {
             addAction(BridgeService.ACTION_CALL_UI_STATE)
             addAction(BridgeService.ACTION_CLOSE_CALL_UI)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(uiReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            registerReceiver(uiReceiver, filter)
-        }
+        ContextCompat.registerReceiver(this, uiReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
     override fun onStop() {

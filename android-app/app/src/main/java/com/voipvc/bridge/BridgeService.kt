@@ -3,6 +3,7 @@
 package com.voipvc.bridge
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.*
 import android.content.*
 import android.content.pm.PackageManager
@@ -18,8 +19,11 @@ import androidx.core.content.ContextCompat
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 
 /**
  * Always-on foreground service.
@@ -31,6 +35,8 @@ import kotlinx.coroutines.*
  * • Auto-starts on boot via BootReceiver
  */
 class BridgeService : Service() {
+
+    private data class DialResult(val ok: Boolean, val message: String)
 
     // ── CONSTANTS ─────────────────────────────────────────────────────────────
     companion object {
@@ -71,6 +77,11 @@ class BridgeService : Service() {
         const val PREF_TOKEN       = "token"
         const val PREF_DEVICE_ID   = "device_id"
         const val PREF_DEVICE_NAME = "device_name"
+        const val PREF_ACTIVE_COMMAND_ID = "active_command_id"
+        const val PREF_ACTIVE_CONTACT_ID = "active_contact_id"
+        const val PREF_CAMPAIGN_PHONE = "campaign_phone"
+        const val PREF_CAMPAIGN_CALL_STATE = "campaign_call_state"
+        const val PREF_CAMPAIGN_STATE_OBSERVED = "campaign_state_observed"
 
         // Status broadcast
         const val ACTION_STATUS        = "com.voipvc.bridge.STATUS"
@@ -79,12 +90,14 @@ class BridgeService : Service() {
         const val ACTION_CLOSE_CALL_UI = "com.voipvc.bridge.CLOSE_CALL_UI"
         const val ACTION_TELECOM_CALL_STATE = "com.voipvc.bridge.TELECOM_CALL_STATE"
         const val EXTRA_CALL_STATE = "call_state"
+        const val EXTRA_CALL_DIRECTION = "call_direction"
         const val EXTRA_MIC_MUTED = "mic_muted"
         const val EXTRA_SPEAKER_ON = "speaker_on"
     }
 
     // ── STATE ─────────────────────────────────────────────────────────────────
     private var socket: Socket? = null
+    private var connectionKey = ""
 
     // Audio
     private var audioRecord : AudioRecord? = null
@@ -92,6 +105,11 @@ class BridgeService : Service() {
     private val isStreaming  = AtomicBoolean(false)
     private val isPlaying    = AtomicBoolean(false)
     private var captureJob: Job? = null
+    private var playbackJob: Job? = null
+    private val audioPlaybackQueue = Channel<ByteArray>(
+        capacity = 4,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val minBufIn  by lazy { AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,  AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(CHUNK_FRAMES * 2) }
@@ -109,6 +127,19 @@ class BridgeService : Service() {
     private var isSpeakerOn = false
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile private var dialAttemptToken = 0
+    private var activeCommandId = ""
+    private var activeContactId = ""
+    private var campaignPhoneNumber = ""
+    private var campaignStateObserved = false
+    private var campaignTrackingRestored = false
+    private var hangupVerificationToken = 0
+    private var currentCallDirection = "unknown"
+    private var lastTelecomEventAt = 0L
+    private var statusSequence = 0L
+    private val statusSessionId = UUID.randomUUID().toString()
+    private var lastEmittedStatusSignature = ""
+    private var lastDialCommandId = ""
+    private var lastDialAck = DialResult(false, "")
 
     private val telecomStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -117,33 +148,9 @@ class BridgeService : Service() {
             if (st.isBlank()) return
             val incomingNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER).orEmpty().trim()
             val incomingName = intent.getStringExtra(EXTRA_CONTACT_NAME).orEmpty().trim()
-
-            if (incomingNumber.isNotBlank()) {
-                currentPhoneNumber = incomingNumber
-            }
-            if (incomingName.isNotBlank()) {
-                currentContactName = incomingName
-                if (currentCompanyName.isBlank()) currentCompanyName = incomingName
-            }
-            lastCallState = st
-            emitPhoneStatus(st)
-            emitCallUiState()
-            if (st == "in_call" || st == "dialing" || st == "ringing") {
-                launchCallUi()
-            }
-            when (st) {
-                "dialing" -> setStatus("📞 Llamando...")
-                "ringing" -> setStatus("📲 Llamada entrante")
-                "in_call" -> {
-                    startAudio()
-                    setStatus("🔊 En llamada")
-                }
-                "ended", "idle" -> {
-                    stopAudio()
-                    setStatus("✅ Activo — esperando llamadas")
-                    closeCallUi()
-                }
-            }
+            val direction = intent.getStringExtra(EXTRA_CALL_DIRECTION).orEmpty().ifBlank { "unknown" }
+            lastTelecomEventAt = SystemClock.elapsedRealtime()
+            handleObservedCallState(st, incomingNumber, incomingName, direction, "telecom")
         }
     }
 
@@ -151,14 +158,17 @@ class BridgeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        restoreCampaignTracking()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("Phone-VC iniciando…"))
         registerCallMonitor()
         val filter = IntentFilter(ACTION_TELECOM_CALL_STATE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            registerReceiver(telecomStateReceiver, filter, RECEIVER_NOT_EXPORTED)
-        else
-            @Suppress("DEPRECATION") registerReceiver(telecomStateReceiver, filter)
+        ContextCompat.registerReceiver(
+            this,
+            telecomStateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -177,28 +187,38 @@ class BridgeService : Service() {
             ACTION_UI_ANSWER -> answerIncomingCall()
             ACTION_UI_TOGGLE_MUTE -> setMicMute(!isMicMuted)
             ACTION_UI_TOGGLE_SPEAKER -> setSpeakerOn(!isSpeakerOn)
-            ACTION_UI_SYNC -> emitCallUiState()
+            ACTION_UI_SYNC -> {
+                emitCallUiState()
+                emitPhoneStatus(lastCallState, "ui_sync", correlateCampaign = activeCommandId.isNotBlank())
+            }
+            null -> buildRestartIntentFromPrefs()?.let { restart ->
+                tryConnect(
+                    restart.getStringExtra(EXTRA_SOCKET_URL).orEmpty(),
+                    restart.getStringExtra(EXTRA_CODE).orEmpty(),
+                    restart.getStringExtra(EXTRA_TOKEN).orEmpty(),
+                    restart.getStringExtra(EXTRA_DEVICE_ID).orEmpty(),
+                    restart.getStringExtra(EXTRA_DEVICE_NAME).orEmpty()
+                )
+            }
         }
         return START_STICKY  // Android will restart this service if killed
     }
 
-    /** Schedules a self-restart 1.5s after the user swipes the app away */
+    /** The foreground service normally survives task removal; START_STICKY is
+     * responsible for process recovery without creating a second socket. */
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val restart = buildRestartIntentFromPrefs() ?: return
-        val pi = PendingIntent.getService(
-            this, 1, restart,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-        (getSystemService(ALARM_SERVICE) as AlarmManager)
-            .set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 1500L, pi)
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
         stopAudio()
         unregisterCallMonitor()
         unregisterReceiver(telecomStateReceiver)
         socket?.disconnect()
         socket?.off()
+        socket = null
+        connectionKey = ""
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -208,43 +228,93 @@ class BridgeService : Service() {
     // ── SOCKET CONNECTION ─────────────────────────────────────────────────────
 
     private fun tryConnect(url: String, code: String, token: String, devId: String, devName: String) {
-        if (url.isBlank() || code.isBlank() || token.isBlank()) {
+        if (url.isBlank() || code.isBlank() || token.isBlank() || devId.isBlank()) {
             setStatus("⚠️ Datos incompletos")
             return
         }
 
+        val requestedConnectionKey = listOf(url.trim(), code.trim(), token.trim(), devId.trim()).joinToString("|")
+        if (requestedConnectionKey == connectionKey && socket != null) {
+            if (socket?.connected() != true) socket?.connect()
+            emitCallUiState()
+            setStatus(if (socket?.connected() == true) "✅ Activo — esperando llamadas" else "🔄 Reconectando…")
+            return
+        }
+        connectionKey = requestedConnectionKey
+
         socket?.disconnect()
         socket?.off()
 
-        try { socket = IO.socket(url) } catch (e: Exception) {
+        val client: Socket
+        try {
+            val options = IO.Options().apply {
+                reconnection = true
+                reconnectionAttempts = Int.MAX_VALUE
+                reconnectionDelay = 1_000L
+                reconnectionDelayMax = 10_000L
+                timeout = 20_000L
+                forceNew = true
+            }
+            client = IO.socket(url, options)
+            socket = client
+        } catch (e: Exception) {
             setStatus("URL inválida: ${e.message}")
             return
         }
 
-        socket!!.on(Socket.EVENT_CONNECT) {
+        client.on(Socket.EVENT_CONNECT) {
+            if (client !== socket) return@on
             val payload = JSONObject()
                 .put("code", code).put("role", "phone")
+                .put("protocolVersion", 2)
                 .put("token", token)
                 .put("deviceId", devId).put("deviceName", devName)
-            socket!!.emit("session:join", payload)
+            client.emit("session:join", payload)
         }
 
-        socket!!.on("session:joined") {
-            setStatus("✅ Activo — esperando llamadas")
-            // Save credentials for reboot auto-start
-            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
-                .putString(PREF_SOCKET_URL, url) .putString(PREF_CODE, code)
-                .putString(PREF_TOKEN, token)    .putString(PREF_DEVICE_ID, devId)
-                .putString(PREF_DEVICE_NAME, devName).apply()
+        client.on("session:joined") {
+            if (client !== socket) return@on
+            mainHandler.post {
+                if (client !== socket) return@post
+                setStatus("✅ Activo — esperando llamadas")
+                // Save credentials for reboot auto-start
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                    .putString(PREF_SOCKET_URL, url) .putString(PREF_CODE, code)
+                    .putString(PREF_TOKEN, token)    .putString(PREF_DEVICE_ID, devId)
+                    .putString(PREF_DEVICE_NAME, devName).apply()
+                // Re-announce the actual local call after a network micro-cut so
+                // the server can resume the same command during its grace window.
+                emitPhoneStatus(lastCallState, "reconnect", correlateCampaign = activeCommandId.isNotBlank())
+                if (campaignTrackingRestored) {
+                    campaignTrackingRestored = false
+                    mainHandler.postDelayed({
+                        if (
+                            activeCommandId.isNotBlank() &&
+                            lastCallState in setOf("dialing", "ringing", "in_call") &&
+                            !isActuallyInCall()
+                        ) {
+                            handleObservedCallState(
+                                "failed",
+                                campaignPhoneNumber,
+                                "",
+                                "outgoing",
+                                "process_recovery"
+                            )
+                        }
+                    }, 3_000L)
+                }
+            }
         }
 
-        socket!!.on("session:error") { args ->
+        client.on("session:error") { args ->
+            if (client !== socket) return@on
             val msg = (args.firstOrNull() as? JSONObject)?.optString("message") ?: "Error de sesión"
-            setStatus("❌ $msg")
+            mainHandler.post { setStatus("❌ $msg") }
         }
 
         // Keep APK UI in sync with the authoritative session state from server.
-        socket!!.on("state:changed") { args ->
+        client.on("state:changed") { args ->
+            if (client !== socket) return@on
             val data = args.firstOrNull() as? JSONObject ?: return@on
             val workers = data.optJSONArray("phoneWorkers") ?: return@on
             var ownWorker: JSONObject? = null
@@ -256,43 +326,81 @@ class BridgeService : Service() {
                 }
             }
             val workerState = ownWorker ?: return@on
-            val st = workerState.optString("callState", "idle")
-            if (st.isNotBlank()) {
-                lastCallState = st
-                if (currentPhoneNumber.isBlank()) {
+            // Android/Telecom is authoritative for the physical call state.
+            // Server echoes are useful only to restore missing display data;
+            // feeding them back into lastCallState caused state oscillations.
+            mainHandler.post {
+                if (client !== socket) return@post
+                if (currentPhoneNumber.isBlank() && !isActuallyInCall()) {
                     currentPhoneNumber = workerState.optString("currentNumber")
-                }
-                emitCallUiState()
-                if (st == "in_call" || st == "dialing" || st == "ringing") {
-                    launchCallUi()
-                }
-                if (st == "in_call") startAudio()
-                if (st == "idle" || st == "ended") {
-                    stopAudio()
-                    closeCallUi()
                 }
             }
         }
 
-        socket!!.on("call:action") { args ->
+        client.on("phone:status_ack") { args ->
+            if (client !== socket) return@on
             val data = args.firstOrNull() as? JSONObject ?: return@on
-            val commandId = data.optString("commandId")
-            when (data.optString("action")) {
+            mainHandler.post {
+                if (client !== socket) return@post
+                val commandId = data.optString("commandId")
+                val contactId = data.optString("contactId")
+                if (
+                    data.optBoolean("accepted") &&
+                    data.optBoolean("terminal") &&
+                    commandId == activeCommandId &&
+                    contactId == activeContactId
+                ) {
+                    clearCampaignTracking()
+                }
+            }
+        }
+
+        client.on("call:action") { args ->
+            if (client !== socket) return@on
+            val data = args.firstOrNull() as? JSONObject ?: return@on
+            mainHandler.post {
+              if (client !== socket) return@post
+              val commandId = data.optString("commandId")
+              when (data.optString("action")) {
                 "dial"   -> {
                     val phoneNumber = data.optString("phoneNumber")
                     val companyName = data.optString("companyName")
                     val contactName = data.optString("contactName")
                     val imageUrl = data.optString("imageUrl")
-                    dialNumber(phoneNumber, companyName, contactName, imageUrl)
-                    emitCommandAck(commandId, "dial", true, "Comando recibido en APK")
+                    val contactId = data.optString("contactId")
+                    val result = if (commandId.isNotBlank() && commandId == lastDialCommandId) {
+                        lastDialAck
+                    } else {
+                        dialNumber(
+                            phoneNumber,
+                            companyName,
+                            contactName,
+                            imageUrl,
+                            commandId,
+                            contactId
+                        ).also {
+                            lastDialCommandId = commandId
+                            lastDialAck = it
+                        }
+                    }
+                    emitCommandAck(commandId, "dial", result.ok, result.message)
                 }
                 "hangup" -> {
-                    // Close call UI immediately on remote hangup command.
-                    lastCallState = "ended"
-                    emitPhoneStatus("ended")
-                    emitCallUiState()
-                    closeCallUi()
-                    emitCommandAck(commandId, "hangup", hangup(), "Corte procesado")
+                    val requestedContactId = data.optString("contactId")
+                    val matchesActiveCall = requestedContactId.isBlank() ||
+                        activeContactId.isBlank() ||
+                        requestedContactId == activeContactId
+                    val ok = matchesActiveCall && hangup()
+                    emitCommandAck(
+                        commandId,
+                        "hangup",
+                        ok,
+                        when {
+                            !matchesActiveCall -> "La orden pertenece a otra llamada"
+                            ok -> "Corte solicitado; esperando confirmación física"
+                            else -> "Android no pudo solicitar el corte"
+                        }
+                    )
                 }
                 "answer" -> {
                     emitCommandAck(commandId, "answer", answerIncomingCall(), "Respuesta procesada")
@@ -301,32 +409,52 @@ class BridgeService : Service() {
                 "unmute" -> emitCommandAck(commandId, "unmute", setMicMute(false), "Micrófono procesado")
                 "speaker_on" -> emitCommandAck(commandId, "speaker_on", setSpeakerOn(true), "Altavoz procesado")
                 "speaker_off" -> emitCommandAck(commandId, "speaker_off", setSpeakerOn(false), "Altavoz procesado")
-                else -> emitCommandAck(commandId, data.optString("action"), false, "Acción no soportada")
+                  else -> emitCommandAck(commandId, data.optString("action"), false, "Acción no soportada")
+              }
             }
         }
 
         // Receive web mic audio → play on phone speaker during call
-        socket!!.on("audio:dashboard") { args ->
+        client.on("audio:dashboard") { args ->
+            if (client !== socket) return@on
             val raw = args.firstOrNull()
             val bytes: ByteArray? = when (raw) {
                 is ByteArray -> raw
                 else -> null
             }
-            bytes?.let { playAudio(it) }
+            bytes?.let { audioPlaybackQueue.trySend(it) }
         }
 
-        socket!!.on(Socket.EVENT_DISCONNECT) { setStatus("🔄 Reconectando…") }
-        socket!!.on(Socket.EVENT_CONNECT_ERROR) { setStatus("🔄 Sin servidor — reintentando…") }
+        client.on(Socket.EVENT_DISCONNECT) {
+            if (client === socket) mainHandler.post { setStatus("🔄 Reconectando…") }
+        }
+        client.on(Socket.EVENT_CONNECT_ERROR) {
+            if (client === socket) mainHandler.post { setStatus("🔄 Sin servidor — reintentando…") }
+        }
 
-        socket!!.connect()
+        client.connect()
         setStatus("🔗 Conectando…")
     }
 
     // ── CALL ACTIONS ──────────────────────────────────────────────────────────
 
-    private fun dialNumber(number: String, companyName: String, contactName: String, imageUrl: String) {
-        if (number.isBlank()) return
+    @SuppressLint("MissingPermission")
+    private fun dialNumber(
+        number: String,
+        companyName: String,
+        contactName: String,
+        imageUrl: String,
+        commandId: String,
+        contactId: String
+    ): DialResult {
+        if (number.isBlank() || commandId.isBlank()) {
+            return DialResult(false, "Número o identificador de llamada inválido")
+        }
+        if (isActuallyInCall() || activeCommandId.isNotBlank()) {
+            return DialResult(false, "El teléfono ya está atendiendo otra llamada")
+        }
         dialAttemptToken += 1
+        hangupVerificationToken += 1
         val thisAttempt = dialAttemptToken
         // Every new call must start with speaker OFF by default.
         isSpeakerOn = false
@@ -343,70 +471,81 @@ class BridgeService : Service() {
             else -> number
         }
         currentImageUrl = imageUrl
+        activeCommandId = commandId
+        activeContactId = contactId
+        campaignPhoneNumber = number
+        campaignStateObserved = false
+        campaignTrackingRestored = false
+        currentCallDirection = "outgoing"
         lastCallState = "dialing"
+        persistCampaignTracking()
         launchCallUi()
         emitCallUiState()
 
         if (!hasPermission(Manifest.permission.CALL_PHONE)) {
-            setStatus("⚠️ Falta permiso CALL_PHONE"); return
+            return abortDial("Falta permiso CALL_PHONE")
         }
         if (!isDefaultDialer()) {
-            setStatus("⚠️ Phone-VC no es marcador predeterminado. Toca la notificación para llamar.")
-            showDialNotification(number)
-            lastCallState = "idle"
-            emitCallUiState()
-            emitPhoneStatus("idle")
-            return
+            return abortDial("Phone-VC no es el marcador predeterminado")
         }
 
         try {
             val tm = getSystemService(TELECOM_SERVICE) as? TelecomManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && tm != null) {
                 tm.placeCall(Uri.parse("tel:$number"), Bundle())
-                emitPhoneStatus("dialing")
+                emitPhoneStatus("dialing", "command", correlateCampaign = true)
                 setStatus("📞 Intentando llamada a $number")
 
-                // Some devices silently block background dial attempts.
+                // Never place a second automatic call: on some phones the
+                // original implementation could dial the contact twice while
+                // Android was still reporting the first request.
                 mainHandler.postDelayed({
                     if (thisAttempt != dialAttemptToken) return@postDelayed
                     if (!isActuallyInCall()) {
-                        val launched = launchSystemDialerCall(number)
-                        if (launched) {
-                            setStatus("📞 Reintentando vía marcador del sistema…")
-                            mainHandler.postDelayed({
-                                if (thisAttempt != dialAttemptToken) return@postDelayed
-                                if (!isActuallyInCall()) {
-                                    emitPhoneStatus("idle")
-                                    setStatus("⚠️ Android exige confirmación. Mostrando llamada en pantalla.")
-                                    showDialNotification(number, autoLaunch = true)
-                                }
-                            }, 1800)
-                        } else {
-                            emitPhoneStatus("idle")
-                            setStatus("⚠️ Android bloqueó llamada automática. Mostrando fallback.")
-                            showDialNotification(number, autoLaunch = true)
-                        }
+                        handleObservedCallState(
+                            "failed",
+                            number,
+                            "",
+                            "outgoing",
+                            "dial_timeout"
+                        )
+                        setStatus("⚠️ Android no inició la llamada")
                     }
-                }, 2200)
-                return
+                }, 10_000)
+                return DialResult(true, "Comando recibido e inicio de llamada solicitado")
             }
         } catch (e: Exception) {
             Log.w(TAG, "TelecomManager.placeCall failed: ${e.message}")
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            setStatus("⚠️ Android requiere confirmación manual. Toca la notificación.")
-            showDialNotification(number, autoLaunch = true)
-            return
+            return abortDial("Android bloqueó la marcación automática")
         }
 
         try {
             startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:$number")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            emitPhoneStatus("dialing")
+            emitPhoneStatus("dialing", "command", correlateCampaign = true)
             setStatus("📞 Llamando $number")
+            return DialResult(true, "Comando recibido e inicio de llamada solicitado")
         } catch (e: Exception) {
-            setStatus("❌ No se pudo llamar: ${e.message}")
+            return abortDial("No se pudo iniciar la llamada: ${e.message}")
         }
+    }
+
+    private fun abortDial(reason: String): DialResult {
+        dialAttemptToken += 1
+        lastCallState = "idle"
+        stopAudio()
+        clearCampaignTracking()
+        currentPhoneNumber = ""
+        currentCompanyName = ""
+        currentContactName = ""
+        currentImageUrl = ""
+        currentCallDirection = "unknown"
+        emitCallUiState()
+        closeCallUi()
+        setStatus("⚠️ $reason")
+        return DialResult(false, reason)
     }
 
     /** Shows a high-priority notification with a tap-to-call action (Android 10+ safe) */
@@ -480,6 +619,7 @@ class BridgeService : Service() {
             am.isMicrophoneMute = mute
             isMicMuted = mute
             emitCallUiState()
+            emitPhoneStatus(lastCallState, "controls", correlateCampaign = activeCommandId.isNotBlank())
             launchCallUi()
             setStatus(if (mute) "🔇 Micrófono silenciado" else "🎙️ Micrófono activo")
             return true
@@ -518,6 +658,7 @@ class BridgeService : Service() {
             am.isSpeakerphoneOn = enabled
             isSpeakerOn = enabled && ok
             emitCallUiState()
+            emitPhoneStatus(lastCallState, "controls", correlateCampaign = activeCommandId.isNotBlank())
             launchCallUi()
             if (!ok) {
                 setStatus("⚠️ No se pudo cambiar ruta de audio en este dispositivo")
@@ -543,7 +684,7 @@ class BridgeService : Service() {
         }
         lastCallState = "in_call"
         startAudio()
-        emitPhoneStatus("in_call")
+        emitPhoneStatus("in_call", "user_action", correlateCampaign = activeCommandId.isNotBlank())
         emitCallUiState()
         launchCallUi()
         setStatus("✅ Llamada contestada")
@@ -551,24 +692,43 @@ class BridgeService : Service() {
     }
 
 
+    @SuppressLint("MissingPermission")
     private fun hangup(): Boolean {
         dialAttemptToken += 1 // cancel pending dial fallback callbacks
+        val targetNumber = campaignPhoneNumber.ifBlank { currentPhoneNumber }
         if (!isDefaultDialer()) {
             setStatus("⚠️ Activa Phone-VC como marcador default")
             return false
         }
         try {
-            val tm = getSystemService(TELECOM_SERVICE) as? TelecomManager
-            if (tm?.endCall() == true) {
-                emitPhoneStatus("ended")
-                setStatus("📵 Llamada colgada")
-                stopAudio()
-                lastCallState = "ended"
-                currentPhoneNumber = ""
-                isSpeakerOn = false
-                emitCallUiState()
+            if (!VoipVcInCallService.hasLiveCall(targetNumber)) {
+                val targetAlreadyEnded = VoipVcInCallService.isCallDefinitelyAbsent(targetNumber) ||
+                    (
+                        !VoipVcInCallService.isTrackingCalls() &&
+                            hasPermission(Manifest.permission.READ_PHONE_STATE) &&
+                            !isActuallyInCall()
+                    )
+                if (targetAlreadyEnded && activeCommandId.isNotBlank()) {
+                    handleObservedCallState(
+                        "ended",
+                        targetNumber,
+                        "",
+                        "outgoing",
+                        "hangup_already_ended"
+                    )
+                    return true
+                }
+                setStatus("⚠️ No se pudo identificar la llamada que debe cortarse")
+                return false
+            }
+
+            val requested = VoipVcInCallService.disconnectCall(targetNumber)
+            scheduleHangupVerification(targetNumber)
+            if (requested) {
+                setStatus("📵 Corte solicitado; esperando confirmación…")
                 return true
             }
+            setStatus("⚠️ Android rechazó el corte; verificando nuevamente…")
             return false
         } catch (e: Exception) {
             setStatus("Error al colgar: ${e.message}")
@@ -576,12 +736,198 @@ class BridgeService : Service() {
         }
     }
 
+    private fun scheduleHangupVerification(targetNumber: String) {
+        hangupVerificationToken += 1
+        val token = hangupVerificationToken
+        mainHandler.postDelayed({
+            if (token != hangupVerificationToken || activeCommandId.isBlank()) return@postDelayed
+            if (VoipVcInCallService.hasLiveCall(targetNumber)) {
+                VoipVcInCallService.disconnectCall(targetNumber)
+            }
+        }, 1_000L)
+        mainHandler.postDelayed({
+            if (token != hangupVerificationToken || activeCommandId.isBlank()) return@postDelayed
+            val targetEnded = !VoipVcInCallService.hasLiveCall(targetNumber) &&
+                (
+                    VoipVcInCallService.isCallDefinitelyAbsent(targetNumber) ||
+                        (
+                            !VoipVcInCallService.isTrackingCalls() &&
+                                hasPermission(Manifest.permission.READ_PHONE_STATE) &&
+                                !isActuallyInCall()
+                        )
+                )
+            if (targetEnded) {
+                handleObservedCallState(
+                    "ended",
+                    targetNumber,
+                    "",
+                    "outgoing",
+                    "hangup_verification"
+                )
+            } else {
+                setStatus("⚠️ No se confirmó el corte; revisa el teléfono")
+            }
+        }, 3_500L)
+    }
+
     private fun isDefaultDialer(): Boolean =
         (getSystemService(TELECOM_SERVICE) as? TelecomManager)?.defaultDialerPackage == packageName
 
     private fun isActuallyInCall(): Boolean {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            return false
+        }
         val tm = getSystemService(TELECOM_SERVICE) as? TelecomManager
         return tm?.isInCall == true
+    }
+
+    private fun normalizedNumber(value: String): String {
+        var digits = value.filter(Char::isDigit)
+        if (digits.length == 11 && digits.startsWith("51")) digits = digits.drop(2)
+        return digits
+    }
+
+    private fun numbersMatch(first: String, second: String): Boolean {
+        val a = normalizedNumber(first)
+        val b = normalizedNumber(second)
+        return a.isNotBlank() && b.isNotBlank() && a == b
+    }
+
+    private fun isRegressiveTransition(previous: String, next: String): Boolean =
+        (previous == "in_call" && (next == "dialing" || next == "ringing")) ||
+            (previous == "ringing" && next == "dialing")
+
+    private fun handleObservedCallState(
+        rawState: String,
+        observedNumber: String,
+        observedName: String,
+        direction: String,
+        source: String
+    ) {
+        if (rawState !in setOf("idle", "dialing", "ringing", "in_call", "ended", "failed")) return
+
+        val hasCampaignCall = activeCommandId.isNotBlank()
+        val normalizedDirection = direction.lowercase()
+        val hasCampaignIdentity = if (observedNumber.isBlank()) {
+            normalizedDirection == "outgoing"
+        } else {
+            numbersMatch(campaignPhoneNumber, observedNumber)
+        }
+        val belongsToCampaign = hasCampaignCall &&
+            normalizedDirection != "incoming" &&
+            hasCampaignIdentity
+
+        if (hasCampaignCall && !belongsToCampaign) {
+            // Report the observation for diagnostics, without campaign IDs.
+            // The server will keep it isolated from the assigned outbound call.
+            emitPhoneStatus(
+                rawState,
+                source,
+                correlateCampaign = false,
+                phoneNumberOverride = observedNumber,
+                directionOverride = direction
+            )
+            Log.i(TAG, "Ignoring unrelated $direction call while campaign command is active")
+            return
+        }
+
+        if (!hasCampaignCall && observedNumber.isNotBlank()) currentPhoneNumber = observedNumber
+        if (!hasCampaignCall && observedName.isNotBlank()) {
+            currentContactName = observedName
+            if (currentCompanyName.isBlank()) currentCompanyName = observedName
+        }
+        if (hasCampaignCall) currentPhoneNumber = campaignPhoneNumber
+        currentCallDirection = if (hasCampaignCall) "outgoing" else direction
+
+        if (hasCampaignCall && rawState in setOf("dialing", "ringing", "in_call")) {
+            campaignStateObserved = true
+        }
+        if (hasCampaignCall && rawState == "idle" && !campaignStateObserved) {
+            Log.d(TAG, "Ignoring premature idle before campaign call activity")
+            return
+        }
+
+        val state = if (hasCampaignCall && rawState == "idle") "ended" else rawState
+        if (isRegressiveTransition(lastCallState, state)) {
+            Log.d(TAG, "Ignoring regressive state $lastCallState -> $state from $source")
+            return
+        }
+
+        lastCallState = state
+        if (belongsToCampaign) persistCampaignTracking(state)
+        emitPhoneStatus(state, source, correlateCampaign = belongsToCampaign)
+        emitCallUiState()
+
+        when (state) {
+            "dialing" -> {
+                launchCallUi()
+                setStatus("📞 Llamando...")
+            }
+            "ringing" -> {
+                launchCallUi()
+                setStatus("📲 Llamada entrante")
+            }
+            "in_call" -> {
+                startAudio()
+                launchCallUi()
+                setStatus("🔊 En llamada")
+            }
+            "ended", "failed", "idle" -> {
+                dialAttemptToken += 1
+                hangupVerificationToken += 1
+                stopAudio()
+                setStatus("✅ Activo — esperando llamadas")
+                closeCallUi()
+                if (!isActuallyInCall()) {
+                    currentPhoneNumber = ""
+                    currentCompanyName = ""
+                    currentContactName = ""
+                    currentImageUrl = ""
+                }
+            }
+        }
+    }
+
+    private fun clearCampaignTracking() {
+        activeCommandId = ""
+        activeContactId = ""
+        campaignPhoneNumber = ""
+        campaignStateObserved = false
+        campaignTrackingRestored = false
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+            .remove(PREF_ACTIVE_COMMAND_ID)
+            .remove(PREF_ACTIVE_CONTACT_ID)
+            .remove(PREF_CAMPAIGN_PHONE)
+            .remove(PREF_CAMPAIGN_CALL_STATE)
+            .remove(PREF_CAMPAIGN_STATE_OBSERVED)
+            .apply()
+    }
+
+    private fun persistCampaignTracking(state: String = lastCallState) {
+        if (activeCommandId.isBlank()) return
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+            .putString(PREF_ACTIVE_COMMAND_ID, activeCommandId)
+            .putString(PREF_ACTIVE_CONTACT_ID, activeContactId)
+            .putString(PREF_CAMPAIGN_PHONE, campaignPhoneNumber)
+            .putString(PREF_CAMPAIGN_CALL_STATE, state)
+            .putBoolean(PREF_CAMPAIGN_STATE_OBSERVED, campaignStateObserved)
+            .apply()
+    }
+
+    private fun restoreCampaignTracking() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        activeCommandId = prefs.getString(PREF_ACTIVE_COMMAND_ID, "").orEmpty()
+        activeContactId = prefs.getString(PREF_ACTIVE_CONTACT_ID, "").orEmpty()
+        campaignPhoneNumber = prefs.getString(PREF_CAMPAIGN_PHONE, "").orEmpty()
+        if (activeCommandId.isBlank()) return
+        lastCallState = prefs.getString(PREF_CAMPAIGN_CALL_STATE, "dialing").orEmpty().ifBlank { "dialing" }
+        currentPhoneNumber = campaignPhoneNumber
+        currentCallDirection = "outgoing"
+        campaignStateObserved = prefs.getBoolean(
+            PREF_CAMPAIGN_STATE_OBSERVED,
+            lastCallState in setOf("ringing", "in_call", "ended", "failed")
+        )
+        campaignTrackingRestored = true
     }
 
     // ── CALL STATE MONITOR (no root, just READ_PHONE_STATE) ───────────────────
@@ -600,35 +946,19 @@ class BridgeService : Service() {
                     TelephonyManager.CALL_STATE_OFFHOOK -> "dialing"
                     else                                -> "idle"
                 }
-                if (callState == lastCallState) return
-                lastCallState = callState
+                val scheduledAt = SystemClock.elapsedRealtime()
+                val number = phoneNumber.orEmpty()
+                val direction = if (callState == "ringing") "incoming"
+                    else if (activeCommandId.isNotBlank()) "outgoing" else "unknown"
 
-                if (!phoneNumber.isNullOrBlank()) currentPhoneNumber = phoneNumber
-                emitPhoneStatus(callState)
-                emitCallUiState()
-
-                when (callState) {
-                    "ringing" -> {
-                        setStatus("📲 Llamada entrante: ${phoneNumber ?: "?"}")
-                        launchCallUi()
+                // InCallService has richer, authoritative states. Telephony is
+                // retained only as a delayed fallback for vendor-specific ROMs.
+                mainHandler.postDelayed({
+                    if (lastTelecomEventAt >= scheduledAt || VoipVcInCallService.isTrackingCalls()) {
+                        return@postDelayed
                     }
-                    "in_call" -> {
-                        startAudio()
-                        if (isActuallyInCall()) {
-                            setStatus("🔊 En llamada")
-                        } else {
-                            emitPhoneStatus("idle")
-                            setStatus("⚠️ Intento de llamada sin conexión real")
-                        }
-                    }
-                    "idle" -> {
-                        dialAttemptToken += 1
-                        stopAudio()
-                        currentPhoneNumber = ""
-                        setStatus("✅ Activo — esperando llamadas")
-                        closeCallUi()
-                    }
-                }
+                    handleObservedCallState(callState, number, "", direction, "telephony_fallback")
+                }, 750L)
             }
         }
 
@@ -652,6 +982,7 @@ class BridgeService : Service() {
      * 1. AudioRecord — captures phone MIC → sends to web via socket "audio:phone"
      * 2. AudioTrack  — receives web MIC audio → plays on phone speaker
      */
+    @SuppressLint("MissingPermission")
     private fun startAudio() {
         if (isStreaming.getAndSet(true)) return
 
@@ -679,6 +1010,11 @@ class BridgeService : Service() {
             )
             audioTrack!!.play()
             isPlaying.set(true)
+            playbackJob = serviceScope.launch(Dispatchers.IO) {
+                for (bytes in audioPlaybackQueue) {
+                    if (isPlaying.get()) playAudio(bytes)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "AudioTrack failed", e)
         }
@@ -694,13 +1030,13 @@ class BridgeService : Service() {
             )
         } catch (e: Exception) {
             Log.e(TAG, "AudioRecord failed", e)
-            isStreaming.set(false)
+            stopAudio()
             return
         }
 
         if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
             setStatus("⚠️ AudioRecord no disponible")
-            isStreaming.set(false)
+            stopAudio()
             return
         }
 
@@ -725,10 +1061,24 @@ class BridgeService : Service() {
         isPlaying.set(false)
         captureJob?.cancel()
         captureJob = null
+        playbackJob?.cancel()
+        playbackJob = null
+        while (audioPlaybackQueue.tryReceive().isSuccess) { /* discard stale audio */ }
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         try { audioTrack?.stop(); audioTrack?.release()  } catch (_: Exception) {}
         audioRecord = null
         audioTrack  = null
+        try {
+            val audioManager = getSystemService(AUDIO_SERVICE) as? AudioManager
+            @Suppress("DEPRECATION")
+            audioManager?.isMicrophoneMute = false
+            @Suppress("DEPRECATION")
+            audioManager?.isSpeakerphoneOn = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) audioManager?.clearCommunicationDevice()
+            audioManager?.mode = AudioManager.MODE_NORMAL
+        } catch (_: Exception) {}
+        isMicMuted = false
+        isSpeakerOn = false
     }
 
     private fun buildRestartIntentFromPrefs(): Intent? {
@@ -793,7 +1143,7 @@ class BridgeService : Service() {
     }
 
     private fun emitCommandAck(commandId: String, action: String, ok: Boolean, message: String) {
-        if (commandId.isBlank()) return
+        if (commandId.isBlank() || socket?.connected() != true) return
         socket?.emit(
             "phone:command_ack",
             JSONObject()
@@ -812,6 +1162,7 @@ class BridgeService : Service() {
             socket?.disconnect()
             socket?.off()
             socket = null
+            connectionKey = ""
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
             lastCallState = "idle"
             currentPhoneNumber = ""
@@ -820,6 +1171,9 @@ class BridgeService : Service() {
             currentImageUrl = ""
             isMicMuted = false
             isSpeakerOn = false
+            clearCampaignTracking()
+            lastDialCommandId = ""
+            lastDialAck = DialResult(false, "")
             setStatus("🔒 Sesión cerrada. APK detenida.")
         } catch (e: Exception) {
             setStatus("⚠️ Error al cerrar sesión: ${e.message}")
@@ -829,14 +1183,55 @@ class BridgeService : Service() {
         }
     }
 
-    private fun emitPhoneStatus(state: String) {
+    private fun emitPhoneStatus(
+        state: String,
+        source: String,
+        correlateCampaign: Boolean,
+        phoneNumberOverride: String? = null,
+        directionOverride: String? = null
+    ) {
+        val reportedNumber = phoneNumberOverride ?: currentPhoneNumber
+        val reportedDirection = directionOverride ?: currentCallDirection
+        val commandId = if (correlateCampaign) activeCommandId else ""
+        val contactId = if (correlateCampaign) activeContactId else ""
+        val noLiveCalls = state in setOf("idle", "ended", "failed") &&
+            hasPermission(Manifest.permission.READ_PHONE_STATE) &&
+            !VoipVcInCallService.isTrackingCalls() &&
+            !isActuallyInCall()
+        val signature = listOf(
+            state,
+            normalizedNumber(reportedNumber),
+            commandId,
+            contactId,
+            reportedDirection,
+            source,
+            campaignStateObserved.toString(),
+            noLiveCalls.toString(),
+            isMicMuted.toString(),
+            isSpeakerOn.toString()
+        ).joinToString("|")
+        if (socket?.connected() != true) return
+        if (signature == lastEmittedStatusSignature && source != "reconnect") return
+        lastEmittedStatusSignature = signature
+        statusSequence += 1
+
         socket?.emit(
             "phone:status",
             JSONObject()
                 .put("callState", state)
-                .put("phoneNumber", currentPhoneNumber)
+                .put("phoneNumber", reportedNumber)
                 .put("contactName", currentContactName)
                 .put("companyName", currentCompanyName)
+                .put("commandId", commandId)
+                .put("contactId", contactId)
+                .put("callDirection", reportedDirection)
+                .put("source", source)
+                .put("physicalObserved", campaignStateObserved)
+                .put("noLiveCalls", noLiveCalls)
+                .put("statusSessionId", statusSessionId)
+                .put("statusSequence", statusSequence)
+                .put("micMuted", isMicMuted)
+                .put("speakerOn", isSpeakerOn)
         )
     }
 
@@ -851,7 +1246,11 @@ class BridgeService : Service() {
         (getSystemService(NotificationManager::class.java))
             ?.notify(NOTIFICATION_ID, buildNotification(msg))
         // Broadcast to MainActivity
-        sendBroadcast(Intent(ACTION_STATUS).putExtra(EXTRA_STATUS_MESSAGE, msg))
+        sendBroadcast(
+            Intent(ACTION_STATUS)
+                .setPackage(packageName)
+                .putExtra(EXTRA_STATUS_MESSAGE, msg)
+        )
     }
 
     // ── NOTIFICATION ──────────────────────────────────────────────────────────

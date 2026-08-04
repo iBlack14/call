@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
     private var isMicMuted = false
     private var isSpeakerOn = false
     private var callStartedAt: Long? = null
+    private var autoReconnectAttempted = false
     private val timerHandler = Handler(Looper.getMainLooper())
     private val timerRunnable = object : Runnable {
         override fun run() {
@@ -190,6 +191,7 @@ class MainActivity : AppCompatActivity() {
             if (isDefaultDialer()) Tone.SUCCESS else Tone.WARNING
         )
         refreshReadinessChips()
+        if (isDefaultDialer()) autoReconnectIfSaved()
     }
 
     private val statusReceiver = object : BroadcastReceiver() {
@@ -215,7 +217,6 @@ class MainActivity : AppCompatActivity() {
         renderPersistentStatus()
         renderTransientStatus()
         renderCallPresentation()
-        autoReconnectIfSaved()
         requestAllPermissions()
     }
 
@@ -225,12 +226,7 @@ class MainActivity : AppCompatActivity() {
             addAction(BridgeService.ACTION_STATUS)
             addAction(BridgeService.ACTION_CALL_UI_STATE)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(statusReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            registerReceiver(statusReceiver, filter)
-        }
+        ContextCompat.registerReceiver(this, statusReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         if (bridgeMode == BridgeMode.CONNECTED) {
             sendServiceAction(BridgeService.ACTION_UI_SYNC)
         }
@@ -339,6 +335,7 @@ class MainActivity : AppCompatActivity() {
     private fun requestDialerRoleIfNeeded() {
         if (isDefaultDialer()) {
             refreshReadinessChips()
+            autoReconnectIfSaved()
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -506,6 +503,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoReconnectIfSaved() {
+        if (autoReconnectAttempted) return
+        if (!hasPermission(Manifest.permission.READ_PHONE_STATE) ||
+            !hasPermission(Manifest.permission.CALL_PHONE) ||
+            !hasPermission(Manifest.permission.RECORD_AUDIO) ||
+            !isDefaultDialer()
+        ) return
+        autoReconnectAttempted = true
         val prefs = getSharedPreferences(BridgeService.PREFS_NAME, Context.MODE_PRIVATE)
         val url = prefs.getString(BridgeService.PREF_SOCKET_URL, "") ?: ""
         val code = prefs.getString(BridgeService.PREF_CODE, "") ?: ""

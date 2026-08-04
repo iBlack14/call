@@ -1,5 +1,10 @@
 import { nanoid } from 'nanoid';
 
+// A campaign must keep object identity for its whole in-memory lifetime.
+// Several operations call helper functions recursively; rebuilding the object
+// in ensureCampaign() made the caller continue mutating a stale object.
+const normalizedCampaigns = new WeakSet();
+
 const DEFAULT_CAMPAIGN = () => ({
   status: "idle",
   contacts: [],
@@ -19,7 +24,7 @@ function nowIso() {
 }
 
 function normalizeResult(value) {
-  const allowed = new Set(["agendado", "no_interesado", "requiere_asesor", "sin_respuesta", "reintentar"]);
+  const allowed = new Set(["agendado", "no_interesado", "requiere_asesor", "sin_respuesta", "reintentar", "contactado"]);
   return allowed.has(value) ? value : "sin_respuesta";
 }
 
@@ -53,7 +58,10 @@ function normalizeContact(input = {}) {
     assignedWorkerId: input.assignedWorkerId || null,
     assignedAdvisor: input.assignedAdvisor || "",
     callbackReason: input.callbackReason || "",
-    transcriptSummary: input.transcriptSummary || ""
+    transcriptSummary: input.transcriptSummary || "",
+    wasAnswered: Boolean(input.wasAnswered),
+    connectedAt: input.connectedAt || null,
+    lastCallState: String(input.lastCallState || "").trim()
   };
 }
 
@@ -62,8 +70,10 @@ export function ensureCampaign(session) {
     session.campaign = DEFAULT_CAMPAIGN();
   }
 
+  if (normalizedCampaigns.has(session.campaign)) return session.campaign;
+
   const base = DEFAULT_CAMPAIGN();
-  session.campaign = {
+  const normalized = {
     ...base,
     ...session.campaign,
     contacts: Array.isArray(session.campaign.contacts)
@@ -83,12 +93,17 @@ export function ensureCampaign(session) {
       : []
   };
 
+  // Normalize in place so references held by callers remain authoritative.
+  Object.assign(session.campaign, normalized);
+  normalizedCampaigns.add(session.campaign);
+
   return session.campaign;
 }
 
 export function syncCampaignContacts(session, contacts = []) {
   const campaign = ensureCampaign(session);
   const seenPhones = new Set();
+  const seenIds = new Set();
   campaign.contacts = contacts
     .map((contact) => normalizeContact(contact))
     .filter((contact) => {
@@ -96,6 +111,17 @@ export function syncCampaignContacts(session, contacts = []) {
       const key = contact.phone.replace(/\D/g, "").replace(/^51(?=9\d{8}$)/, "");
       if (seenPhones.has(key)) return false;
       seenPhones.add(key);
+      if (seenIds.has(contact.id)) contact.id = nanoid();
+      seenIds.add(contact.id);
+      contact.status = "pending";
+      contact.result = "";
+      contact.attempts = 0;
+      contact.lastAttemptAt = null;
+      contact.completedAt = null;
+      contact.assignedWorkerId = null;
+      contact.wasAnswered = false;
+      contact.connectedAt = null;
+      contact.lastCallState = "";
       return true;
     });
   campaign.activeContactId = null;
@@ -109,6 +135,27 @@ export function syncCampaignContacts(session, contacts = []) {
 
 export function getCampaignSnapshot(session) {
   const campaign = ensureCampaign(session);
+  const quarantinedCalls = (session.phoneWorkers || [])
+    .filter((worker) =>
+      worker.physicalStateUnconfirmed ||
+      worker.hangupUnconfirmed ||
+      worker.manualHangupUnconfirmed ||
+      (
+        (worker.campaignContactId || worker.manualCommandId) &&
+        ["blocked", "unresponsive", "offline"].includes(worker.callState)
+      )
+    )
+    .map((worker) => ({
+      workerId: worker.id,
+      kind: worker.campaignContactId ? "campaign" : (worker.quarantineKind || "manual"),
+      contactId: worker.campaignContactId || worker.manualContactId || worker.quarantineContactId || "",
+      phoneNumber: worker.currentNumber || worker.quarantinePhoneNumber || "",
+      callState: worker.callState || "blocked",
+      reason: worker.quarantineReason || worker.lastError || "No se pudo verificar el estado físico de la llamada"
+    }));
+  const quarantinedContactIds = quarantinedCalls
+    .filter((item) => item.kind === "campaign" && item.contactId)
+    .map((item) => item.contactId);
   const activeContacts = campaign.contacts.filter((contact) =>
     ["dialing", "ringing", "in_call"].includes(contact.status)
   );
@@ -124,7 +171,8 @@ export function getCampaignSnapshot(session) {
   };
 
   for (const contact of campaign.contacts) {
-    if (counts[contact.status] !== undefined) counts[contact.status] += 1;
+    if (contact.status === "reintentar") counts.pending += 1;
+    else if (counts[contact.status] !== undefined) counts[contact.status] += 1;
   }
 
   return {
@@ -134,6 +182,8 @@ export function getCampaignSnapshot(session) {
     activeContacts,
     activeWorkerId: campaign.activeWorkerId,
     activeWorkerSocketId: campaign.activeWorkerSocketId,
+    quarantinedContactIds,
+    quarantinedCalls,
     lastError: campaign.lastError,
     updatedAt: campaign.updatedAt,
     startedAt: campaign.startedAt,
@@ -148,7 +198,7 @@ export function getCampaignSnapshot(session) {
 export function startCampaign(session, contacts = []) {
   const campaign = contacts.length ? syncCampaignContacts(session, contacts) : ensureCampaign(session);
   campaign.status = "running";
-  campaign.startedAt ||= nowIso();
+  campaign.startedAt = nowIso();
   campaign.pausedAt = null;
   campaign.completedAt = null;
   campaign.lastError = "";
@@ -200,7 +250,8 @@ export function getContactById(session, contactId) {
 export function getActiveContact(session) {
   const campaign = ensureCampaign(session);
   if (campaign.activeContactId) {
-    return getContactById(session, campaign.activeContactId);
+    const active = getContactById(session, campaign.activeContactId);
+    if (active && ["dialing", "ringing", "in_call"].includes(active.status)) return active;
   }
   // Fallback: look for ANY contact that is currently in a call state
   return campaign.contacts.find((c) => ["dialing", "ringing", "in_call"].includes(c.status)) || null;
@@ -220,14 +271,19 @@ export function getContactByWorker(session, workerId) {
 
 export function pickNextContact(session) {
   const campaign = ensureCampaign(session);
-  return campaign.contacts.find((contact) => contact.status === "pending" || contact.status === "reintentar") || null;
+  // Complete the untouched queue before cycling back to explicitly skipped
+  // contacts; otherwise "Saltar" could immediately call the same number again.
+  return campaign.contacts.find((contact) => contact.status === "pending")
+    || campaign.contacts.find((contact) => contact.status === "reintentar")
+    || null;
 }
 
 export function assignNextContact(session, worker = {}) {
   const campaign = ensureCampaign(session);
   const next = pickNextContact(session);
   if (!next) {
-    if (!getActiveContacts(session).length) {
+    const hasBoundWorker = (session.phoneWorkers || []).some((worker) => worker.campaignContactId);
+    if (!getActiveContacts(session).length && !hasBoundWorker) {
       campaign.status = campaign.status === "paused" ? "paused" : "completed";
       campaign.completedAt = nowIso();
       campaign.activeContactId = null;
@@ -262,17 +318,29 @@ export function updateActiveCallState(session, state, worker = {}) {
   if (!contact) return null;
 
   if (worker.id) contact.assignedWorkerId = worker.id;
+  contact.lastCallState = state;
   
   if (state === "dialing" || state === "ringing" || state === "in_call") {
+    if (contact.status === "in_call" && (state === "dialing" || state === "ringing")) return contact;
+    if (contact.status === "ringing" && state === "dialing") return contact;
     contact.status = state;
+    if (state === "in_call") {
+      contact.wasAnswered = true;
+      contact.connectedAt ||= nowIso();
+    }
     campaign.activeContactId = contact.id; // Re-sync active ID if it was lost
     campaign.updatedAt = Date.now();
     return contact;
   }
 
   if (["idle", "ended", "failed"].includes(state) && ["dialing", "ringing", "in_call"].includes(contact.status)) {
-    contact.status = "failed";
-    if (!contact.result) contact.result = "sin_respuesta";
+    if (!contact.result && contact.wasAnswered) {
+      contact.status = "completed";
+      contact.result = "contactado";
+    } else {
+      contact.status = "failed";
+      if (!contact.result) contact.result = "sin_respuesta";
+    }
     contact.completedAt = nowIso();
     const remaining = getActiveContacts(session).filter((item) => item.id !== contact.id);
     campaign.activeContactId = remaining[0]?.id || null;
@@ -327,17 +395,14 @@ export function markContactResult(session, contactId, result, extras = {}) {
   return contact;
 }
 
-export function skipActiveContact(session) {
+export function skipActiveContact(session, contactId = "") {
   const campaign = ensureCampaign(session);
-  const contact = getActiveContact(session);
+  const contact = contactId ? getContactById(session, contactId) : getActiveContact(session);
+  if (contact && !["dialing", "ringing", "in_call"].includes(contact.status)) return null;
   if (!contact) return null;
 
   contact.result = "reintentar";
-  contact.status = "pending";
   contact.completedAt = null;
-  campaign.activeContactId = null;
-  campaign.activeWorkerId = null;
-  campaign.activeWorkerSocketId = null;
   campaign.updatedAt = Date.now();
   return contact;
 }

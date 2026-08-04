@@ -111,6 +111,7 @@ class QrCaptureActivity : androidx.activity.ComponentActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         captureManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }
