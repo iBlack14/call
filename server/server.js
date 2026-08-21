@@ -869,18 +869,26 @@ function selectPhoneWorker(session, preferredSocketId = "") {
   return chosen;
 }
 
+function reorderPairingSlotLabels(session) {
+  const slots = session.pairingSlots || [];
+  slots.forEach((slot, index) => {
+    slot.label = `Dispositivo ${index + 1}`;
+  });
+}
+
 function createPairingSlot(session, label = "") {
   const slots = session.pairingSlots || (session.pairingSlots = []);
   const slot = {
     id: nanoid(10),
     token: nanoid(24),
-    label: String(label || "").trim() || `Dispositivo ${slots.length + 1}`,
+    label: `Dispositivo ${slots.length + 1}`,
     deviceId: "",
     deviceName: "",
     createdAt: new Date().toISOString(),
     linkedAt: null
   };
   slots.push(slot);
+  reorderPairingSlotLabels(session);
   return slot;
 }
 
@@ -919,6 +927,7 @@ function ensureLegacyPairingSlot(session) {
       linkedAt: null
     });
   }
+  reorderPairingSlotLabels(session);
   return slots[0];
 }
 
@@ -2192,6 +2201,7 @@ app.delete("/api/session/:code/pairing-slots/:id", (req, res) => {
   }
 
   slots.splice(index, 1);
+  reorderPairingSlotLabels(session);
   saveSoon();
   emitState(code);
 

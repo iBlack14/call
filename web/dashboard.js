@@ -2,7 +2,6 @@ import { socket, API_BASE } from './modules/socket.js?v=2';
 import { refs, setStatus, setBadge, setAckBadge } from './modules/dom.js?v=2';
 import * as Contacts from './modules/contacts.js?v=3';
 import * as AudioBridge from './modules/audio-bridge.js?v=2';
-import * as WhatsApp from './modules/whatsapp.js?v=2';
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let sessionCode = "";
@@ -37,7 +36,6 @@ async function init() {
   Contacts.loadContactRowStatus();
   Contacts.loadCallDurations();
   Contacts.loadDismissedReminders();
-  WhatsApp.loadWhatsAppPresetMessages();
   Contacts.setPersistenceListener(scheduleWorkspaceSave);
   
   renderContacts();
@@ -63,6 +61,57 @@ function makeId() {
   return (typeof crypto.randomUUID === "function")
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function showCustomConfirm(title, message, okText = "Eliminar", isDanger = true) {
+  window.showCustomConfirm = showCustomConfirm;
+  return new Promise((resolve) => {
+    const modal = document.getElementById("confirmModal");
+    const titleEl = document.getElementById("confirmTitle");
+    const msgEl = document.getElementById("confirmMessage");
+    const okBtn = document.getElementById("confirmOkBtn");
+    const cancelBtn = document.getElementById("confirmCancelBtn");
+    
+    if (!modal || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+      resolve(confirm(message));
+      return;
+    }
+    
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    okBtn.textContent = okText;
+    
+    if (isDanger) {
+      okBtn.className = "danger-soft";
+      okBtn.style.background = "rgba(220, 38, 38, 0.1)";
+      okBtn.style.color = "#dc2626";
+      okBtn.style.border = "1px solid rgba(220, 38, 38, 0.25)";
+    } else {
+      okBtn.className = "primary";
+      okBtn.style.background = "var(--accent)";
+      okBtn.style.color = "#fff";
+      okBtn.style.border = "none";
+    }
+    
+    modal.style.display = "flex";
+    
+    okBtn.onclick = () => {
+      modal.style.display = "none";
+      resolve(true);
+    };
+    
+    cancelBtn.onclick = () => {
+      modal.style.display = "none";
+      resolve(false);
+    };
+    
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+        resolve(false);
+      }
+    };
+  });
 }
 
 function normalizePhone(input) {
@@ -484,7 +533,6 @@ function renderContacts() {
       </td>
       <td class="actions-cell">
         <button data-action="edit" data-id="${c.id}" class="secondary">✏️</button>
-        <button data-action="whatsapp" data-id="${c.id}" class="wa-action-btn">🟢 WA</button>
         <button data-action="delete" data-id="${c.id}" class="secondary">🗑️</button>
       </td>`;
     fragment.appendChild(tr);
@@ -840,7 +888,8 @@ async function forceReleaseCampaignPhone() {
   const contactId = quarantined?.contactId || campaignState?.quarantinedContactIds?.[0] || "";
   const workerId = quarantined?.workerId || "";
   if (!contactId && !workerId) return;
-  const accepted = window.confirm(
+  const accepted = await showCustomConfirm(
+    "Forzar liberación",
     "No se pudo comprobar si la llamada terminó físicamente. Forzar la liberación desconectará ese teléfono y, si pertenece a la campaña, marcará el contacto como fallido. Úsalo solo después de revisar el celular."
   );
   if (!accepted) return;
@@ -921,7 +970,7 @@ function bindEvents() {
       const deleteBtn = event.target.closest(".delete-slot-btn");
       if (deleteBtn) {
         const slotId = deleteBtn.dataset.id;
-        if (confirm("¿Estás seguro de que deseas eliminar este dispositivo QR? Si el celular está conectado se desconectará.")) {
+        if (await showCustomConfirm("Eliminar dispositivo QR", "¿Estás seguro de que deseas eliminar este dispositivo QR? Si el celular está conectado se desconectará.")) {
           try {
             const res = await fetch(`${API_BASE}/api/session/${encodeURIComponent(sessionCode)}/pairing-slots/${encodeURIComponent(slotId)}`, {
               method: "DELETE"
@@ -942,7 +991,7 @@ function bindEvents() {
     };
   }
   
-  refs.cBodyEl.onclick = (e) => {
+  refs.cBodyEl.onclick = async (e) => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
     const action = btn.dataset.action;
@@ -950,12 +999,11 @@ function bindEvents() {
     const contact = Contacts.contacts.find(c => c.id === id);
     if (!contact) return;
     
-    if (action === "whatsapp") WhatsApp.openWhatsAppModal(contact);
     if (action === "edit") {
        openEditModal(contact);
     }
     if (action === "delete") {
-      if (confirm(`¿Eliminar a ${contact.name}?`)) {
+      if (await showCustomConfirm("Eliminar contacto", `¿Eliminar a ${contact.name}?`)) {
         Contacts.deleteContact(id);
         renderContacts();
       }
@@ -1044,8 +1092,8 @@ function bindEvents() {
   // Missing button handlers
   if (refs.exportWordBtn) refs.exportWordBtn.onclick = exportContactsToWord;
   if (refs.deleteAllContactsBtn) {
-    refs.deleteAllContactsBtn.onclick = () => {
-      if (!confirm("¿Estás seguro de que deseas ELIMINAR TODOS los contactos y todas las listas? Esta acción no se puede deshacer.")) return;
+    refs.deleteAllContactsBtn.onclick = async () => {
+      if (!await showCustomConfirm("Eliminar todos los contactos", "¿Estás seguro de que deseas ELIMINAR TODOS los contactos y todas las listas? Esta acción no se puede deshacer.")) return;
       Contacts.contacts.length = 0;
       Contacts.lists.length = 0;
       Contacts.lists.push("Principal");
@@ -1057,45 +1105,7 @@ function bindEvents() {
       setStatus("Todos los contactos y listas han sido eliminados.");
     };
   }
-  if (refs.connectWhatsAppBtn) refs.connectWhatsAppBtn.onclick = WhatsApp.openWhatsAppConnectModal;
   
-  
-  
-  // WhatsApp modal handlers
-  if (refs.whatsappCloseBtn) refs.whatsappCloseBtn.onclick = WhatsApp.closeWhatsAppModal;
-  if (refs.whatsappSendBtn) refs.whatsappSendBtn.onclick = WhatsApp.sendWhatsAppMessage;
-  if (refs.whatsappLogoutBtn) refs.whatsappLogoutBtn.onclick = WhatsApp.logoutWhatsAppAccount;
-  if (refs.whatsappTemplateSaveBtn) refs.whatsappTemplateSaveBtn.onclick = WhatsApp.saveNewWhatsAppPresetMessage;
-  
-  
-  
-  // WhatsApp file drop zone handlers
-  if (refs.whatsappDropZone) {
-    refs.whatsappDropZone.onclick = () => refs.whatsappFileInput?.click();
-    
-    refs.whatsappDropZone.ondragover = (e) => {
-      e.preventDefault();
-      refs.whatsappDropZone.classList.add("drag-over");
-    };
-    
-    refs.whatsappDropZone.ondragleave = () => {
-      refs.whatsappDropZone.classList.remove("drag-over");
-    };
-    
-    refs.whatsappDropZone.ondrop = (e) => {
-      e.preventDefault();
-      refs.whatsappDropZone.classList.remove("drag-over");
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        refs.whatsappFileInput.files = files;
-        WhatsApp.updateWhatsAppFileLabel();
-      }
-    };
-    
-    if (refs.whatsappFileInput) {
-      refs.whatsappFileInput.onchange = WhatsApp.updateWhatsAppFileLabel;
-    }
-  }
 }
 
 // ── MISSING BUTTON FUNCTIONS ─────────────────────────────────────────────
@@ -1676,8 +1686,8 @@ function openHistory() {
   refs.historyModalEl.style.display = "flex";
 }
 
-function clearHistory() {
-  if (!confirm("¿Limpiar historial?")) return;
+async function clearHistory() {
+  if (!await showCustomConfirm("Limpiar historial", "¿Estás seguro de que deseas limpiar todo el historial de llamadas recientes?")) return;
   callHistory = [];
   saveHistory();
   renderHistory();
@@ -1812,7 +1822,7 @@ function renderTabs() {
     <button class="add-tab-btn" id="addNewTabBtn">＋ Nueva Lista</button>
   `;
   
-  container.onclick = (e) => {
+  container.onclick = async (e) => {
     const tab = e.target.closest(".tab-item");
     const del = e.target.closest(".delete-tab-btn");
     const add = e.target.closest("#addNewTabBtn");
@@ -1820,7 +1830,7 @@ function renderTabs() {
     if (del) {
       e.stopPropagation();
       const name = del.dataset.list;
-      if (confirm(`¿Eliminar la lista "${name}" y todos sus contactos?`)) {
+      if (await showCustomConfirm("Eliminar lista", `¿Eliminar la lista "${name}" y todos sus contactos?`)) {
         Contacts.deleteList(name);
         renderTabs();
         renderContacts();
