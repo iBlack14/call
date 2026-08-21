@@ -8,6 +8,7 @@
     "pairingToken": "jA5oWyrjtwSnRSwyq7LE",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -47,6 +48,7 @@
     "pairingToken": "gbDWuP-EVGkhAm549_tL",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -86,6 +88,7 @@
     "pairingToken": "VNkqbsp2VLc5Nx6KprS7",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -125,6 +128,7 @@
     "pairingToken": "wrhr-ReBd8HVAaDn8WAT",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -164,6 +168,7 @@
     "pairingToken": "4gstbZi1zAsLpiQa4eTi",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -203,6 +208,7 @@
     "pairingToken": "QmlvARyDQN0wuwO00wP4",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -242,6 +248,7 @@
     "pairingToken": "v9N89edLT7f8ggJULvFT",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -281,6 +288,7 @@
     "pairingToken": "T3RHXm61qjoe2N6j8L6Y",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -320,6 +328,7 @@
     "pairingToken": "5-IMcoURejumztFLJRrE",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -359,6 +368,7 @@
     "pairingToken": "qouY3bPpXvNHmB7JYm1E",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -398,6 +408,7 @@
     "pairingToken": "oErdprksN3ddGsvZARt6",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -437,6 +448,7 @@
     "pairingToken": "Pc4TT1oJ8EUnwPvLOwly",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -476,6 +488,7 @@
     "pairingToken": "MVGKGGs_YT5HyhPiQ6GO",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -515,6 +528,7 @@
     "pairingToken": "gcbURKxoctY7gSXW6yx8",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -554,6 +568,7 @@
     "pairingToken": "18-fUgFOpGO6vRtkV75u",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -593,6 +608,7 @@
     "pairingToken": "zmwhoa8kXAe6o7BD0tSs",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -632,6 +648,7 @@
     "pairingToken": "CAokfUshnKDi5QbPu_ES",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -671,6 +688,7 @@
     "pairingToken": "FqQCMlX6Wx3Hy62Cjlsi",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -710,6 +728,7 @@
     "pairingToken": "4Cr1Q-ceY4rvbiu8oEwC",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -749,6 +768,7 @@
     "pairingToken": "pWse7CSo9Zcsoat2HuH9",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -788,6 +808,7 @@
     "pairingToken": "h3l85pORG9W3q1AfN8Fq",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -827,6 +848,7 @@
     "pairingToken": "lEy7ZCViihPI-9uvLOla",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -866,6 +888,7 @@
     "pairingToken": "SSWgrIG8dKv2CEr31Zgu",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -905,6 +928,7 @@
     "pairingToken": "qKrpHc4F2xp5_3qLW6fN",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -944,6 +968,7 @@
     "pairingToken": "VgyaS7SlTH4gKXeVrTtZ",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -983,6 +1008,7 @@
     "pairingToken": "BVSd0FDbXusmcDukb_KN",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1022,6 +1048,7 @@
     "pairingToken": "jKTdsgxBxUwQnWbY9vjk",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1061,6 +1088,7 @@
     "pairingToken": "0UxjVMBBjKcjN-LVjYaX",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1100,6 +1128,7 @@
     "pairingToken": "PLq1eFwZWC2NQMZ95HkE",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1139,6 +1168,7 @@
     "pairingToken": "0Dw7ocMl2vjaszVgcc6Q",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1178,6 +1208,7 @@
     "pairingToken": "_U1hju4xy6Bcsgl-Q0wG",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1217,6 +1248,7 @@
     "pairingToken": "h6Bq-7w_s-GIefoG-gKX",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1256,6 +1288,7 @@
     "pairingToken": "PiC_SQGUfDStWts7wlDD",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1295,6 +1328,7 @@
     "pairingToken": "DArfANmGKNRYfM0Hiedj",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1334,6 +1368,7 @@
     "pairingToken": "VT3xJXtBsKUsSTHPN7lM",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1373,6 +1408,7 @@
     "pairingToken": "HTUSuBIVa53UmTstQqFa",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1412,6 +1448,7 @@
     "pairingToken": "fytff8MYluWGwYbRMrza",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1451,6 +1488,7 @@
     "pairingToken": "RG25GSU_gIC-b6uT2cAr",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1490,6 +1528,7 @@
     "pairingToken": "SDgLNe13BZn1gcuKfWHW",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1529,6 +1568,7 @@
     "pairingToken": "ixmw3R6BQkbWb5K3pdBT",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1568,6 +1608,7 @@
     "pairingToken": "NsWK4DXv4WKnopkiLQq9",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1607,6 +1648,7 @@
     "pairingToken": "_WjGAmiZnUlSEdbr6OZl",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1646,6 +1688,7 @@
     "pairingToken": "IwG0o7KVqIfBn_7qpkyy",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1685,6 +1728,7 @@
     "pairingToken": "_6cFdxhngbShnoPkdEQp",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1732,27 +1776,100 @@
         "socketId": null,
         "id": "android-worker",
         "name": "Android bridge",
+        "pairingSlotId": "",
         "linkedAt": "2026-05-01T15:55:51.358Z",
         "connected": false,
-        "callState": "idle"
+        "callState": "offline",
+        "currentNumber": "",
+        "currentContactName": "",
+        "currentCompanyName": "",
+        "campaignContactId": null,
+        "campaignCommandId": null,
+        "campaignCallPhase": "idle",
+        "campaignLastState": "idle",
+        "hangupUnconfirmed": false,
+        "manualCommandId": null,
+        "manualContactId": null,
+        "manualCallPhase": "idle",
+        "manualLastState": "idle",
+        "pendingManualHangupCommandId": null,
+        "manualHangupUnconfirmed": false,
+        "physicalStateUnconfirmed": false,
+        "quarantineKind": "",
+        "quarantineContactId": "",
+        "quarantinePhoneNumber": "",
+        "quarantineReason": "",
+        "lastStatusSignature": "",
+        "lineLabel": "",
+        "lastError": "",
+        "disconnectedAt": "2026-08-21T17:04:58.317Z"
       },
       {
         "socketId": null,
         "id": "android-worker",
         "name": "Android bridge",
+        "pairingSlotId": "",
         "linkedAt": "2026-05-01T15:55:52.563Z",
         "connected": false,
-        "callState": "idle"
+        "callState": "offline",
+        "currentNumber": "",
+        "currentContactName": "",
+        "currentCompanyName": "",
+        "campaignContactId": null,
+        "campaignCommandId": null,
+        "campaignCallPhase": "idle",
+        "campaignLastState": "idle",
+        "hangupUnconfirmed": false,
+        "manualCommandId": null,
+        "manualContactId": null,
+        "manualCallPhase": "idle",
+        "manualLastState": "idle",
+        "pendingManualHangupCommandId": null,
+        "manualHangupUnconfirmed": false,
+        "physicalStateUnconfirmed": false,
+        "quarantineKind": "",
+        "quarantineContactId": "",
+        "quarantinePhoneNumber": "",
+        "quarantineReason": "",
+        "lastStatusSignature": "",
+        "lineLabel": "",
+        "lastError": "",
+        "disconnectedAt": "2026-08-21T17:04:58.318Z"
       },
       {
         "socketId": null,
         "id": "8bca7b6df636d74e",
         "name": "Xiaomi 2312CRNCCL",
+        "pairingSlotId": "",
         "linkedAt": "2026-05-01T16:01:48.549Z",
         "connected": false,
-        "callState": "idle"
+        "callState": "offline",
+        "currentNumber": "",
+        "currentContactName": "",
+        "currentCompanyName": "",
+        "campaignContactId": null,
+        "campaignCommandId": null,
+        "campaignCallPhase": "idle",
+        "campaignLastState": "idle",
+        "hangupUnconfirmed": false,
+        "manualCommandId": null,
+        "manualContactId": null,
+        "manualCallPhase": "idle",
+        "manualLastState": "idle",
+        "pendingManualHangupCommandId": null,
+        "manualHangupUnconfirmed": false,
+        "physicalStateUnconfirmed": false,
+        "quarantineKind": "",
+        "quarantineContactId": "",
+        "quarantinePhoneNumber": "",
+        "quarantineReason": "",
+        "lastStatusSignature": "",
+        "lineLabel": "",
+        "lastError": "",
+        "disconnectedAt": "2026-08-21T17:04:58.318Z"
       }
     ],
+    "pairingSlots": [],
     "micMuted": false,
     "isSpeakerOn": false,
     "pbx": {
@@ -1774,7 +1891,7 @@
       "contacts": [],
       "activeContactId": "9c2fb274-eff0-4c5a-b438-c8754efb7ef2",
       "activeWorkerId": null,
-      "activeWorkerSocketId": "7SOxjGog8cgg20GvAAZp",
+      "activeWorkerSocketId": null,
       "callbacks": [],
       "lastError": "",
       "updatedAt": 1777650936847,
@@ -1796,11 +1913,36 @@
         "socketId": null,
         "id": "android-worker",
         "name": "Android bridge",
+        "pairingSlotId": "",
         "linkedAt": "2026-05-01T15:55:41.815Z",
         "connected": false,
-        "callState": "idle"
+        "callState": "offline",
+        "currentNumber": "",
+        "currentContactName": "",
+        "currentCompanyName": "",
+        "campaignContactId": null,
+        "campaignCommandId": null,
+        "campaignCallPhase": "idle",
+        "campaignLastState": "idle",
+        "hangupUnconfirmed": false,
+        "manualCommandId": null,
+        "manualContactId": null,
+        "manualCallPhase": "idle",
+        "manualLastState": "idle",
+        "pendingManualHangupCommandId": null,
+        "manualHangupUnconfirmed": false,
+        "physicalStateUnconfirmed": false,
+        "quarantineKind": "",
+        "quarantineContactId": "",
+        "quarantinePhoneNumber": "",
+        "quarantineReason": "",
+        "lastStatusSignature": "",
+        "lineLabel": "",
+        "lastError": "",
+        "disconnectedAt": "2026-08-21T17:04:58.318Z"
       }
     ],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1840,6 +1982,7 @@
     "pairingToken": "s4nf9rTARIbbVGlui_SK",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1879,6 +2022,7 @@
     "pairingToken": "r33ar9F11UZupKr1IH55",
     "phoneDevice": null,
     "phoneWorkers": [],
+    "pairingSlots": [],
     "micMuted": true,
     "isSpeakerOn": false,
     "pbx": {
@@ -1971,6 +2115,168 @@
       "startedAt": null,
       "pausedAt": null,
       "completedAt": null
+    }
+  },
+  "NUKTLI": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "RD2JbfZGrQ51tCjZrOTy",
+    "phoneDevice": null,
+    "phoneWorkers": [],
+    "pairingSlots": [
+      {
+        "id": "sgVyUAm-uJ",
+        "token": "RD2JbfZGrQ51tCjZrOTy",
+        "label": "Dispositivo 1",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:18:29.283Z",
+        "linkedAt": null
+      },
+      {
+        "id": "F30i2jR-pB",
+        "token": "qotZlBo5H-GFRaxZHLtOyw0-",
+        "label": "Dispositivo 2",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:24:16.231Z",
+        "linkedAt": null
+      },
+      {
+        "id": "IRwNcBK-RE",
+        "token": "pt5cBLoWA2PD9PMZrBeTSaMz",
+        "label": "Dispositivo 3",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:24:16.985Z",
+        "linkedAt": null
+      },
+      {
+        "id": "jmXmW6pgQM",
+        "token": "cgjwAiqtck6ZgnXZRbIOsIay",
+        "label": "Dispositivo 4",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:24:17.722Z",
+        "linkedAt": null
+      },
+      {
+        "id": "w_tDX-qOYn",
+        "token": "2AI_gp9llM7_fFR9o4-h2lfH",
+        "label": "Dispositivo 5",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:24:18.462Z",
+        "linkedAt": null
+      },
+      {
+        "id": "EdqW0rXdMr",
+        "token": "lKmlr-rydITBfwLhqamd98_L",
+        "label": "Dispositivo 6",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:24:18.951Z",
+        "linkedAt": null
+      },
+      {
+        "id": "eQlV33zjRu",
+        "token": "nSgmzpTeMAouPYNFmrKns92U",
+        "label": "Dispositivo 7",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:04.916Z",
+        "linkedAt": null
+      },
+      {
+        "id": "hvM1nQUeUO",
+        "token": "HQ6jR9bZgsBtWwa2YSUYIhtN",
+        "label": "Dispositivo 8",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:05.750Z",
+        "linkedAt": null
+      },
+      {
+        "id": "dqKAQN1R69",
+        "token": "qDCEYqnP-Uek0eQg1eVzXjLd",
+        "label": "Dispositivo 9",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:06.014Z",
+        "linkedAt": null
+      },
+      {
+        "id": "bVTW2qHvPb",
+        "token": "G2Fw5L8ZhgwBkPUDaQhx-t4m",
+        "label": "Dispositivo 10",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:06.379Z",
+        "linkedAt": null
+      },
+      {
+        "id": "TXjW5mmlP_",
+        "token": "5HZba-cSNqztSmkVSqFIDSqj",
+        "label": "Dispositivo 11",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:06.732Z",
+        "linkedAt": null
+      },
+      {
+        "id": "W1ZpilwT2v",
+        "token": "1wpfp4izMZCfVN9pguYQRF0A",
+        "label": "Dispositivo 12",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:29:07.088Z",
+        "linkedAt": null
+      }
+    ],
+    "micMuted": true,
+    "isSpeakerOn": false,
+    "pbx": {
+      "activeChannelId": "",
+      "activeBridgeId": "",
+      "externalMediaChannelId": "",
+      "externalMediaHost": "",
+      "externalMediaPort": 0,
+      "lastPlaybackId": "",
+      "endpoint": "",
+      "callerId": "",
+      "appArgs": "",
+      "lastTtsMedia": "",
+      "updatedAt": 0
+    },
+    "updatedAt": 1787333475482,
+    "campaign": {
+      "status": "idle",
+      "contacts": [],
+      "activeContactId": null,
+      "activeWorkerId": null,
+      "activeWorkerSocketId": null,
+      "callbacks": [],
+      "lastError": "",
+      "updatedAt": 1787332709266,
+      "startedAt": null,
+      "pausedAt": null,
+      "completedAt": null
+    },
+    "dashboardData": {
+      "contacts": [],
+      "lists": [
+        "Principal"
+      ],
+      "activeList": "Principal",
+      "calledCounts": {},
+      "contactRowStatus": {},
+      "callDurations": {},
+      "dismissedReminderIds": {},
+      "callHistory": [],
+      "updatedAt": "2026-08-21T17:18:30.390Z"
     }
   }
 }

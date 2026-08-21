@@ -619,7 +619,6 @@ function renderCampaignPanel() {
       campaignCounter("Pendientes", counts.pending || 0),
       campaignCounter("Llamando", (counts.dialing || 0) + (counts.ringing || 0), "warn"),
       campaignCounter("En llamada", counts.in_call || 0, "ok"),
-      campaignCounter("Callbacks", counts.awaiting_callback || 0, "accent"),
       campaignCounter("Completados", counts.completed || 0, "ok"),
       campaignCounter("Fallidos", counts.failed || 0, "danger")
     ].join("");
@@ -1584,6 +1583,9 @@ function renderPairingSlots(slots) {
       </div>
     </article>
   `).join("");
+  // Cuando hay 3+ slots, el bloque QR cambia a layout expandido
+  const qrBlock = document.getElementById("qrBlock");
+  if (qrBlock) qrBlock.classList.toggle("has-many-slots", slots.length >= 3);
 }
 
 async function createPairingSlot() {

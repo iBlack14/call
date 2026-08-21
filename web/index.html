@@ -29,9 +29,7 @@
 
       <!-- HEADER -->
       <div class="app-header">
-        <div class="app-logo" aria-hidden="true">
-          <span>VC</span>
-        </div>
+    <img class="app-logo" src="/logotipo-VCMAS.ico" alt="VC logo" aria-hidden="true" />
         <div class="app-title">
           <h1> GESTION DE LLAMADAS VC </h1>
           <p>Control remoto de llamadas desde el navegador</p>
@@ -51,30 +49,9 @@
             <small id="apkMeta" class="muted">Cargando info del APK…</small>
           </div>
         </div>
-        <div class="apk-actions">
-          <select id="apkVersionSelect" class="apk-version-select" title="Seleccionar versión APK">
-            <option value="">Versiones...</option>
-          </select>
-          <a id="apkDownloadBtn" href="/api/apk/download" class="btn-apk-dl" download>
-            ⬇️ Descargar APK
-          </a>
-          <button id="apkInstallHelp" class="secondary" style="font-size:12px;min-height:34px;padding:0 12px;">
-            ❓ Cómo instalar
-          </button>
-        </div>
-      </div>
-
-      <!-- INSTALL GUIDE (collapsible) -->
-      <div id="installGuide" class="install-guide" style="display:none">
-        <ol>
-          <li>Descarga el APK con el botón de arriba.</li>
-          <li>En Android: <strong>Ajustes → Seguridad → Instalar apps desconocidas</strong> → Activar para tu navegador.
-          </li>
-          <li>Abre el archivo descargado e instala.</li>
-          <li>Abre <strong>Phone-VC</strong>, escanea el QR o ingresa el código de sesión.</li>
-          <li>Activa <strong>Phone-VC como marcador por defecto</strong> dentro de la app para poder colgar llamadas.
-          </li>
-        </ol>
+        <a id="apkDownloadBtn" href="/api/apk/download" class="btn-apk-dl" download>
+          ⬇️ Descargar APK
+        </a>
       </div>
 
       <!-- SESSION BAR -->
@@ -132,34 +109,23 @@
       <!-- CONTACTS SECTION -->
       <section id="contactsSection" style="display:none">
         <section id="campaignSection" class="campaign-panel">
-          <div class="campaign-panel-head">
-            <div>
-              <p class="section-title" style="margin-top:0;">📞 Llamada general</p>
-              <p id="campaignStatusLine" class="muted campaign-status-line">Sin campaña activa.</p>
+          <div class="campaign-panel-row">
+            <div class="campaign-panel-left">
+              <span class="campaign-label">📞 Llamada general</span>
+              <span id="campaignStatusLine" class="campaign-status-text"></span>
             </div>
             <div class="campaign-actions">
-              <button id="campaignStartBtn">▶ Iniciar llamada general</button>
+              <button id="campaignStartBtn" class="campaign-btn-primary">▶ Iniciar campaña</button>
               <button id="campaignPauseBtn" class="secondary">⏸ Pausar</button>
               <button id="campaignResumeBtn" class="secondary">⏯ Continuar</button>
-              <button id="campaignSkipBtn" class="secondary">⏭ Saltar</button>
-              <button id="campaignForceReleaseBtn" class="danger-soft" style="display:none">⚠ Liberar teléfono</button>
+              <button id="campaignForceReleaseBtn" class="danger-soft" style="display:none">⚠ Liberar</button>
             </div>
           </div>
-
-          <div class="campaign-grid">
-            <div class="campaign-card">
-              <h3>Resumen</h3>
-              <div id="campaignCounters" class="campaign-counters"></div>
-            </div>
-
-            <div class="campaign-card">
-              <h3>Agendados / Callbacks</h3>
-              <div id="callbacksSummary" class="campaign-metric">0 pendientes</div>
-              <div id="callbacksList" class="campaign-list-empty">Sin callbacks pendientes.</div>
-            </div>
-          </div>
-
-          <!-- VOICE BOT SECTION REMOVED -->
+          <div id="campaignCounters" class="campaign-counters-inline"></div>
+          <!-- hidden but kept for JS compatibility -->
+          <div id="campaignSkipBtn" style="display:none"></div>
+          <div id="callbacksSummary" style="display:none"></div>
+          <div id="callbacksList" style="display:none"></div>
         </section>
 
         <div class="contacts-tabs" id="contactsTabs"></div>

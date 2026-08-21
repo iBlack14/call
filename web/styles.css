@@ -60,13 +60,12 @@ body {
 .app-logo {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  display: block;
   flex-shrink: 0;
-  box-shadow: 0 0 20px var(--accent-glow);
+  object-fit: contain;
 }
 
 .app-title h1 {
@@ -188,6 +187,48 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
   margin-top: 14px;
+}
+
+/* ── 3+ slots: layout expandido full-width ──────────── */
+.qr-block.has-many-slots {
+  grid-template-columns: 1fr;
+}
+
+.qr-block.has-many-slots .qr-copy {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.qr-block.has-many-slots .qr-copy p,
+.qr-block.has-many-slots .qr-copy h3 { margin: 0; }
+.qr-block.has-many-slots .qr-copy h3 { font-size: 14px; }
+
+.qr-block.has-many-slots .qr-copy .qr-eyebrow,
+.qr-block.has-many-slots .qr-copy .qr-description,
+.qr-block.has-many-slots #pairQr,
+.qr-block.has-many-slots #qrHint { display: none !important; }
+
+.qr-block.has-many-slots .pairing-data {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qr-block.has-many-slots .pairing-data input {
+  max-width: 200px;
+  flex: 1;
+}
+
+.qr-block.has-many-slots .pairing-slots {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  margin-top: 10px;
 }
 
 .pairing-slot-card {
@@ -2622,4 +2663,124 @@ th,
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* ── CAMPAIGN COUNTERS INLINE ───────────────────────── */
+.campaign-counters-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.campaign-counters-inline .campaign-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px 2px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, rgba(255,255,255,0.55));
+  white-space: nowrap;
+}
+
+.campaign-counters-inline .campaign-counter strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text, #fff);
+}
+
+.campaign-counters-inline .campaign-counter.ok {
+  border-color: rgba(52,211,153,0.35);
+  background: rgba(52,211,153,0.08);
+  color: #6ee7b7;
+}
+.campaign-counters-inline .campaign-counter.ok strong { color: #34d399; }
+
+.campaign-counters-inline .campaign-counter.warn {
+  border-color: rgba(251,191,36,0.35);
+  background: rgba(251,191,36,0.08);
+  color: #fcd34d;
+}
+.campaign-counters-inline .campaign-counter.warn strong { color: #fbbf24; }
+
+.campaign-counters-inline .campaign-counter.danger {
+  border-color: rgba(248,113,113,0.35);
+  background: rgba(248,113,113,0.08);
+  color: #fca5a5;
+}
+.campaign-counters-inline .campaign-counter.danger strong { color: #f87171; }
+
+.campaign-counters-inline .campaign-counter.accent {
+  border-color: rgba(167,139,250,0.35);
+  background: rgba(167,139,250,0.08);
+  color: #c4b5fd;
+}
+.campaign-counters-inline .campaign-counter.accent strong { color: #a78bfa; }
+
+/* ── CAMPAIGN PANEL IMPROVED ────────────────────────── */
+.campaign-panel {
+  background: var(--card, rgba(17,0,24,0.75));
+  border: 1px solid var(--border, rgba(180,0,230,0.25));
+  border-radius: 14px;
+  padding: 14px 18px 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.campaign-panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.campaign-panel-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.campaign-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text, #fff);
+  white-space: nowrap;
+}
+
+.campaign-status-text {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+
+.campaign-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campaign-actions button {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.campaign-btn-primary {
+  background: linear-gradient(135deg, var(--accent2, #4F46E5) 0%, var(--accent, #7C3AED) 100%) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 14px rgba(124,58,237,0.35);
 }
