@@ -34,10 +34,6 @@
           <h1> GESTION DE LLAMADAS VC </h1>
           <p>Control remoto de llamadas desde el navegador</p>
         </div>
-        <div class="app-header-meta">
-          <span class="header-chip">Dashboard remoto</span>
-          <span class="header-chip header-chip-accent">Voice control</span>
-        </div>
       </div>
 
       <!-- APK MANAGEMENT BAR -->
@@ -54,8 +50,22 @@
         </a>
       </div>
 
+      <!-- SHIFT BAR -->
+      <div id="shiftBar" class="shift-bar">
+        <div class="shift-bar-left">
+          <span id="shiftDot" class="shift-dot"></span>
+          <span id="shiftName" class="shift-name">—</span>
+          <span id="shiftRange" class="shift-range"></span>
+          <span id="shiftElapsed" class="shift-elapsed">00:00:00</span>
+          <span id="shiftProgress" class="shift-progress-wrap">
+            <span id="shiftProgressBar" class="shift-progress-bar"></span>
+          </span>
+        </div>
+        <button id="shiftEndBtn" class="shift-end-btn">⏹ Finalizar turno</button>
+      </div>
+
       <!-- SESSION BAR -->
-      <div id="sessionBar" class="session-bar">
+      <div id="sessionBar" class="session-bar" style="display:none;">
         <button id="createSession">＋ Crear Sesión</button>
         <input id="sessionCode" placeholder="CÓDIGO (6 chars)" maxlength="8" style="text-transform:uppercase;" />
         <button id="joinSession" class="secondary">Vincular</button>
@@ -98,10 +108,10 @@
           <small id="qrHint" class="muted">Crea una sesión para ver el QR.</small>
         </div>
         <div class="pairing-data">
-          <label class="muted" style="font-size:12px;">Link de vinculación</label>
-          <input id="pairLink" readonly placeholder="Aparecerá al crear sesión" />
-          <button id="copyPairLink" class="secondary">📋 Copiar link</button>
-          <button id="addPairingSlot">＋ Crear QR para otro celular</button>
+          <label class="muted" style="font-size:12px; display:none;">Link de vinculación</label>
+          <input id="pairLink" readonly placeholder="Aparecerá al crear sesión" style="display:none;" />
+          <button id="copyPairLink" class="secondary" style="display:none;">📋 Copiar link</button>
+          <button id="addPairingSlot" style="width: 100%;">＋ Crear QR para otro celular</button>
         </div>
         <div id="pairingSlots" class="pairing-slots"></div>
       </div>
@@ -141,6 +151,7 @@
           <button id="importBtn" class="secondary">📥 Importar (Excel/Doc)</button>
           <button id="addContactBtn">＋ Agregar</button>
           <button id="openHistoryBtn" class="secondary">📜 Historial</button>
+          <button id="openReportBtn" class="secondary">📊 Reporte</button>
           <button id="deleteAllContactsBtn" class="danger-soft">🗑️ Eliminar todo</button>
           <input id="filterInput" placeholder="Filtrar por nombre o número..." style="flex:1" />
         </div>
@@ -338,81 +349,6 @@
     </div>
   </div>
 
-  <!-- QUOTATION MODAL -->
-  <div id="quotationModal" class="edit-modal" style="display:none">
-    <div class="edit-card quotation-card">
-      <button id="quotationCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
-      <h3>Nueva Cotización</h3>
-      <p class="muted" style="margin-bottom:10px;">Sin PHP. Se genera y descarga directamente desde el navegador.</p>
-
-      <div class="edit-form quotation-form-grid">
-        <label for="qDate">Fecha</label>
-        <input id="qDate" type="date" />
-
-        <label for="qCompany">Empresa / Razón Social</label>
-        <input id="qCompany" type="text" placeholder="Empresa" />
-
-        <label for="qRuc">RUC</label>
-        <input id="qRuc" type="text" placeholder="RUC" />
-
-        <label for="qPhone">Teléfono</label>
-        <input id="qPhone" type="text" placeholder="+51999999999" />
-
-        <label for="qEmail">Correo</label>
-        <input id="qEmail" type="email" placeholder="correo@dominio.com" />
-
-        <label for="qAddress">Dirección</label>
-        <input id="qAddress" type="text" placeholder="Dirección" />
-      </div>
-
-      <div class="table-wrap quotation-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Servicio / Producto</th>
-              <th>Cantidad</th>
-              <th>Precio</th>
-              <th>Total</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="quotationItemsBody"></tbody>
-        </table>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="quotationAddItemBtn" type="button" class="secondary">＋ Agregar ítem</button>
-      </div>
-
-      <div class="quotation-totals">
-        <label class="quotation-igv-label">
-          <input id="quotationApplyIgv" type="checkbox" />
-          <span>Aplicar IGV (18%)</span>
-        </label>
-        <div class="quotation-total-line"><span>Subtotal:</span><strong id="quotationSubtotal">S/ 0.00</strong></div>
-        <div class="quotation-total-line"><span>IGV:</span><strong id="quotationIgv">S/ 0.00</strong></div>
-        <div class="quotation-total-line grand"><span>Total:</span><strong id="quotationTotal">S/ 0.00</strong></div>
-      </div>
-
-      <div class="row" style="justify-content:flex-end;">
-        <button id="quotationPreviewBtn" type="button" class="secondary">👁️ Vista previa</button>
-        <button id="quotationDownloadBtn" type="button">💾 Descargar PDF</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- QUOTATION PREVIEW MODAL -->
-  <div id="quotationPreviewModal" class="edit-modal quotation-preview-modal" style="display:none">
-    <div class="edit-card quotation-preview-card">
-      <button id="quotationPreviewCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
-      <div class="quotation-preview-actions">
-        <button id="quotationPreviewDownloadBtn" type="button">💾 Descargar PDF</button>
-        <span id="quotationSendFeedback" class="quotation-send-feedback" aria-live="polite"></span>
-      </div>
-      <iframe id="quotationPreviewFrame" class="quotation-preview-frame" title="Vista previa cotización"></iframe>
-    </div>
-  </div>
-
   <datalist id="noteOptions">
     <option value="No contestó"></option>
     <option value="Llamar mañana"></option>
@@ -421,7 +357,6 @@
     <option value="Llamar 25/02/2026"></option>
     <option value="Llamar 2026-02-25 15:30"></option>
   </datalist>
-  <datalist id="quotationServicesDatalist"></datalist>
 
   <!-- CALL MODAL -->
   <div id="callModal" class="call-modal" style="display:none">
@@ -467,6 +402,36 @@
       </div>
       <div id="historyList" class="history-list">
         <div class="muted" style="text-align:center;padding:40px;">Sin llamadas recientes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT MODAL -->
+  <div id="reportModal" class="edit-modal" style="display:none">
+    <div class="edit-card">
+      <button id="reportCloseBtn" class="edit-close-btn" type="button" aria-label="Cerrar">✕</button>
+      <h3>📊 Descargar Reporte de Llamadas</h3>
+      <div class="edit-form" style="gap:14px; margin-top: 10px;">
+        <label for="repDate">Seleccionar Día</label>
+        <input id="repDate" type="date" style="width: 100%;" />
+
+        <div style="display:flex; gap:10px; width:100%;">
+          <div style="flex:1;">
+            <label for="repStartHour">Hora Inicio</label>
+            <input id="repStartHour" type="time" value="07:00" style="width: 100%;" />
+          </div>
+          <div style="flex:1;">
+            <label for="repEndHour">Hora Fin</label>
+            <input id="repEndHour" type="time" value="20:00" style="width: 100%;" />
+          </div>
+        </div>
+
+        <div class="report-preview-stats" style="margin-top:10px; padding:12px; background:rgba(0,0,0,0.03); border-radius:10px; text-align:center;">
+          <span style="font-size:12px;" class="muted">Llamadas encontradas en el rango: </span>
+          <strong id="repMatchCount" style="font-size:16px;">0</strong>
+        </div>
+
+        <button id="repDownloadBtn" type="button" class="campaign-btn-primary" style="margin-top:10px; width: 100%;">📥 Descargar Reporte (Excel)</button>
       </div>
     </div>
   </div>

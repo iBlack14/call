@@ -1802,7 +1802,7 @@
         "lastStatusSignature": "",
         "lineLabel": "",
         "lastError": "",
-        "disconnectedAt": "2026-08-21T17:04:58.317Z"
+        "disconnectedAt": "2026-08-21T18:18:04.256Z"
       },
       {
         "socketId": null,
@@ -1834,7 +1834,7 @@
         "lastStatusSignature": "",
         "lineLabel": "",
         "lastError": "",
-        "disconnectedAt": "2026-08-21T17:04:58.318Z"
+        "disconnectedAt": "2026-08-21T18:18:04.257Z"
       },
       {
         "socketId": null,
@@ -1866,7 +1866,7 @@
         "lastStatusSignature": "",
         "lineLabel": "",
         "lastError": "",
-        "disconnectedAt": "2026-08-21T17:04:58.318Z"
+        "disconnectedAt": "2026-08-21T18:18:04.257Z"
       }
     ],
     "pairingSlots": [],
@@ -1939,7 +1939,7 @@
         "lastStatusSignature": "",
         "lineLabel": "",
         "lastError": "",
-        "disconnectedAt": "2026-08-21T17:04:58.318Z"
+        "disconnectedAt": "2026-08-21T18:18:04.257Z"
       }
     ],
     "pairingSlots": [],
@@ -2251,7 +2251,7 @@
       "lastTtsMedia": "",
       "updatedAt": 0
     },
-    "updatedAt": 1787333475482,
+    "updatedAt": 1787333839854,
     "campaign": {
       "status": "idle",
       "contacts": [],
@@ -2277,6 +2277,348 @@
       "dismissedReminderIds": {},
       "callHistory": [],
       "updatedAt": "2026-08-21T17:18:30.390Z"
+    }
+  },
+  "DHGZOK": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "ci9-zN4OZm2eqLsMV2tC",
+    "phoneDevice": null,
+    "phoneWorkers": [],
+    "pairingSlots": [
+      {
+        "id": "QahdG4XT5S",
+        "token": "ci9-zN4OZm2eqLsMV2tC",
+        "label": "Dispositivo 1",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:19.875Z",
+        "linkedAt": null
+      }
+    ],
+    "micMuted": true,
+    "isSpeakerOn": false,
+    "pbx": {
+      "activeChannelId": "",
+      "activeBridgeId": "",
+      "externalMediaChannelId": "",
+      "externalMediaHost": "",
+      "externalMediaPort": 0,
+      "lastPlaybackId": "",
+      "endpoint": "",
+      "callerId": "",
+      "appArgs": "",
+      "lastTtsMedia": "",
+      "updatedAt": 0
+    },
+    "updatedAt": 1787333843126,
+    "campaign": {
+      "status": "idle",
+      "contacts": [],
+      "activeContactId": null,
+      "activeWorkerId": null,
+      "activeWorkerSocketId": null,
+      "callbacks": [],
+      "lastError": "",
+      "updatedAt": 1787333839866,
+      "startedAt": null,
+      "pausedAt": null,
+      "completedAt": null
+    },
+    "dashboardData": {
+      "contacts": [],
+      "lists": [
+        "Principal"
+      ],
+      "activeList": "Principal",
+      "calledCounts": {},
+      "contactRowStatus": {},
+      "callDurations": {},
+      "dismissedReminderIds": {},
+      "callHistory": [],
+      "updatedAt": "2026-08-21T17:37:20.410Z"
+    }
+  },
+  "HMFFFT": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "AKfZVYQ9QKDHqvh443w8",
+    "phoneDevice": null,
+    "phoneWorkers": [],
+    "pairingSlots": [
+      {
+        "id": "40NqkSkG21",
+        "token": "AKfZVYQ9QKDHqvh443w8",
+        "label": "Dispositivo 1",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:23.396Z",
+        "linkedAt": null
+      }
+    ],
+    "micMuted": true,
+    "isSpeakerOn": false,
+    "pbx": {
+      "activeChannelId": "",
+      "activeBridgeId": "",
+      "externalMediaChannelId": "",
+      "externalMediaHost": "",
+      "externalMediaPort": 0,
+      "lastPlaybackId": "",
+      "endpoint": "",
+      "callerId": "",
+      "appArgs": "",
+      "lastTtsMedia": "",
+      "updatedAt": 0
+    },
+    "updatedAt": 1787333844491,
+    "campaign": {
+      "status": "idle",
+      "contacts": [],
+      "activeContactId": null,
+      "activeWorkerId": null,
+      "activeWorkerSocketId": null,
+      "callbacks": [],
+      "lastError": "",
+      "updatedAt": 1787333843126,
+      "startedAt": null,
+      "pausedAt": null,
+      "completedAt": null
+    },
+    "dashboardData": {
+      "contacts": [],
+      "lists": [
+        "Principal"
+      ],
+      "activeList": "Principal",
+      "calledCounts": {},
+      "contactRowStatus": {},
+      "callDurations": {},
+      "dismissedReminderIds": {},
+      "callHistory": [],
+      "updatedAt": "2026-08-21T17:37:24.491Z"
+    }
+  },
+  "CDFYX-": {
+    "callState": "idle",
+    "lastNumber": "",
+    "lastCompanyName": "",
+    "lastContactName": "",
+    "lastImageUrl": "",
+    "pairingToken": "-c2B8ihZVNEKQ9O3CMbB",
+    "phoneDevice": null,
+    "phoneWorkers": [],
+    "pairingSlots": [
+      {
+        "id": "CIw75v5CE0",
+        "token": "-c2B8ihZVNEKQ9O3CMbB",
+        "label": "Dispositivo 1",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:24.546Z",
+        "linkedAt": null
+      },
+      {
+        "id": "1b92J_15Io",
+        "token": "73BChyR_qDlYhbZiOfdf4Yux",
+        "label": "Dispositivo 2",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:25.652Z",
+        "linkedAt": null
+      },
+      {
+        "id": "8vYaPfYN3A",
+        "token": "eJaRkdegQETr-6Ns0lWPX87K",
+        "label": "Dispositivo 3",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:28.426Z",
+        "linkedAt": null
+      },
+      {
+        "id": "4htMWzpsw0",
+        "token": "RV5eDpbkcAD0knOBkj_C91jM",
+        "label": "Dispositivo 4",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:29.632Z",
+        "linkedAt": null
+      },
+      {
+        "id": "dDrSqyQDF3",
+        "token": "oSwDsxmm6yEfQE2G_3DjFbrD",
+        "label": "Dispositivo 5",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:30.335Z",
+        "linkedAt": null
+      },
+      {
+        "id": "jcvtfBTpdu",
+        "token": "ykl0FBwxHh1DnF1mB-KUYF6w",
+        "label": "Dispositivo 6",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:31.171Z",
+        "linkedAt": null
+      },
+      {
+        "id": "5gkGSKbMRw",
+        "token": "1qFCweTB1V5BPp-bmmSZ7G0n",
+        "label": "Dispositivo 7",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:37:31.543Z",
+        "linkedAt": null
+      },
+      {
+        "id": "AI6zNeSV9e",
+        "token": "8RDBjohtd7lOId_7FRuMjaJh",
+        "label": "Dispositivo 8",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:20.398Z",
+        "linkedAt": null
+      },
+      {
+        "id": "vwNIWDAjsR",
+        "token": "cgFpoYEepnkV3-LvTuHAq1Hs",
+        "label": "Dispositivo 9",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:20.745Z",
+        "linkedAt": null
+      },
+      {
+        "id": "EwIFaj2nRS",
+        "token": "mqfCSCErVhV1TEU0Lp7C7CuD",
+        "label": "Dispositivo 10",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:21.009Z",
+        "linkedAt": null
+      },
+      {
+        "id": "1lVgUC7eSr",
+        "token": "Hx-gCR1W7ZH6Py79Bk6RiYG8",
+        "label": "Dispositivo 11",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:21.278Z",
+        "linkedAt": null
+      },
+      {
+        "id": "VUAjeaM3rN",
+        "token": "ZZhlQzDEJuHY47-v7Av40OsX",
+        "label": "Dispositivo 12",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:21.583Z",
+        "linkedAt": null
+      },
+      {
+        "id": "5O1NX6HUiH",
+        "token": "oQjM0omyZ9IdPvHOugxNrCcA",
+        "label": "Dispositivo 12",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:21.687Z",
+        "linkedAt": null
+      },
+      {
+        "id": "IDQh18TgbB",
+        "token": "LwkHE4WhtGMFF09-Xgk_tjSU",
+        "label": "Dispositivo 14",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:41:22.081Z",
+        "linkedAt": null
+      },
+      {
+        "id": "znQ1Ls3AEH",
+        "token": "QhHbPJuLoLvYBLFF5QqVW7JF",
+        "label": "Dispositivo 15",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:44:24.106Z",
+        "linkedAt": null
+      },
+      {
+        "id": "JTsvsHwq1N",
+        "token": "4Z3tk2Fjl7acdT4_64AGkwH4",
+        "label": "Dispositivo 16",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:54:00.243Z",
+        "linkedAt": null
+      },
+      {
+        "id": "LhcZTo2ywf",
+        "token": "HK6-ur-SjWcCSPFDghPTO-rA",
+        "label": "Dispositivo 17",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:54:01.313Z",
+        "linkedAt": null
+      },
+      {
+        "id": "hCGq_qoRAf",
+        "token": "uqnHrKl3ipxXUZqvf5e_L9t0",
+        "label": "Dispositivo 17",
+        "deviceId": "",
+        "deviceName": "",
+        "createdAt": "2026-08-21T17:54:01.537Z",
+        "linkedAt": null
+      }
+    ],
+    "micMuted": true,
+    "isSpeakerOn": false,
+    "pbx": {
+      "activeChannelId": "",
+      "activeBridgeId": "",
+      "externalMediaChannelId": "",
+      "externalMediaHost": "",
+      "externalMediaPort": 0,
+      "lastPlaybackId": "",
+      "endpoint": "",
+      "callerId": "",
+      "appArgs": "",
+      "lastTtsMedia": "",
+      "updatedAt": 0
+    },
+    "updatedAt": 1787336901213,
+    "campaign": {
+      "status": "idle",
+      "contacts": [],
+      "activeContactId": null,
+      "activeWorkerId": null,
+      "activeWorkerSocketId": null,
+      "callbacks": [],
+      "lastError": "",
+      "updatedAt": 1787333844489,
+      "startedAt": null,
+      "pausedAt": null,
+      "completedAt": null
+    },
+    "dashboardData": {
+      "contacts": [],
+      "lists": [
+        "Principal"
+      ],
+      "activeList": "Principal",
+      "calledCounts": {},
+      "contactRowStatus": {},
+      "callDurations": {},
+      "dismissedReminderIds": {},
+      "callHistory": [],
+      "updatedAt": "2026-08-21T17:37:25.659Z"
     }
   }
 }

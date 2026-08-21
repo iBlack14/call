@@ -3,7 +3,6 @@ import { refs, setStatus, setBadge, setAckBadge } from './modules/dom.js?v=2';
 import * as Contacts from './modules/contacts.js?v=3';
 import * as AudioBridge from './modules/audio-bridge.js?v=2';
 import * as WhatsApp from './modules/whatsapp.js?v=2';
-import * as Quotation from './modules/quotation.js?v=2';
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let sessionCode = "";
@@ -881,12 +880,19 @@ async function markCampaignResult(result) {
 
 function restoreSavedSession() {
   if (restoreAttempted) return;
-  const savedCode = getSavedSessionCode();
-  if (!savedCode) return;
+  
+  let savedCode = getSavedSessionCode();
+  
+  if (!savedCode) {
+    restoreAttempted = true;
+    console.log("No saved session code found. Automatically creating a new one...");
+    socket.emit("session:create");
+    return;
+  }
 
   restoreAttempted = true;
   sessionCode = savedCode;
-  refs.sessionCodeIn.value = savedCode;
+  if (refs.sessionCodeIn) refs.sessionCodeIn.value = savedCode;
   setStatus(`Restaurando sesión ${savedCode}...`);
   socket.emit("session:join", { code: savedCode, role: "dashboard" });
   loadPairingData(savedCode);
@@ -905,10 +911,34 @@ function bindEvents() {
   if (refs.addPairingSlotBtn) refs.addPairingSlotBtn.onclick = createPairingSlot;
   if (refs.pairingSlotsEl) {
     refs.pairingSlotsEl.onclick = async (event) => {
-      const button = event.target.closest(".copy-slot-link");
-      if (!button) return;
-      await navigator.clipboard.writeText(button.dataset.link || "");
-      setStatus("Link de este dispositivo copiado.", true);
+      const copyBtn = event.target.closest(".copy-slot-link");
+      if (copyBtn) {
+        await navigator.clipboard.writeText(copyBtn.dataset.link || "");
+        setStatus("Link de este dispositivo copiado.", true);
+        return;
+      }
+      
+      const deleteBtn = event.target.closest(".delete-slot-btn");
+      if (deleteBtn) {
+        const slotId = deleteBtn.dataset.id;
+        if (confirm("¿Estás seguro de que deseas eliminar este dispositivo QR? Si el celular está conectado se desconectará.")) {
+          try {
+            const res = await fetch(`${API_BASE}/api/session/${encodeURIComponent(sessionCode)}/pairing-slots/${encodeURIComponent(slotId)}`, {
+              method: "DELETE"
+            });
+            const data = await res.json();
+            if (data.ok) {
+              setStatus("Dispositivo QR eliminado.", true);
+              await loadPairingData(sessionCode);
+            } else {
+              alert(data.error || "No se pudo eliminar el dispositivo QR");
+            }
+          } catch (e) {
+            console.error(e);
+            alert("Error al intentar eliminar el dispositivo QR");
+          }
+        }
+      }
     };
   }
   
@@ -989,6 +1019,14 @@ function bindEvents() {
   if (refs.historyCloseBtn) refs.historyCloseBtn.onclick = () => { refs.historyModalEl.style.display = "none"; };
   if (refs.clearHistoryBtn) refs.clearHistoryBtn.onclick = clearHistory;
 
+  // Report
+  if (refs.openReportBtn) refs.openReportBtn.onclick = openReportModal;
+  if (refs.reportCloseBtn) refs.reportCloseBtn.onclick = () => { refs.reportModalEl.style.display = "none"; };
+  if (refs.repDate) refs.repDate.onchange = updateReportPreview;
+  if (refs.repStartHour) refs.repStartHour.onchange = updateReportPreview;
+  if (refs.repEndHour) refs.repEndHour.onchange = updateReportPreview;
+  if (refs.repDownloadBtn) refs.repDownloadBtn.onclick = downloadReportExcel;
+
   // Tabs
   renderTabs();
 
@@ -1005,7 +1043,6 @@ function bindEvents() {
   
   // Missing button handlers
   if (refs.exportWordBtn) refs.exportWordBtn.onclick = exportContactsToWord;
-  if (refs.openQuotationBtn) refs.openQuotationBtn.onclick = openQuotationModal;
   if (refs.deleteAllContactsBtn) {
     refs.deleteAllContactsBtn.onclick = () => {
       if (!confirm("¿Estás seguro de que deseas ELIMINAR TODOS los contactos y todas las listas? Esta acción no se puede deshacer.")) return;
@@ -1022,16 +1059,7 @@ function bindEvents() {
   }
   if (refs.connectWhatsAppBtn) refs.connectWhatsAppBtn.onclick = WhatsApp.openWhatsAppConnectModal;
   
-  // Quotation modal handlers
-  if (refs.quotationCloseBtn) refs.quotationCloseBtn.onclick = () => {
-    if (refs.quotationModalEl) refs.quotationModalEl.style.display = "none";
-  };
-  if (refs.quotationPreviewBtn) refs.quotationPreviewBtn.onclick = Quotation.previewQuotationHtml;
-  if (refs.quotationDownloadBtn) refs.quotationDownloadBtn.onclick = Quotation.downloadQuotationPdf;
-  if (refs.quotationPreviewCloseBtn) refs.quotationPreviewCloseBtn.onclick = () => {
-    if (refs.quotationPreviewModalEl) refs.quotationPreviewModalEl.style.display = "none";
-  };
-  if (refs.quotationPreviewDownloadBtn) refs.quotationPreviewDownloadBtn.onclick = Quotation.downloadQuotationPdf;
+  
   
   // WhatsApp modal handlers
   if (refs.whatsappCloseBtn) refs.whatsappCloseBtn.onclick = WhatsApp.closeWhatsAppModal;
@@ -1039,66 +1067,7 @@ function bindEvents() {
   if (refs.whatsappLogoutBtn) refs.whatsappLogoutBtn.onclick = WhatsApp.logoutWhatsAppAccount;
   if (refs.whatsappTemplateSaveBtn) refs.whatsappTemplateSaveBtn.onclick = WhatsApp.saveNewWhatsAppPresetMessage;
   
-  // Quotation form handlers
-  if (refs.quotationAddItemBtn) refs.quotationAddItemBtn.onclick = () => {
-    Quotation.quotationItems.push({ 
-      id: makeId(), 
-      service: "", 
-      customMode: false, 
-      quantity: 1, 
-      price: 0, 
-      image: "" 
-    });
-    Quotation.renderQuotationItems();
-  };
   
-  // Quotation item change handlers
-  if (refs.quotationItemsBodyEl) {
-    refs.quotationItemsBodyEl.onclick = (e) => {
-      const target = e.target;
-      const field = target.dataset.qField;
-      const id = target.dataset.qId;
-      const action = target.dataset.qAction;
-      
-      if (!id) return;
-      
-      const item = Quotation.quotationItems.find(item => item.id === id);
-      if (!item) return;
-      
-      if (action === "remove") {
-        Quotation.quotationItems = Quotation.quotationItems.filter(i => i.id !== id);
-        Quotation.renderQuotationItems();
-        Quotation.recalcQuotationTotals();
-        return;
-      }
-      
-      if (field === "service_select") {
-        item.service = target.value;
-        item.customMode = target.value === "__other__";
-        Quotation.renderQuotationItems();
-      } else if (field === "service_custom") {
-        item.service = target.value;
-      } else if (field === "quantity") {
-        item.quantity = Number(target.value) || 1;
-      } else if (field === "price") {
-        item.price = Number(target.value) || 0;
-      } else if (field === "image") {
-        item.image = target.value;
-      }
-      
-      Quotation.recalcQuotationTotals();
-    };
-    
-    refs.quotationItemsBodyEl.onchange = refs.quotationItemsBodyEl.onclick;
-  }
-  
-  // IGV checkbox handler
-  if (refs.quotationApplyIgvEl) {
-    refs.quotationApplyIgvEl.onchange = () => Quotation.recalcQuotationTotals();
-  }
-  
-  // Initialize quotation events
-  Quotation.bindQuotationEvents();
   
   // WhatsApp file drop zone handlers
   if (refs.whatsappDropZone) {
@@ -1211,13 +1180,7 @@ async function exportContactsToWord() {
   }
 }
 
-function openQuotationModal() {
-  Quotation.resetQuotationForm();
-  if (refs.quotationModalEl) {
-    refs.quotationModalEl.style.display = "grid";
-    setStatus("Modal de cotización abierto.", true);
-  }
-}
+
 
 // ── CALL LOGIC ────────────────────────────────────────────────────────
 function startDialForContact(c) {
@@ -1567,23 +1530,28 @@ async function loadPairingData(code) {
 
 function renderPairingSlots(slots) {
   if (!refs.pairingSlotsEl) return;
-  refs.pairingSlotsEl.innerHTML = slots.map((slot) => `
-    <article class="pairing-slot-card ${slot.connected ? "is-connected" : (slot.deviceId ? "is-disconnected" : "")}">
-      <img src="${API_BASE}/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?slotId=${encodeURIComponent(slot.id)}&ts=${Date.now()}" alt="QR ${escHtml(slot.label)}" />
-      <div>
-        <strong>${escHtml(slot.label)}</strong>
-        <small class="pairing-live-state">
-          ${slot.connected
-            ? `● Conectado · ${escHtml(slot.deviceName || slot.deviceId)}`
-            : slot.deviceId
-              ? `○ Desconectado · QR activo para reconectar`
-              : "Disponible para vincular"}
-        </small>
-        <button class="secondary copy-slot-link" data-link="${escHtml(slot.link)}">📋 Copiar link</button>
-      </div>
-    </article>
-  `).join("");
-  // Cuando hay 3+ slots, el bloque QR cambia a layout expandido
+  refs.pairingSlotsEl.innerHTML = slots.map((slot) => {
+    return `
+      <article class="pairing-slot-card ${slot.connected ? "is-connected" : (slot.deviceId ? "is-disconnected" : "")}">
+        <img src="${API_BASE}/api/pairing-qr/${encodeURIComponent(sessionCode)}.svg?slotId=${encodeURIComponent(slot.id)}&ts=${Date.now()}" alt="QR ${escHtml(slot.label)}" />
+        <div>
+          <strong>${escHtml(slot.label)}</strong>
+          <small class="pairing-live-state">
+            ${slot.connected
+              ? `● Conectado · ${escHtml(slot.deviceName || slot.deviceId || "Celular")}`
+              : slot.deviceId
+                ? `○ Desconectado · QR activo para reconectar`
+                : "Disponible para vincular"}
+          </small>
+          <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
+            <button class="secondary copy-slot-link" data-link="${escHtml(slot.link)}" style="flex: 1; padding: 0 8px; min-height: 32px; font-size: 11px;">📋 Copiar</button>
+            <button class="danger-soft delete-slot-btn" data-id="${slot.id}" style="flex: 1; padding: 0 8px; min-height: 32px; font-size: 11px; border: 1px solid rgba(239, 68, 68, 0.25);">🗑️ Eliminar</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+  
   const qrBlock = document.getElementById("qrBlock");
   if (qrBlock) qrBlock.classList.toggle("has-many-slots", slots.length >= 3);
 }
@@ -1699,7 +1667,7 @@ function addHistoryEntry(phone, duration) {
     duration,
     timestamp: Date.now()
   });
-  if (callHistory.length > 50) callHistory.pop();
+  if (callHistory.length > 1000) callHistory.pop();
   saveHistory();
 }
 
@@ -1742,6 +1710,92 @@ window.dialFromHistory = (phone) => {
   refs.historyModalEl.style.display = "none";
   dialManual(phone, "Historial");
 };
+
+/* ── REPORT LOGIC ─────────────────────────────────────── */
+function openReportModal() {
+  if (refs.repDate) {
+    const today = new Date().toISOString().split("T")[0];
+    refs.repDate.value = today;
+  }
+  updateReportPreview();
+  if (refs.reportModalEl) refs.reportModalEl.style.display = "flex";
+}
+
+function getFilteredHistory() {
+  const selectedDate = refs.repDate?.value || "";
+  const startHourStr = refs.repStartHour?.value || "07:00";
+  const endHourStr = refs.repEndHour?.value || "20:00";
+  
+  if (!selectedDate) return [];
+  
+  const [startH, startM] = startHourStr.split(":").map(Number);
+  const [endH, endM] = endHourStr.split(":").map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  
+  return callHistory.filter(h => {
+    const callDate = new Date(h.timestamp);
+    const callDateStr = callDate.toISOString().split("T")[0];
+    
+    if (callDateStr !== selectedDate) return false;
+    
+    const callMinutes = callDate.getHours() * 60 + callDate.getMinutes();
+    return callMinutes >= startMinutes && callMinutes <= endMinutes;
+  });
+}
+
+function updateReportPreview() {
+  const matches = getFilteredHistory();
+  if (refs.repMatchCount) refs.repMatchCount.textContent = String(matches.length);
+}
+
+function downloadReportExcel() {
+  const matches = getFilteredHistory();
+  if (!matches.length) {
+    alert("No hay llamadas registradas en el rango de fecha y hora seleccionado.");
+    return;
+  }
+  
+  try {
+    if (typeof XLSX === "undefined") {
+      alert("La librería de Excel no está disponible. Por favor, recarga la página.");
+      return;
+    }
+    
+    const rows = matches.map(h => {
+      const date = new Date(h.timestamp);
+      return {
+        "Teléfono": h.phone,
+        "Duración (segundos)": h.duration,
+        "Duración Formateada": formatCallDuration(h.duration),
+        "Fecha y Hora": date.toLocaleString("es-PE"),
+        "Día": date.toLocaleDateString("es-PE"),
+        "Hora": date.toLocaleTimeString("es-PE", { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      };
+    });
+    
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+    
+    const max_len = rows.reduce((w, r) => Math.max(w, String(r["Fecha y Hora"]).length), 15);
+    worksheet["!cols"] = [
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: max_len },
+      { wch: 15 },
+      { wch: 15 }
+    ];
+    
+    const filename = `Reporte_Llamadas_${refs.repDate.value}_${refs.repStartHour.value.replace(':', '')}-${refs.repEndHour.value.replace(':', '')}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+    setStatus(`Reporte de Excel descargado con éxito: ${filename}`, true);
+  } catch (error) {
+    console.error("Error al exportar Excel:", error);
+    alert("Ocurrió un error al generar el reporte de Excel.");
+  }
+}
 
 /* ── TABS LOGIC ────────────────────────────────────────── */
 function renderTabs() {
@@ -1826,3 +1880,140 @@ function openEditModal(contact) {
 }
 
 init();
+
+/* ═══════════════════════════════════════════════════════
+   SHIFT MANAGEMENT (Gestión de Turnos)
+   Turno mañana : 07:00 – 14:00
+   Turno tarde  : 14:00 – 20:00
+   ═══════════════════════════════════════════════════════ */
+(function shiftManager() {
+  const SHIFTS = [
+    { id: "morning",   name: "Turno Mañana",   start: 7,  end: 14 },
+    { id: "afternoon", name: "Turno Tarde",     start: 14, end: 20 }
+  ];
+  const LS_KEY = "vc_shift_start";
+
+  const elBar      = document.getElementById("shiftBar");
+  const elDot      = document.getElementById("shiftDot");
+  const elName     = document.getElementById("shiftName");
+  const elRange    = document.getElementById("shiftRange");
+  const elElapsed  = document.getElementById("shiftElapsed");
+  const elProgress = document.getElementById("shiftProgressBar");
+  const elEndBtn   = document.getElementById("shiftEndBtn");
+
+  if (!elBar) return;
+
+  function getActiveShift(now) {
+    const h = now.getHours() + now.getMinutes() / 60;
+    return SHIFTS.find(s => h >= s.start && h < s.end) || null;
+  }
+
+  function fmt2(n) { return String(n).padStart(2, "0"); }
+
+  function fmtDuration(ms) {
+    const s = Math.floor(ms / 1000);
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    return `${fmt2(hh)}:${fmt2(mm)}:${fmt2(ss)}`;
+  }
+
+  function fmtTime(h) {
+    const suffix = h < 12 ? "AM" : "PM";
+    const display = h % 12 === 0 ? 12 : h % 12;
+    return `${display}:00 ${suffix}`;
+  }
+
+  function getShiftStart(shift, now) {
+    // Saved session start from localStorage (operator may have started mid-shift)
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved) {
+      const d = new Date(saved);
+      // Only use saved if it's from the same shift window
+      const savedH = d.getHours() + d.getMinutes() / 60;
+      if (savedH >= shift.start && savedH < shift.end && d.toDateString() === now.toDateString()) {
+        return d;
+      }
+    }
+    // Default: start of the shift
+    const d = new Date(now);
+    d.setHours(shift.start, 0, 0, 0);
+    return d;
+  }
+
+  function saveShiftStart(date) {
+    localStorage.setItem(LS_KEY, date.toISOString());
+  }
+
+  function clearShiftStart() {
+    localStorage.removeItem(LS_KEY);
+  }
+
+  function showEndSummary(shift, startTime, endTime) {
+    const dur = fmtDuration(endTime - startTime);
+    const startStr = startTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+    const endStr   = endTime.toLocaleTimeString("es-PE",   { hour: "2-digit", minute: "2-digit" });
+    const msg =
+      `✅ ${shift.name} finalizado\n\n` +
+      `Inicio:   ${startStr}\n` +
+      `Fin:      ${endStr}\n` +
+      `Duración: ${dur}\n\n` +
+      `El turno ha sido registrado.`;
+    alert(msg);
+  }
+
+  let currentShiftId = null;
+  let shiftStartTime = null;
+  let tickTimer = null;
+
+  function tick() {
+    const now = new Date();
+    const shift = getActiveShift(now);
+
+    // Shift changed or started
+    if (shift?.id !== currentShiftId) {
+      currentShiftId = shift ? shift.id : null;
+      if (shift) {
+        shiftStartTime = getShiftStart(shift, now);
+        saveShiftStart(shiftStartTime);
+      } else {
+        shiftStartTime = null;
+      }
+    }
+
+    // Update bar class
+    elBar.className = "shift-bar " + (shift ? shift.id : "off");
+    elDot.className = "shift-dot "  + (shift ? shift.id : "off");
+
+    if (shift) {
+      elName.textContent    = shift.name;
+      elRange.textContent   = `${fmtTime(shift.start)} – ${fmtTime(shift.end)}`;
+      const elapsed         = now - shiftStartTime;
+      elElapsed.textContent = fmtDuration(elapsed);
+      const totalMs         = (shift.end - shift.start) * 3600 * 1000;
+      const pct             = Math.min(100, (elapsed / totalMs) * 100);
+      elProgress.style.width = pct.toFixed(1) + "%";
+    } else {
+      elName.textContent     = "Fuera de turno";
+      elRange.textContent    = "Próximo: 7:00 AM";
+      elElapsed.textContent  = "—";
+      elProgress.style.width = "0%";
+    }
+  }
+
+  elEndBtn.addEventListener("click", () => {
+    const now = new Date();
+    const shift = getActiveShift(now);
+    if (!shift || !shiftStartTime) return;
+    showEndSummary(shift, shiftStartTime, now);
+    clearShiftStart();
+    // Reset: next tick will recalculate from shift start
+    shiftStartTime = new Date();
+    shiftStartTime.setHours(shift.start, 0, 0, 0);
+    saveShiftStart(shiftStartTime);
+  });
+
+  // Init immediately then every second
+  tick();
+  tickTimer = setInterval(tick, 1000);
+})();

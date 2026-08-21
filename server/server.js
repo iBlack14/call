@@ -900,6 +900,24 @@ function ensureLegacyPairingSlot(session) {
       createdAt: new Date().toISOString(),
       linkedAt: null
     });
+    slots.push({
+      id: nanoid(10),
+      token: nanoid(24),
+      label: "Dispositivo 2",
+      deviceId: "",
+      deviceName: "",
+      createdAt: new Date().toISOString(),
+      linkedAt: null
+    });
+    slots.push({
+      id: nanoid(10),
+      token: nanoid(24),
+      label: "Dispositivo 3",
+      deviceId: "",
+      deviceName: "",
+      createdAt: new Date().toISOString(),
+      linkedAt: null
+    });
   }
   return slots[0];
 }
@@ -2146,6 +2164,38 @@ app.post("/api/session/:code/pairing-slots", (req, res) => {
     ok: true,
     slot: { id: slot.id, label: slot.label, link: getPairingLink(req, code, slot.token) }
   });
+});
+
+app.delete("/api/session/:code/pairing-slots/:id", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase().trim();
+  const id = String(req.params.id || "").trim();
+  const session = sessions.get(code);
+  if (!session) return res.status(404).json({ ok: false, error: "Sesion no encontrada" });
+
+  const slots = session.pairingSlots || [];
+  const index = slots.findIndex(s => s.id === id);
+  if (index === -1) return res.status(404).json({ ok: false, error: "Slot no encontrado" });
+
+  const slot = slots[index];
+
+  if (slot.deviceId) {
+    const workers = session.phoneWorkers || [];
+    const workerIndex = workers.findIndex(w => w.pairingSlotId === slot.id || w.id === slot.deviceId);
+    if (workerIndex !== -1) {
+      const worker = workers[workerIndex];
+      const socket = io.sockets.sockets.get(worker.socketId);
+      if (socket) {
+        socket.disconnect(true);
+      }
+      workers.splice(workerIndex, 1);
+    }
+  }
+
+  slots.splice(index, 1);
+  saveSoon();
+  emitState(code);
+
+  return res.json({ ok: true });
 });
 
 app.get("/api/session/:code/workers", (req, res) => {

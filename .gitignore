@@ -37,3 +37,7 @@ android-app/keystore/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Agent and Infrastructure
+.agent/
+infrastructure/

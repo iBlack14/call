@@ -121,29 +121,6 @@ export const refs = {
   whatsappTemplateInput: document.getElementById("whatsappTemplateInput"),
   whatsappTemplateSaveBtn: document.getElementById("whatsappTemplateSaveBtn"),
   connectWhatsAppBtn: document.getElementById("connectWhatsAppBtn"),
-  openQuotationBtn: document.getElementById("openQuotationBtn"),
-  quotationModalEl: document.getElementById("quotationModal"),
-  quotationCloseBtn: document.getElementById("quotationCloseBtn"),
-  quotationItemsBodyEl: document.getElementById("quotationItemsBody"),
-  quotationAddItemBtn: document.getElementById("quotationAddItemBtn"),
-  quotationApplyIgvEl: document.getElementById("quotationApplyIgv"),
-  quotationSubtotalEl: document.getElementById("quotationSubtotal"),
-  quotationIgvEl: document.getElementById("quotationIgv"),
-  quotationTotalEl: document.getElementById("quotationTotal"),
-  quotationPreviewBtn: document.getElementById("quotationPreviewBtn"),
-  quotationDownloadBtn: document.getElementById("quotationDownloadBtn"),
-  quotationPreviewModalEl: document.getElementById("quotationPreviewModal"),
-  quotationPreviewCloseBtn: document.getElementById("quotationPreviewCloseBtn"),
-  quotationPreviewDownloadBtn: document.getElementById("quotationPreviewDownloadBtn"),
-  quotationSendFeedbackEl: document.getElementById("quotationSendFeedback"),
-  quotationPreviewFrameEl: document.getElementById("quotationPreviewFrame"),
-  qDateEl: document.getElementById("qDate"),
-  qCompanyEl: document.getElementById("qCompany"),
-  qRucEl: document.getElementById("qRuc"),
-  qPhoneEl: document.getElementById("qPhone"),
-  qEmailEl: document.getElementById("qEmail"),
-  qAddressEl: document.getElementById("qAddress"),
-  quotationServicesDatalistEl: document.getElementById("quotationServicesDatalist"),
   testBotAudioBtn: document.getElementById("testBotAudioBtn"),
   
   // History
@@ -155,6 +132,16 @@ export const refs = {
   
   // Tabs
   contactsTabsEl: document.getElementById("contactsTabs"),
+
+  // Report
+  openReportBtn: document.getElementById("openReportBtn"),
+  reportModalEl: document.getElementById("reportModal"),
+  reportCloseBtn: document.getElementById("reportCloseBtn"),
+  repDate: document.getElementById("repDate"),
+  repStartHour: document.getElementById("repStartHour"),
+  repEndHour: document.getElementById("repEndHour"),
+  repMatchCount: document.getElementById("repMatchCount"),
+  repDownloadBtn: document.getElementById("repDownloadBtn"),
 };
 
 export function setStatus(msg, isActive = false) {
